@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"models"
 	"net/http"
+
+	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/models"
 )
 
 type Controller struct {

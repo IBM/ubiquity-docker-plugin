@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	"web_server"
+
+	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/web_server"
 )
 
 var address = flag.String(

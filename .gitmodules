@@ -1,0 +1,6 @@
+[submodule "src/github.com/gorilla/mux"]
+	path = src/github.com/gorilla/mux
+	url = https://github.com/gorilla/mux.git
+[submodule "src/github.com/gorilla/context"]
+	path = src/github.com/gorilla/context
+	url = https://github.com/gorilla/context.git

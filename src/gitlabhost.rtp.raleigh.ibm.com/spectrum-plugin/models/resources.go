@@ -11,6 +11,20 @@ type CreateRequest struct {
 	Opts map[string]interface{}
 }
 
+type ActivateResponse struct {
+	Implements []string
+}
+
+func (r *ActivateResponse) WriteResponse(w http.ResponseWriter) {
+	data, err := json.Marshal(r)
+	if err != nil {
+		fmt.Errorf("Error marshalling response: %s", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, string(data))
+}
+
 type GenericResponse struct {
 	Err string
 }

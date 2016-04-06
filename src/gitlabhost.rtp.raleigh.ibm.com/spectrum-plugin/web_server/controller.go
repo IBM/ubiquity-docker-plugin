@@ -16,6 +16,11 @@ func NewController() *Controller {
 	return &Controller{}
 }
 
+func (c *Controller) Activate(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("activate request called")
+	activateResponse := &models.ActivateResponse{Implements: []string{"VolumeDriver"}}
+	activateResponse.WriteResponse(w)
+}
 func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("create request called")
 	var createRequest models.CreateRequest
@@ -53,7 +58,7 @@ func (c *Controller) Mount(w http.ResponseWriter, r *http.Request) {
 		mountResponse.WriteResponse(w)
 		return
 	}
-	mountResponse := &models.MountResponse{}
+	mountResponse := &models.MountResponse{Mountpoint: "/tmp/test"}
 	mountResponse.WriteResponse(w)
 }
 
@@ -79,7 +84,7 @@ func (c *Controller) Path(w http.ResponseWriter, r *http.Request) {
 		mountResponse.WriteResponse(w)
 		return
 	}
-	pathResponse := &models.MountResponse{}
+	pathResponse := &models.MountResponse{Mountpoint: "/tmp/test"}
 	pathResponse.WriteResponse(w)
 }
 
@@ -92,13 +97,15 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 		errorResponse.WriteResponse(w)
 		return
 	}
-	getResponse := &models.GetResponse{}
+	volume := models.VolumeMetadata{Name: "test", Mountpoint: "/tmp/test"}
+	getResponse := &models.GetResponse{Volume: volume}
 	getResponse.WriteResponse(w)
 }
 
 func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("List request called")
-	listResponse := &models.ListResponse{}
+	volume := models.VolumeMetadata{Name: "test", Mountpoint: "/tmp/test"}
+	listResponse := &models.ListResponse{Volumes: []models.VolumeMetadata{volume}}
 	listResponse.WriteResponse(w)
 }
 

@@ -84,7 +84,8 @@ func (c *Controller) Path(w http.ResponseWriter, r *http.Request) {
 		mountResponse.WriteResponse(w)
 		return
 	}
-	pathResponse := &models.MountResponse{Mountpoint: "/tmp/test"}
+	//pathResponse := &models.MountResponse{Mountpoint: "/tmp/test"}
+	pathResponse := &models.MountResponse{Err: "Volume not found"}
 	pathResponse.WriteResponse(w)
 }
 
@@ -97,8 +98,9 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 		errorResponse.WriteResponse(w)
 		return
 	}
-	volume := models.VolumeMetadata{Name: "test", Mountpoint: "/tmp/test"}
-	getResponse := &models.GetResponse{Volume: volume}
+	//volume := models.VolumeMetadata{Name: "test", Mountpoint: "/tmp/test"}
+	//getResponse := &models.GetResponse{Volume: volume}
+	getResponse := &models.GetResponse{Err: "Volume does not exist"}
 	getResponse.WriteResponse(w)
 }
 

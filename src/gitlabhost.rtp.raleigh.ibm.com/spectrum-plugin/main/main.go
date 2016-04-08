@@ -12,7 +12,7 @@ var address = flag.String(
 	"host ip to serve volume management functions",
 )
 var port = flag.Int(
-	"listenPost",
+	"listenPort",
 	9000,
 	"host port to serve volume management functions",
 )

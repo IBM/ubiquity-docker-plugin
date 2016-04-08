@@ -1,2 +1,5 @@
 bin/*
 pkg/*
+src/github.com/maxbrunsfeld/*
+src/github.com/onsi/*
+src/golang.org/

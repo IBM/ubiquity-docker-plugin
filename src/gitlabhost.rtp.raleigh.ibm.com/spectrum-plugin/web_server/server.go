@@ -11,7 +11,7 @@ import (
 )
 
 type Server struct {
-	controller *Controller
+	handler *Handler
 }
 
 type ServerInfo struct {
@@ -20,20 +20,20 @@ type ServerInfo struct {
 }
 
 func NewServer() *Server {
-	return &Server{controller: NewController()}
+	return &Server{handler: NewHandler()}
 }
 
 func (s *Server) Start(address string, port int, pluginsPath string) {
 	fmt.Println("Starting server...")
 	router := mux.NewRouter()
-	router.HandleFunc("/Plugin.Activate", s.controller.Activate).Methods("POST")
-	router.HandleFunc("/VolumeDriver.Create", s.controller.Create).Methods("POST")
-	router.HandleFunc("/VolumeDriver.Remove", s.controller.Remove).Methods("POST")
-	router.HandleFunc("/VolumeDriver.Mount", s.controller.Mount).Methods("POST")
-	router.HandleFunc("/VolumeDriver.Unmount", s.controller.Unmount).Methods("POST")
-	router.HandleFunc("/VolumeDriver.Get", s.controller.Get).Methods("POST")
-	router.HandleFunc("/VolumeDriver.Path", s.controller.Path).Methods("POST")
-	router.HandleFunc("/VolumeDriver.List", s.controller.List).Methods("POST")
+	router.HandleFunc("/Plugin.Activate", s.handler.Activate).Methods("POST")
+	router.HandleFunc("/VolumeDriver.Create", s.handler.Create).Methods("POST")
+	router.HandleFunc("/VolumeDriver.Remove", s.handler.Remove).Methods("POST")
+	router.HandleFunc("/VolumeDriver.Mount", s.handler.Mount).Methods("POST")
+	router.HandleFunc("/VolumeDriver.Unmount", s.handler.Unmount).Methods("POST")
+	router.HandleFunc("/VolumeDriver.Get", s.handler.Get).Methods("POST")
+	router.HandleFunc("/VolumeDriver.Path", s.handler.Path).Methods("POST")
+	router.HandleFunc("/VolumeDriver.List", s.handler.List).Methods("POST")
 	http.Handle("/", router)
 	serverInfo := &ServerInfo{Name: "spectrum-scale", Addr: fmt.Sprintf("http://%s:%d", address, port)}
 	writeSpecFile(serverInfo, pluginsPath)

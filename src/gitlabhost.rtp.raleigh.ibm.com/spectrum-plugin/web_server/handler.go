@@ -6,22 +6,24 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/core"
 	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/models"
 )
 
-type Controller struct {
+type Handler struct {
+	Controller *core.Controller
 }
 
-func NewController() *Controller {
-	return &Controller{}
+func NewHandler() *Handler {
+	return &Handler{Controller: &core.Controller{}}
 }
 
-func (c *Controller) Activate(w http.ResponseWriter, r *http.Request) {
+func (c *Handler) Activate(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("activate request called")
-	activateResponse := &models.ActivateResponse{Implements: []string{"VolumeDriver"}}
+	activateResponse := c.Controller.Activate()
 	activateResponse.WriteResponse(w)
 }
-func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
+func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("create request called")
 	var createRequest models.CreateRequest
 	err := extractRequestObject(r, &createRequest)
@@ -30,13 +32,12 @@ func (c *Controller) Create(w http.ResponseWriter, r *http.Request) {
 		genericResponse.WriteResponse(w)
 		return
 	}
-	fmt.Printf("Create details %s, %#v\n", createRequest.Name, createRequest.Opts)
-	createResponse := &models.GenericResponse{}
+	createResponse := c.Controller.Create(createRequest)
 	createResponse.WriteResponse(w)
 
 }
 
-func (c *Controller) Remove(w http.ResponseWriter, r *http.Request) {
+func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Remove request called")
 	var removeRequest models.GenericRequest
 	err := extractRequestObject(r, &removeRequest)
@@ -45,11 +46,11 @@ func (c *Controller) Remove(w http.ResponseWriter, r *http.Request) {
 		genericResponse.WriteResponse(w)
 		return
 	}
-	removeResponse := &models.GenericResponse{}
+	removeResponse := c.Controller.Remove(removeRequest)
 	removeResponse.WriteResponse(w)
 }
 
-func (c *Controller) Mount(w http.ResponseWriter, r *http.Request) {
+func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Mount request called")
 	var mountRequest models.GenericRequest
 	err := extractRequestObject(r, &mountRequest)
@@ -58,11 +59,11 @@ func (c *Controller) Mount(w http.ResponseWriter, r *http.Request) {
 		mountResponse.WriteResponse(w)
 		return
 	}
-	mountResponse := &models.MountResponse{Mountpoint: "/tmp/test"}
+	mountResponse := c.Controller.Mount(mountRequest)
 	mountResponse.WriteResponse(w)
 }
 
-func (c *Controller) Unmount(w http.ResponseWriter, r *http.Request) {
+func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Unmount request called")
 	var unmountRequest models.GenericRequest
 	err := extractRequestObject(r, &unmountRequest)
@@ -71,11 +72,11 @@ func (c *Controller) Unmount(w http.ResponseWriter, r *http.Request) {
 		genericResponse.WriteResponse(w)
 		return
 	}
-	unmountResponse := &models.GenericResponse{}
+	unmountResponse := c.Controller.Unmount(unmountRequest)
 	unmountResponse.WriteResponse(w)
 }
 
-func (c *Controller) Path(w http.ResponseWriter, r *http.Request) {
+func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Path request called")
 	var pathRequest models.GenericRequest
 	err := extractRequestObject(r, &pathRequest)
@@ -84,12 +85,11 @@ func (c *Controller) Path(w http.ResponseWriter, r *http.Request) {
 		mountResponse.WriteResponse(w)
 		return
 	}
-	//pathResponse := &models.MountResponse{Mountpoint: "/tmp/test"}
-	pathResponse := &models.MountResponse{Err: "Volume not found"}
+	pathResponse := c.Controller.Path(pathRequest)
 	pathResponse.WriteResponse(w)
 }
 
-func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
+func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Get request called")
 	var getRequest models.GenericRequest
 	err := extractRequestObject(r, &getRequest)
@@ -98,16 +98,13 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 		errorResponse.WriteResponse(w)
 		return
 	}
-	//volume := models.VolumeMetadata{Name: "test", Mountpoint: "/tmp/test"}
-	//getResponse := &models.GetResponse{Volume: volume}
-	getResponse := &models.GetResponse{Err: "Volume does not exist"}
+	getResponse := c.Controller.Get(getRequest)
 	getResponse.WriteResponse(w)
 }
 
-func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
+func (c *Handler) List(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("List request called")
-	volume := models.VolumeMetadata{Name: "test", Mountpoint: "/tmp/test"}
-	listResponse := &models.ListResponse{Volumes: []models.VolumeMetadata{volume}}
+	listResponse := c.Controller.List()
 	listResponse.WriteResponse(w)
 }
 

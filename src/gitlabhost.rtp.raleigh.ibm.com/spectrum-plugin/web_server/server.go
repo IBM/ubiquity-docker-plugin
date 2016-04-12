@@ -19,8 +19,8 @@ type ServerInfo struct {
 	Addr string
 }
 
-func NewServer() *Server {
-	return &Server{handler: NewHandler()}
+func NewServer(filesystem, mountpath string) *Server {
+	return &Server{handler: NewHandler(filesystem, mountpath)}
 }
 
 func (s *Server) Start(address string, port int, pluginsPath string) {

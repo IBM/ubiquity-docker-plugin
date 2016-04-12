@@ -5,22 +5,26 @@ package core
 type SpectrumClient interface {
 	CreateFileset(fileset *Fileset) error
 	RemoveFileset(fileset *Fileset) error
-	LinkFileset(fileset *Fileset, path string) error
+	LinkFileset(fileset *Fileset) (string, error)
 	UnlinkFileset(fileset *Fileset) error
-	ListFilesets(filesystem string) ([]Fileset, error)
-	ListFileset(filesystem string, fileset string) (*Fileset, error)
+	ListFilesets() ([]Fileset, error)
+	ListFileset(fileset string) (*Fileset, error)
+	IsMounted() (bool, error)
+	Mount() error
 }
 
 type Fileset struct {
 	Name       string
-	Filesystem string
+	Mountpoint string
 }
 
-func NewSpectrumClient() SpectrumClient {
+func NewSpectrumClient(filesystem, mountpoint string) SpectrumClient {
 	return &MMCliSpectrumClient{}
 }
 
 type MMCliSpectrumClient struct {
+	Filesystem string
+	Mountpoint string
 }
 
 func (m *MMCliSpectrumClient) CreateFileset(fileset *Fileset) error {
@@ -29,15 +33,21 @@ func (m *MMCliSpectrumClient) CreateFileset(fileset *Fileset) error {
 func (m *MMCliSpectrumClient) RemoveFileset(fileset *Fileset) error {
 	return nil
 }
-func (m *MMCliSpectrumClient) LinkFileset(fileset *Fileset, path string) error {
-	return nil
+func (m *MMCliSpectrumClient) LinkFileset(fileset *Fileset) (string, error) {
+	return "", nil
 }
 func (m *MMCliSpectrumClient) UnlinkFileset(fileset *Fileset) error {
 	return nil
 }
-func (m *MMCliSpectrumClient) ListFilesets(filesystem string) ([]Fileset, error) {
+func (m *MMCliSpectrumClient) ListFilesets() ([]Fileset, error) {
 	return nil, nil
 }
-func (m *MMCliSpectrumClient) ListFileset(filesystem string, filesetName string) (*Fileset, error) {
+func (m *MMCliSpectrumClient) ListFileset(filesetName string) (*Fileset, error) {
 	return &Fileset{}, nil
+}
+func (m *MMCliSpectrumClient) IsMounted() (bool, error) {
+	return false, nil
+}
+func (m *MMCliSpectrumClient) Mount() error {
+	return nil
 }

@@ -24,14 +24,14 @@ type FakeSpectrumClient struct {
 	removeFilesetReturns struct {
 		result1 error
 	}
-	LinkFilesetStub        func(fileset *core.Fileset, path string) error
+	LinkFilesetStub        func(fileset *core.Fileset) (string, error)
 	linkFilesetMutex       sync.RWMutex
 	linkFilesetArgsForCall []struct {
 		fileset *core.Fileset
-		path    string
 	}
 	linkFilesetReturns struct {
-		result1 error
+		result1 string
+		result2 error
 	}
 	UnlinkFilesetStub        func(fileset *core.Fileset) error
 	unlinkFilesetMutex       sync.RWMutex
@@ -41,24 +41,34 @@ type FakeSpectrumClient struct {
 	unlinkFilesetReturns struct {
 		result1 error
 	}
-	ListFilesetsStub        func(filesystem string) ([]core.Fileset, error)
+	ListFilesetsStub        func() ([]core.Fileset, error)
 	listFilesetsMutex       sync.RWMutex
-	listFilesetsArgsForCall []struct {
-		filesystem string
-	}
-	listFilesetsReturns struct {
+	listFilesetsArgsForCall []struct{}
+	listFilesetsReturns     struct {
 		result1 []core.Fileset
 		result2 error
 	}
-	ListFilesetStub        func(filesystem string, fileset string) (*core.Fileset, error)
+	ListFilesetStub        func(fileset string) (*core.Fileset, error)
 	listFilesetMutex       sync.RWMutex
 	listFilesetArgsForCall []struct {
-		filesystem string
-		fileset    string
+		fileset string
 	}
 	listFilesetReturns struct {
 		result1 *core.Fileset
 		result2 error
+	}
+	IsMountedStub        func() (bool, error)
+	isMountedMutex       sync.RWMutex
+	isMountedArgsForCall []struct{}
+	isMountedReturns     struct {
+		result1 bool
+		result2 error
+	}
+	MountStub        func() error
+	mountMutex       sync.RWMutex
+	mountArgsForCall []struct{}
+	mountReturns     struct {
+		result1 error
 	}
 }
 
@@ -126,17 +136,16 @@ func (fake *FakeSpectrumClient) RemoveFilesetReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeSpectrumClient) LinkFileset(fileset *core.Fileset, path string) error {
+func (fake *FakeSpectrumClient) LinkFileset(fileset *core.Fileset) (string, error) {
 	fake.linkFilesetMutex.Lock()
 	fake.linkFilesetArgsForCall = append(fake.linkFilesetArgsForCall, struct {
 		fileset *core.Fileset
-		path    string
-	}{fileset, path})
+	}{fileset})
 	fake.linkFilesetMutex.Unlock()
 	if fake.LinkFilesetStub != nil {
-		return fake.LinkFilesetStub(fileset, path)
+		return fake.LinkFilesetStub(fileset)
 	} else {
-		return fake.linkFilesetReturns.result1
+		return fake.linkFilesetReturns.result1, fake.linkFilesetReturns.result2
 	}
 }
 
@@ -146,17 +155,18 @@ func (fake *FakeSpectrumClient) LinkFilesetCallCount() int {
 	return len(fake.linkFilesetArgsForCall)
 }
 
-func (fake *FakeSpectrumClient) LinkFilesetArgsForCall(i int) (*core.Fileset, string) {
+func (fake *FakeSpectrumClient) LinkFilesetArgsForCall(i int) *core.Fileset {
 	fake.linkFilesetMutex.RLock()
 	defer fake.linkFilesetMutex.RUnlock()
-	return fake.linkFilesetArgsForCall[i].fileset, fake.linkFilesetArgsForCall[i].path
+	return fake.linkFilesetArgsForCall[i].fileset
 }
 
-func (fake *FakeSpectrumClient) LinkFilesetReturns(result1 error) {
+func (fake *FakeSpectrumClient) LinkFilesetReturns(result1 string, result2 error) {
 	fake.LinkFilesetStub = nil
 	fake.linkFilesetReturns = struct {
-		result1 error
-	}{result1}
+		result1 string
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeSpectrumClient) UnlinkFileset(fileset *core.Fileset) error {
@@ -191,14 +201,12 @@ func (fake *FakeSpectrumClient) UnlinkFilesetReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeSpectrumClient) ListFilesets(filesystem string) ([]core.Fileset, error) {
+func (fake *FakeSpectrumClient) ListFilesets() ([]core.Fileset, error) {
 	fake.listFilesetsMutex.Lock()
-	fake.listFilesetsArgsForCall = append(fake.listFilesetsArgsForCall, struct {
-		filesystem string
-	}{filesystem})
+	fake.listFilesetsArgsForCall = append(fake.listFilesetsArgsForCall, struct{}{})
 	fake.listFilesetsMutex.Unlock()
 	if fake.ListFilesetsStub != nil {
-		return fake.ListFilesetsStub(filesystem)
+		return fake.ListFilesetsStub()
 	} else {
 		return fake.listFilesetsReturns.result1, fake.listFilesetsReturns.result2
 	}
@@ -210,12 +218,6 @@ func (fake *FakeSpectrumClient) ListFilesetsCallCount() int {
 	return len(fake.listFilesetsArgsForCall)
 }
 
-func (fake *FakeSpectrumClient) ListFilesetsArgsForCall(i int) string {
-	fake.listFilesetsMutex.RLock()
-	defer fake.listFilesetsMutex.RUnlock()
-	return fake.listFilesetsArgsForCall[i].filesystem
-}
-
 func (fake *FakeSpectrumClient) ListFilesetsReturns(result1 []core.Fileset, result2 error) {
 	fake.ListFilesetsStub = nil
 	fake.listFilesetsReturns = struct {
@@ -224,15 +226,14 @@ func (fake *FakeSpectrumClient) ListFilesetsReturns(result1 []core.Fileset, resu
 	}{result1, result2}
 }
 
-func (fake *FakeSpectrumClient) ListFileset(filesystem string, fileset string) (*core.Fileset, error) {
+func (fake *FakeSpectrumClient) ListFileset(fileset string) (*core.Fileset, error) {
 	fake.listFilesetMutex.Lock()
 	fake.listFilesetArgsForCall = append(fake.listFilesetArgsForCall, struct {
-		filesystem string
-		fileset    string
-	}{filesystem, fileset})
+		fileset string
+	}{fileset})
 	fake.listFilesetMutex.Unlock()
 	if fake.ListFilesetStub != nil {
-		return fake.ListFilesetStub(filesystem, fileset)
+		return fake.ListFilesetStub(fileset)
 	} else {
 		return fake.listFilesetReturns.result1, fake.listFilesetReturns.result2
 	}
@@ -244,10 +245,10 @@ func (fake *FakeSpectrumClient) ListFilesetCallCount() int {
 	return len(fake.listFilesetArgsForCall)
 }
 
-func (fake *FakeSpectrumClient) ListFilesetArgsForCall(i int) (string, string) {
+func (fake *FakeSpectrumClient) ListFilesetArgsForCall(i int) string {
 	fake.listFilesetMutex.RLock()
 	defer fake.listFilesetMutex.RUnlock()
-	return fake.listFilesetArgsForCall[i].filesystem, fake.listFilesetArgsForCall[i].fileset
+	return fake.listFilesetArgsForCall[i].fileset
 }
 
 func (fake *FakeSpectrumClient) ListFilesetReturns(result1 *core.Fileset, result2 error) {
@@ -256,6 +257,55 @@ func (fake *FakeSpectrumClient) ListFilesetReturns(result1 *core.Fileset, result
 		result1 *core.Fileset
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeSpectrumClient) IsMounted() (bool, error) {
+	fake.isMountedMutex.Lock()
+	fake.isMountedArgsForCall = append(fake.isMountedArgsForCall, struct{}{})
+	fake.isMountedMutex.Unlock()
+	if fake.IsMountedStub != nil {
+		return fake.IsMountedStub()
+	} else {
+		return fake.isMountedReturns.result1, fake.isMountedReturns.result2
+	}
+}
+
+func (fake *FakeSpectrumClient) IsMountedCallCount() int {
+	fake.isMountedMutex.RLock()
+	defer fake.isMountedMutex.RUnlock()
+	return len(fake.isMountedArgsForCall)
+}
+
+func (fake *FakeSpectrumClient) IsMountedReturns(result1 bool, result2 error) {
+	fake.IsMountedStub = nil
+	fake.isMountedReturns = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSpectrumClient) Mount() error {
+	fake.mountMutex.Lock()
+	fake.mountArgsForCall = append(fake.mountArgsForCall, struct{}{})
+	fake.mountMutex.Unlock()
+	if fake.MountStub != nil {
+		return fake.MountStub()
+	} else {
+		return fake.mountReturns.result1
+	}
+}
+
+func (fake *FakeSpectrumClient) MountCallCount() int {
+	fake.mountMutex.RLock()
+	defer fake.mountMutex.RUnlock()
+	return len(fake.mountArgsForCall)
+}
+
+func (fake *FakeSpectrumClient) MountReturns(result1 error) {
+	fake.MountStub = nil
+	fake.mountReturns = struct {
+		result1 error
+	}{result1}
 }
 
 var _ core.SpectrumClient = new(FakeSpectrumClient)

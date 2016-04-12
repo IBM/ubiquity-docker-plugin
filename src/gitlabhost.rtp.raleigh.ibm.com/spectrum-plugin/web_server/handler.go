@@ -14,8 +14,8 @@ type Handler struct {
 	Controller *core.Controller
 }
 
-func NewHandler() *Handler {
-	return &Handler{Controller: &core.Controller{}}
+func NewHandler(filesystem, mountpath string) *Handler {
+	return &Handler{Controller: core.NewController(filesystem, mountpath)}
 }
 
 func (c *Handler) Activate(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +32,7 @@ func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		genericResponse.WriteResponse(w)
 		return
 	}
-	createResponse := c.Controller.Create(createRequest)
+	createResponse := c.Controller.Create(&createRequest)
 	createResponse.WriteResponse(w)
 
 }
@@ -46,7 +46,7 @@ func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 		genericResponse.WriteResponse(w)
 		return
 	}
-	removeResponse := c.Controller.Remove(removeRequest)
+	removeResponse := c.Controller.Remove(&removeRequest)
 	removeResponse.WriteResponse(w)
 }
 
@@ -59,7 +59,7 @@ func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 		mountResponse.WriteResponse(w)
 		return
 	}
-	mountResponse := c.Controller.Mount(mountRequest)
+	mountResponse := c.Controller.Mount(&mountRequest)
 	mountResponse.WriteResponse(w)
 }
 
@@ -72,7 +72,7 @@ func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 		genericResponse.WriteResponse(w)
 		return
 	}
-	unmountResponse := c.Controller.Unmount(unmountRequest)
+	unmountResponse := c.Controller.Unmount(&unmountRequest)
 	unmountResponse.WriteResponse(w)
 }
 
@@ -85,7 +85,7 @@ func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 		mountResponse.WriteResponse(w)
 		return
 	}
-	pathResponse := c.Controller.Path(pathRequest)
+	pathResponse := c.Controller.Path(&pathRequest)
 	pathResponse.WriteResponse(w)
 }
 
@@ -98,7 +98,7 @@ func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		errorResponse.WriteResponse(w)
 		return
 	}
-	getResponse := c.Controller.Get(getRequest)
+	getResponse := c.Controller.Get(&getRequest)
 	getResponse.WriteResponse(w)
 }
 

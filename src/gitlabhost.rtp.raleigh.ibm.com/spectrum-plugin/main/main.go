@@ -21,9 +21,19 @@ var pluginsPath = flag.String(
 	"/tmp/",
 	"docker plugins directory path",
 )
+var filesystemName = flag.String(
+	"filesystem",
+	"gpfs1",
+	"gpfs filesystem name for this plugin",
+)
+var defaultMountPath = flag.String(
+	"mountpath",
+	"/gpfs/fs1",
+	"gpfs mount path",
+)
 
 func main() {
 	flag.Parse()
-	server := web_server.NewServer()
+	server := web_server.NewServer(*filesystemName, *defaultMountPath)
 	server.Start(*address, *port, *pluginsPath)
 }

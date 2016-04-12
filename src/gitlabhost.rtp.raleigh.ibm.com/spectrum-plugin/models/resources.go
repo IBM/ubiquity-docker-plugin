@@ -46,10 +46,6 @@ type GenericRequest struct {
 	Name string
 }
 
-type RemoveResponse struct {
-	Err string
-}
-
 type MountResponse struct {
 	Mountpoint string
 	Err        string

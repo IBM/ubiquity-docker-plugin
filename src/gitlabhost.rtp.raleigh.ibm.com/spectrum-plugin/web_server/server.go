@@ -36,20 +36,23 @@ func (s *Server) Start(address string, port int, pluginsPath string) {
 	router.HandleFunc("/VolumeDriver.List", s.handler.List).Methods("POST")
 	http.Handle("/", router)
 	serverInfo := &ServerInfo{Name: "spectrum-scale", Addr: fmt.Sprintf("http://%s:%d", address, port)}
-	writeSpecFile(serverInfo, pluginsPath)
+	err := writeSpecFile(serverInfo, pluginsPath)
+	if err != nil {
+		fmt.Printf("Error writing plugiun config, aborting...(: %s)\n", err.Error())
+		return
+	}
 	fmt.Printf("Started http server on %s:%d\n", address, port)
 	http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func writeSpecFile(server *ServerInfo, pluginsPath string) {
+func writeSpecFile(server *ServerInfo, pluginsPath string) error {
 	data, err := json.Marshal(server)
 	if err != nil {
-		fmt.Errorf("Error marshalling Get response: %s", err.Error())
-		return
+		return fmt.Errorf("Error marshalling Get response: %s", err.Error())
 	}
 	err = ioutil.WriteFile(path.Join(pluginsPath, "spectrum-scale.json"), data, 0644)
 	if err != nil {
-		fmt.Errorf("Error writing json spec: %s", err.Error())
-		return
+		return fmt.Errorf("Error writing json spec: %s", err.Error())
 	}
+	return nil
 }

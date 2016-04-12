@@ -43,7 +43,7 @@ func (c *Controller) Create(createRequest *models.CreateRequest) *models.Generic
 		return &models.GenericResponse{}
 	}
 
-	fileset := &Fileset{Name: createRequest.Name}
+	fileset := &Fileset{DockerVolumeName: createRequest.Name}
 	err = c.Client.CreateFileset(fileset)
 	var createResponse *models.GenericResponse
 	if err != nil {
@@ -137,7 +137,7 @@ func (c *Controller) Get(getRequest *models.GenericRequest) *models.GetResponse 
 	if fileset == nil {
 		return &models.GetResponse{Err: "volume does not exist"}
 	}
-	volume := models.VolumeMetadata{Name: fileset.Name, Mountpoint: fileset.Mountpoint}
+	volume := models.VolumeMetadata{Name: fileset.DockerVolumeName, Mountpoint: fileset.Mountpoint}
 	getResponse := &models.GetResponse{Volume: volume}
 	return getResponse
 }
@@ -150,7 +150,7 @@ func (c *Controller) List() *models.ListResponse {
 	}
 	var volumes []models.VolumeMetadata
 	for _, fileset := range filesets {
-		volumes = append(volumes, models.VolumeMetadata{Name: fileset.Name, Mountpoint: fileset.Mountpoint})
+		volumes = append(volumes, models.VolumeMetadata{Name: fileset.DockerVolumeName, Mountpoint: fileset.Mountpoint})
 	}
 	listResponse := &models.ListResponse{Volumes: volumes}
 	return listResponse

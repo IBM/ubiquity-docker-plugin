@@ -43,14 +43,27 @@ var _ = Describe("Main", func() {
 				Expect(len(activateResponse.Implements)).To(Equal(1))
 				Expect(activateResponse.Implements[0]).To(Equal("VolumeDriver"))
 			})
-			/*			It("does not error when previously mounted", func() {
-						})
-						It("errors when mount fails", func() {
-						})
-						It("errors when isMounted returns error", func() {
-						})
-			*/
-			/*	Context("on successful activation", func() {
+			It("does not error when previously mounted (duplicate activate)", func() {
+				body, status, err := submitRequest("POST", "/Plugin.Activate")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(status).To(Equal("200 OK"))
+				var activateResponse models.ActivateResponse
+				err = json.Unmarshal([]byte(body), &activateResponse)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(activateResponse.Implements)).To(Equal(1))
+				Expect(activateResponse.Implements[0]).To(Equal("VolumeDriver"))
+
+				//second activate
+				body, status, err = submitRequest("POST", "/Plugin.Activate")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(status).To(Equal("200 OK"))
+				err = json.Unmarshal([]byte(body), &activateResponse)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(activateResponse.Implements)).To(Equal(1))
+				Expect(activateResponse.Implements[0]).To(Equal("VolumeDriver"))
+
+			})
+			Context("on successful activation", func() {
 				BeforeEach(func() {
 					body, status, err := submitRequest("POST", "/Plugin.Activate")
 					Expect(err).ToNot(HaveOccurred())
@@ -60,19 +73,9 @@ var _ = Describe("Main", func() {
 					Expect(err).ToNot(HaveOccurred())
 					Expect(len(activateResponse.Implements)).To(Equal(1))
 					Expect(activateResponse.Implements[0]).To(Equal("VolumeDriver"))
-
-				})
-				It("should not error on list", func() {
-					body, status, err := submitRequest("POST", "/VolumeDriver.List")
-					Expect(err).ToNot(HaveOccurred())
-					Expect(status).To(Equal("200 OK"))
-					var listResponse models.ListResponse
-					err = json.Unmarshal([]byte(body), &listResponse)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(listResponse.Err).To(Equal(""))
 				})
 				It("should not error on create with valid opts", func() {
-					createRequest := models.CreateRequest{Name: "some-testfileset", Opts: map[string]interface{}{"Filesystem": "some-filesystem"}}
+					createRequest := models.CreateRequest{Name: "some-testvolume", Opts: map[string]interface{}{}}
 					createRequestBody, err := json.Marshal(createRequest)
 					Expect(err).ToNot(HaveOccurred())
 					body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
@@ -83,7 +86,53 @@ var _ = Describe("Main", func() {
 					Expect(err).ToNot(HaveOccurred())
 					Expect(createResponse.Err).To(Equal(""))
 				})
-			}) */
+				It("It should not error when removing an existing volume", func() {
+					createRequest := models.CreateRequest{Name: "some-testvolume", Opts: map[string]interface{}{}}
+					createRequestBody, err := json.Marshal(createRequest)
+					Expect(err).ToNot(HaveOccurred())
+					body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(status).To(Equal("200 OK"))
+					var createResponse models.GenericResponse
+					err = json.Unmarshal([]byte(body), &createResponse)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(createResponse.Err).To(Equal(""))
+
+					removeRequest := models.GenericRequest{Name: "some-testvolume"}
+					removeRequestBody, err := json.Marshal(removeRequest)
+					Expect(err).ToNot(HaveOccurred())
+					body, status, err = submitRequestWithBody("POST", "/VolumeDriver.Remove", removeRequestBody)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(status).To(Equal("200 OK"))
+					var removeResponse models.GenericResponse
+					err = json.Unmarshal([]byte(body), &removeResponse)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(removeResponse.Err).To(Equal(""))
+				})
+				It("It should list volumes", func() {
+					createRequest := models.CreateRequest{Name: "some-testvolume", Opts: map[string]interface{}{}}
+					createRequestBody, err := json.Marshal(createRequest)
+					Expect(err).ToNot(HaveOccurred())
+					body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(status).To(Equal("200 OK"))
+					var createResponse models.GenericResponse
+					err = json.Unmarshal([]byte(body), &createResponse)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(createResponse.Err).To(Equal(""))
+
+					body, status, err = submitRequestWithBody("POST", "/VolumeDriver.List", nil)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(status).To(Equal("200 OK"))
+					var listResponse models.ListResponse
+					err = json.Unmarshal([]byte(body), &listResponse)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(listResponse.Err).To(Equal(""))
+					Expect(listResponse.Volumes).ToNot(Equal(nil))
+					Expect(len(listResponse.Volumes)).To(Equal(1))
+					Expect(listResponse.Volumes[0].Name).To(Equal("some-testvolume"))
+				})
+			})
 		})
 	})
 })

@@ -35,7 +35,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 var _ = BeforeEach(func() {
 	listenAddr = "127.0.0.1"
 	listenPort = 9000 + GinkgoParallelNode()
-	spectrumCommand = exec.Command(spectrumPath, "-listenAddr", listenAddr, "-listenPort", strconv.Itoa(listenPort))
+	spectrumCommand = exec.Command(spectrumPath, "-listenAddr", listenAddr, "-listenPort", strconv.Itoa(listenPort), "-filesystem", "gpfs1", "-mountpath", "/gpfs/fs1")
 	err := spectrumCommand.Start()
 	Expect(err).ToNot(HaveOccurred())
 	spectrumProcess = spectrumCommand.Process

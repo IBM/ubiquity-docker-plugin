@@ -16,6 +16,8 @@ var spectrumProcess *os.Process
 var spectrumCommand *exec.Cmd
 var listenAddr string
 var listenPort int
+var filesystemName string
+var filesystemMountpoint string
 
 func TestMain(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -30,12 +32,14 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	return []byte(spectrumPath)
 }, func(pathsByte []byte) {
 	spectrumPath = string(pathsByte)
+	filesystemName = "gpfs1"
+	filesystemMountpoint = "/gpfs/fs1"
 })
 
 var _ = BeforeEach(func() {
 	listenAddr = "127.0.0.1"
 	listenPort = 9000 + GinkgoParallelNode()
-	spectrumCommand = exec.Command(spectrumPath, "-listenAddr", listenAddr, "-listenPort", strconv.Itoa(listenPort), "-filesystem", "gpfs1", "-mountpath", "/gpfs/fs1")
+	spectrumCommand = exec.Command(spectrumPath, "-listenAddr", listenAddr, "-listenPort", strconv.Itoa(listenPort), "-filesystem", filesystemName, "-mountpath", filesystemMountpoint)
 	err := spectrumCommand.Start()
 	Expect(err).ToNot(HaveOccurred())
 	spectrumProcess = spectrumCommand.Process

@@ -96,11 +96,66 @@ func (m *MMCliSpectrumClient) RemoveFileset(fileset *Fileset) error {
 	return nil
 }
 func (m *MMCliSpectrumClient) LinkFileset(fileset *Fileset) (string, error) {
-	return "", nil
+	mappingConfig, err := m.retrieveMappingConfig()
+	if err != nil {
+		return "", err
+	}
+	mapping, ok := mappingConfig.Mappings[fileset.DockerVolumeName]
+	if ok == false {
+		return "", fmt.Errorf("fileset couldn't be located")
+	}
+	if mapping.Mountpoint != "" {
+		return "", fmt.Errorf("fileset already linked")
+	}
+	spectrumCommand := "mmlinkfileset"
+	filesetPath := path.Join(m.Mountpoint, fileset.Name)
+	args := []string{m.Filesystem, fileset.Name, filesetPath}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("Failed to link fileset")
+	}
+	fmt.Printf("Linkfileset output: %s\n", string(output))
+
+	mapping.Mountpoint = filesetPath
+	mappingConfig.Mappings[fileset.DockerVolumeName] = mapping
+	err = m.persistMappingConfig(mappingConfig)
+	if err != nil {
+		return "", fmt.Errorf("internal error updating mapping")
+	}
+	return filesetPath, nil
 }
+
 func (m *MMCliSpectrumClient) UnlinkFileset(fileset *Fileset) error {
+	mappingConfig, err := m.retrieveMappingConfig()
+	if err != nil {
+		return err
+	}
+	mapping, ok := mappingConfig.Mappings[fileset.DockerVolumeName]
+	if ok == false {
+		return fmt.Errorf("fileset couldn't be located")
+	}
+	if mapping.Mountpoint == "" {
+		return fmt.Errorf("fileset not linked")
+	}
+	spectrumCommand := "mmunlinkfileset"
+	args := []string{m.Filesystem, fileset.Name}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Failed to unlink fileset")
+	}
+	fmt.Printf("unLinkfileset output: %s\n", string(output))
+
+	mapping.Mountpoint = ""
+	mappingConfig.Mappings[fileset.DockerVolumeName] = mapping
+	err = m.persistMappingConfig(mappingConfig)
+	if err != nil {
+		return fmt.Errorf("internal error updating mapping")
+	}
 	return nil
 }
+
 func (m *MMCliSpectrumClient) ListFilesets() ([]Fileset, error) {
 	mappingConfig, err := m.retrieveMappingConfig()
 	if err != nil {

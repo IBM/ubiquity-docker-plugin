@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/core"
@@ -12,19 +13,20 @@ import (
 
 type Handler struct {
 	Controller *core.Controller
+	log        *log.Logger
 }
 
-func NewHandler(filesystem, mountpath string) *Handler {
-	return &Handler{Controller: core.NewController(filesystem, mountpath)}
+func NewHandler(logger *log.Logger, filesystem, mountpath string) *Handler {
+	return &Handler{log: logger, Controller: core.NewController(logger, filesystem, mountpath)}
 }
 
 func (c *Handler) Activate(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("activate request called")
+	c.log.Println("activate request called")
 	activateResponse := c.Controller.Activate()
 	activateResponse.WriteResponse(w)
 }
 func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("create request called")
+	c.log.Println("create request called")
 	var createRequest models.CreateRequest
 	err := extractRequestObject(r, &createRequest)
 	if err != nil {
@@ -38,7 +40,7 @@ func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Remove request called")
+	c.log.Println("Remove request called")
 	var removeRequest models.GenericRequest
 	err := extractRequestObject(r, &removeRequest)
 	if err != nil {
@@ -51,7 +53,7 @@ func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Mount request called")
+	c.log.Println("Mount request called")
 	var mountRequest models.GenericRequest
 	err := extractRequestObject(r, &mountRequest)
 	if err != nil {
@@ -64,7 +66,7 @@ func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Unmount request called")
+	c.log.Println("Unmount request called")
 	var unmountRequest models.GenericRequest
 	err := extractRequestObject(r, &unmountRequest)
 	if err != nil {
@@ -77,7 +79,7 @@ func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Path request called")
+	c.log.Println("Path request called")
 	var pathRequest models.GenericRequest
 	err := extractRequestObject(r, &pathRequest)
 	if err != nil {
@@ -90,7 +92,7 @@ func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Get request called")
+	c.log.Println("Get request called")
 	var getRequest models.GenericRequest
 	err := extractRequestObject(r, &getRequest)
 	if err != nil {
@@ -103,7 +105,7 @@ func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) List(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("List request called")
+	c.log.Println("List request called")
 	listResponse := c.Controller.List()
 	listResponse.WriteResponse(w)
 }

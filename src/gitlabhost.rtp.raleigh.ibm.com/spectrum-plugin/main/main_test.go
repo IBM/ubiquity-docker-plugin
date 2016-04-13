@@ -38,7 +38,7 @@ var _ = Describe("Main", func() {
 				err := cleanupGpfs()
 				Expect(err).ToNot(HaveOccurred())
 				//time for async cleanup of gpfs
-				time.Sleep(time.Millisecond * 4000)
+				time.Sleep(time.Millisecond * 3000)
 			})
 
 			It("does not error when mount is successful", func() {
@@ -115,7 +115,7 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Remove", removeRequestBody)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
+						Expect(status).To(Equal("400 Bad Request"))
 						var removeResponse models.GenericResponse
 						err = json.Unmarshal([]byte(body), &removeResponse)
 						Expect(err).ToNot(HaveOccurred())
@@ -151,7 +151,11 @@ var _ = Describe("Main", func() {
 				Context(".Get", func() {
 					It("should be able to Get volume details", func() {
 						successfullCreateRequest(volumeName)
-						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Get", nil)
+						getRequest := models.GenericRequest{Name: volumeName}
+						getRequestBody, err := json.Marshal(getRequest)
+						Expect(err).ToNot(HaveOccurred())
+
+						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Get", getRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("200 OK"))
 						var getResponse models.GetResponse
@@ -162,9 +166,12 @@ var _ = Describe("Main", func() {
 						Expect(getResponse.Volume.Name).To(Equal(volumeName))
 					})
 					It("should error if volume does not exist", func() {
-						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Get", nil)
+						getRequest := models.GenericRequest{Name: volumeName}
+						getRequestBody, err := json.Marshal(getRequest)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
+						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Get", getRequestBody)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(status).To(Equal("400 Bad Request"))
 						var getResponse models.GetResponse
 						err = json.Unmarshal([]byte(body), &getResponse)
 						Expect(err).ToNot(HaveOccurred())
@@ -184,11 +191,11 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Mount", mountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
+						Expect(status).To(Equal("400 Bad Request"))
 						var mountResponse models.MountResponse
 						err = json.Unmarshal([]byte(body), &mountResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(mountResponse.Err).To(Equal("fileset already linked"))
+						Expect(mountResponse.Err).To(Equal("fileset already mounted"))
 					})
 					It("should error if fileset does not exist", func() {
 						mountRequest := models.GenericRequest{Name: volumeName}
@@ -196,7 +203,7 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Mount", mountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
+						Expect(status).To(Equal("400 Bad Request"))
 						var mountResponse models.MountResponse
 						err = json.Unmarshal([]byte(body), &mountResponse)
 						Expect(err).ToNot(HaveOccurred())
@@ -216,11 +223,11 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Unmount", unmountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
+						Expect(status).To(Equal("400 Bad Request"))
 						var unmountResponse models.GenericResponse
 						err = json.Unmarshal([]byte(body), &unmountResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(unmountResponse.Err).To(Equal("fileset not linked"))
+						Expect(unmountResponse.Err).To(Equal("fileset already unmounted"))
 					})
 					It("should error when fileset does not exist", func() {
 						unmountRequest := models.GenericRequest{Name: volumeName}
@@ -228,7 +235,7 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Unmount", unmountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
+						Expect(status).To(Equal("400 Bad Request"))
 						var unmountResponse models.GenericResponse
 						err = json.Unmarshal([]byte(body), &unmountResponse)
 						Expect(err).ToNot(HaveOccurred())
@@ -258,7 +265,7 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Path", pathRequestBody)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
+						Expect(status).To(Equal("400 Bad Request"))
 						var pathResponse models.MountResponse
 						err = json.Unmarshal([]byte(body), &pathResponse)
 						Expect(err).ToNot(HaveOccurred())
@@ -281,7 +288,7 @@ func submitRequest(reqType string, path string) (body string, status string, err
 	req, _ := http.NewRequest(reqType, fmt.Sprintf("http://%s:%d%s", listenAddr, listenPort, path), nil)
 	response, err := (&http.Client{}).Do(req)
 	if err != nil {
-		fmt.Println(err.Error())
+		testLogger.Println(err.Error())
 		return "", "", err
 	}
 	defer response.Body.Close()
@@ -293,7 +300,7 @@ func submitRequestWithBody(reqType string, path string, requestBody []byte) (bod
 
 	response, err := (&http.Client{}).Do(req)
 	if err != nil {
-		fmt.Println(err.Error())
+		testLogger.Println(err.Error())
 		return "", "", err
 	}
 	defer response.Body.Close()
@@ -344,31 +351,30 @@ func cleanupGpfs() error {
 	spectrumCommand := "mmunmount"
 	args := []string{filesystemName, "-a"}
 	cmd := exec.Command(spectrumCommand, args...)
-	fmt.Printf("Cmd: %#v\n", cmd)
+	//testLogger.Printf("Cmd: %#v\n", cmd)
 	_, err := cmd.Output()
 	if err != nil {
-		fmt.Printf("Error running command mmunmount\n")
-		fmt.Println(err)
-		return err
+		testLogger.Printf("Error running command mmunmount\n")
+		testLogger.Println(err)
 	}
 	spectrumCommand = "mmdelfs"
 	args = []string{filesystemName}
 	cmd = exec.Command(spectrumCommand, args...)
-	fmt.Printf("Cmd: %#v\n", cmd)
+	//testLogger.Printf("Cmd: %#v\n", cmd)
 	_, err = cmd.Output()
 	if err != nil {
-		fmt.Printf("Error running command mmdelfs\n")
-		fmt.Println(err)
+		testLogger.Printf("Error running command mmdelfs\n")
+		testLogger.Println(err)
 	}
 
 	spectrumCommand = "mmcrfs"
 	args = []string{filesystemName, "-F", "/root/stanza", "-A", "yes", "-T", filesystemMountpoint}
 	cmd = exec.Command(spectrumCommand, args...)
-	fmt.Printf("Cmd: %#v\n", cmd)
+	//testLogger.Printf("Cmd: %#v\n", cmd)
 	_, err = cmd.Output()
 	if err != nil {
-		fmt.Printf("Error running command mmcrfs\n")
-		fmt.Println(err)
+		testLogger.Printf("Error running command mmcrfs\n")
+		testLogger.Println(err)
 		return err
 	}
 	return nil

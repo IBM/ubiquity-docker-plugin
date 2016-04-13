@@ -1,24 +1,25 @@
 package core
 
 import (
-	"fmt"
+	"log"
 
 	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/models"
 )
 
 type Controller struct {
 	Client SpectrumClient
+	log    *log.Logger
 }
 
-func NewController(filesystem, mountpath string) *Controller {
-	return &Controller{Client: NewSpectrumClient(filesystem, mountpath)}
+func NewController(logger *log.Logger, filesystem, mountpath string) *Controller {
+	return &Controller{log: logger, Client: NewSpectrumClient(logger, filesystem, mountpath)}
 }
-func NewControllerWithClient(client SpectrumClient) *Controller {
-	return &Controller{Client: client}
+func NewControllerWithClient(logger *log.Logger, client SpectrumClient) *Controller {
+	return &Controller{log: logger, Client: client}
 }
 
 func (c *Controller) Activate() *models.ActivateResponse {
-	fmt.Println("activate request called")
+	c.log.Println("activate request called")
 	//check if filesystem is mounted
 	mounted, err := c.Client.IsMounted()
 	if err != nil {
@@ -33,8 +34,8 @@ func (c *Controller) Activate() *models.ActivateResponse {
 	return &models.ActivateResponse{Implements: []string{"VolumeDriver"}}
 }
 func (c *Controller) Create(createRequest *models.CreateRequest) *models.GenericResponse {
-	fmt.Println("create request called")
-	fmt.Printf("Create details %s, %#v\n", createRequest.Name, createRequest.Opts)
+	c.log.Println("create request called")
+	c.log.Printf("Create details %s, %#v\n", createRequest.Name, createRequest.Opts)
 	existingFileset, err := c.Client.ListFileset(createRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
@@ -55,7 +56,7 @@ func (c *Controller) Create(createRequest *models.CreateRequest) *models.Generic
 }
 
 func (c *Controller) Remove(removeRequest *models.GenericRequest) *models.GenericResponse {
-	fmt.Println("Remove request called")
+	c.log.Println("Remove request called")
 	existingFileset, err := c.Client.ListFileset(removeRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
@@ -71,7 +72,7 @@ func (c *Controller) Remove(removeRequest *models.GenericRequest) *models.Generi
 }
 
 func (c *Controller) Mount(mountRequest *models.GenericRequest) *models.MountResponse {
-	fmt.Println("Mount request called")
+	c.log.Println("Mount request called")
 
 	existingFileset, err := c.Client.ListFileset(mountRequest.Name)
 	if err != nil {
@@ -93,7 +94,7 @@ func (c *Controller) Mount(mountRequest *models.GenericRequest) *models.MountRes
 }
 
 func (c *Controller) Unmount(unmountRequest *models.GenericRequest) *models.GenericResponse {
-	fmt.Println("Unmount request called")
+	c.log.Println("Unmount request called")
 	existingFileset, err := c.Client.ListFileset(unmountRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
@@ -113,7 +114,7 @@ func (c *Controller) Unmount(unmountRequest *models.GenericRequest) *models.Gene
 }
 
 func (c *Controller) Path(pathRequest *models.GenericRequest) *models.MountResponse {
-	fmt.Println("Path request called")
+	c.log.Println("Path request called")
 	fileset, err := c.Client.ListFileset(pathRequest.Name)
 	if err != nil {
 		return &models.MountResponse{Err: err.Error()}
@@ -129,7 +130,7 @@ func (c *Controller) Path(pathRequest *models.GenericRequest) *models.MountRespo
 }
 
 func (c *Controller) Get(getRequest *models.GenericRequest) *models.GetResponse {
-	fmt.Println("Get request called")
+	c.log.Println("Get request called")
 	fileset, err := c.Client.ListFileset(getRequest.Name)
 	if err != nil {
 		return &models.GetResponse{Err: err.Error()}
@@ -143,7 +144,7 @@ func (c *Controller) Get(getRequest *models.GenericRequest) *models.GetResponse 
 }
 
 func (c *Controller) List() *models.ListResponse {
-	fmt.Println("List request called")
+	c.log.Println("List request called")
 	filesets, err := c.Client.ListFilesets()
 	if err != nil {
 		return &models.ListResponse{Err: err.Error()}

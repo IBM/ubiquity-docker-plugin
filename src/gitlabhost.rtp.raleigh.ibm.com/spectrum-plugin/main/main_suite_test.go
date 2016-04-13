@@ -1,6 +1,8 @@
 package main_test
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -18,6 +20,8 @@ var listenAddr string
 var listenPort int
 var filesystemName string
 var filesystemMountpoint string
+var testLogger *log.Logger
+var logFile *os.File
 
 func TestMain(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -37,10 +41,18 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 })
 
 var _ = BeforeEach(func() {
+	var err error
+	logFile, err = os.OpenFile("/tmp/test-spectrum-scale-plugin.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Printf("Failed to setup logger: %s\n", err.Error())
+		return
+	}
+	testLogger = log.New(logFile, "spectrum: ", log.Lshortfile|log.LstdFlags)
+
 	listenAddr = "127.0.0.1"
 	listenPort = 9000 + GinkgoParallelNode()
 	spectrumCommand = exec.Command(spectrumPath, "-listenAddr", listenAddr, "-listenPort", strconv.Itoa(listenPort), "-filesystem", filesystemName, "-mountpath", filesystemMountpoint)
-	err := spectrumCommand.Start()
+	err = spectrumCommand.Start()
 	Expect(err).ToNot(HaveOccurred())
 	spectrumProcess = spectrumCommand.Process
 })
@@ -49,6 +61,8 @@ var _ = AfterEach(func() {
 	//need to kill server
 	err := spectrumProcess.Kill()
 	Expect(err).ToNot(HaveOccurred())
+	logFile.Sync()
+	logFile.Close()
 })
 
 var _ = SynchronizedAfterSuite(func() {

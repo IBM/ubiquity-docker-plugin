@@ -19,7 +19,7 @@ var _ = Describe("Controller", func() {
 		)
 		BeforeEach(func() {
 			fakeClient = new(fakes.FakeSpectrumClient)
-			controller = core.NewControllerWithClient(fakeClient)
+			controller = core.NewControllerWithClient(testLogger, fakeClient)
 		})
 		It("does not error when mount is successful", func() {
 			activateResponse := controller.Activate()
@@ -63,10 +63,10 @@ var _ = Describe("Controller", func() {
 					createResponse := controller.Create(createRequest)
 					Expect(createResponse.Err).To(Equal(""))
 					Expect(fakeClient.CreateFilesetCallCount()).To(Equal(1))
-					Expect(fakeClient.CreateFilesetArgsForCall(0).Name).To(Equal("fileset1"))
+					Expect(fakeClient.CreateFilesetArgsForCall(0).DockerVolumeName).To(Equal("fileset1"))
 				})
 				It("does not error on create with valid opts if fileset already exists", func() {
-					fileset := core.Fileset{Name: "fileset1"}
+					fileset := core.Fileset{DockerVolumeName: "fileset1"}
 					fakeClient.ListFilesetReturns(&fileset, nil)
 					createRequest := &models.CreateRequest{Name: "fileset1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
@@ -145,7 +145,7 @@ var _ = Describe("Controller", func() {
 			})
 			Context(".Get", func() {
 				It("does not error when volume exist", func() {
-					fileset := &core.Fileset{Name: "fileset1"}
+					fileset := &core.Fileset{DockerVolumeName: "fileset1"}
 					fakeClient.ListFilesetReturns(fileset, nil)
 					getRequest := &models.GenericRequest{Name: "fileset1"}
 					getResponse := controller.Get(getRequest)

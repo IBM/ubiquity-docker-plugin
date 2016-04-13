@@ -2,6 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"log"
+	"os"
+	"path"
 
 	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/web_server"
 )
@@ -31,9 +35,31 @@ var defaultMountPath = flag.String(
 	"/gpfs/fs1",
 	"gpfs mount path",
 )
+var logPath = flag.String(
+	"logPath",
+	"/tmp",
+	"log path",
+)
 
 func main() {
 	flag.Parse()
-	server := web_server.NewServer(*filesystemName, *defaultMountPath)
+	logger, logFile := setupLogger(*logPath)
+	defer closeLogs(logFile)
+	server := web_server.NewServer(logger, *filesystemName, *defaultMountPath)
 	server.Start(*address, *port, *pluginsPath)
+}
+
+func setupLogger(logPath string) (*log.Logger, *os.File) {
+	logFile, err := os.OpenFile(path.Join(logPath, "spectrum-scale-plugin.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Printf("Failed to setup logger: %s\n", err.Error())
+		return nil, nil
+	}
+	logger := log.New(logFile, "spectrum: ", log.Lshortfile|log.LstdFlags)
+	return logger, logFile
+}
+
+func closeLogs(logFile *os.File) {
+	logFile.Sync()
+	logFile.Close()
 }

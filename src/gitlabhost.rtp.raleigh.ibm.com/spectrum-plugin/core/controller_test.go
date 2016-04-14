@@ -58,216 +58,216 @@ var _ = Describe("Controller", func() {
 			})
 			Context(".Create", func() {
 				It("does not error on create with valid opts", func() {
-					fakeClient.CreateFilesetReturns(nil)
-					createRequest := &models.CreateRequest{Name: "fileset1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
+					fakeClient.CreateReturns(nil)
+					createRequest := &models.CreateRequest{Name: "dockerVolume1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
 					Expect(createResponse.Err).To(Equal(""))
-					Expect(fakeClient.CreateFilesetCallCount()).To(Equal(1))
-					Expect(fakeClient.CreateFilesetArgsForCall(0).DockerVolumeName).To(Equal("fileset1"))
+					Expect(fakeClient.CreateCallCount()).To(Equal(1))
+					name, _ := fakeClient.CreateArgsForCall(0)
+					Expect(name).To(Equal("dockerVolume1"))
 				})
-				It("does not error on create with valid opts if fileset already exists", func() {
-					fileset := core.Fileset{DockerVolumeName: "fileset1"}
-					fakeClient.ListFilesetReturns(&fileset, nil)
-					createRequest := &models.CreateRequest{Name: "fileset1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
+				It("errors on create with valid opts if dockerVolume already exists", func() {
+					dockerVolume := models.VolumeMetadata{Name: "dockerVolume1"}
+					fakeClient.GetReturns(&dockerVolume, nil)
+					createRequest := &models.CreateRequest{Name: "dockerVolume1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
-					Expect(createResponse.Err).To(Equal(""))
-					Expect(fakeClient.CreateFilesetCallCount()).To(Equal(0))
+					Expect(createResponse.Err).To(Equal("Volume already exists"))
 				})
-				It("does error on create when plugin fails to create fileset", func() {
-					fakeClient.CreateFilesetReturns(fmt.Errorf("Spectrum plugin internal error"))
-					createRequest := &models.CreateRequest{Name: "fileset1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
+				It("does error on create when plugin fails to create dockerVolume", func() {
+					fakeClient.CreateReturns(fmt.Errorf("Spectrum plugin internal error"))
+					createRequest := &models.CreateRequest{Name: "dockerVolume1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
 					Expect(createResponse.Err).To(Equal("Spectrum plugin internal error"))
 				})
-				It("does error on create when plugin fails to list existing fileset", func() {
-					fakeClient.ListFilesetReturns(nil, fmt.Errorf("Spectrum plugin internal error"))
-					createRequest := &models.CreateRequest{Name: "fileset1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
+				It("does error on create when plugin fails to list existing dockerVolume", func() {
+					fakeClient.GetReturns(nil, fmt.Errorf("Spectrum plugin internal error"))
+					createRequest := &models.CreateRequest{Name: "dockerVolume1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
 					Expect(createResponse.Err).To(Equal("Spectrum plugin internal error"))
 				})
 			})
 			Context(".Remove", func() {
-				It("does not error when existing fileset name is given", func() {
-					fileset := &core.Fileset{Name: "fileset1"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					removeRequest := &models.GenericRequest{Name: "fileset1"}
+				It("does not error when existing dockerVolume name is given", func() {
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					removeRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
 					Expect(removeResponse.Err).To(Equal(""))
 				})
-				It("error when fileset not found", func() {
-					fakeClient.ListFilesetReturns(nil, nil)
-					removeRequest := &models.GenericRequest{Name: "fileset1"}
+				It("error when dockerVolume not found", func() {
+					fakeClient.GetReturns(nil, nil)
+					removeRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
-					Expect(removeResponse.Err).To(Equal("Fileset not found"))
-					Expect(fakeClient.RemoveFilesetCallCount()).To(Equal(0))
+					Expect(removeResponse.Err).To(Equal("Volume not found"))
+					Expect(fakeClient.RemoveCallCount()).To(Equal(0))
 				})
-				It("error when list fileset returns an error", func() {
-					fakeClient.ListFilesetReturns(nil, fmt.Errorf("error listing fileset"))
-					removeRequest := &models.GenericRequest{Name: "fileset1"}
+				It("error when list dockerVolume returns an error", func() {
+					fakeClient.GetReturns(nil, fmt.Errorf("error listing volume"))
+					removeRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
-					Expect(removeResponse.Err).To(Equal("error listing fileset"))
-					Expect(fakeClient.RemoveFilesetCallCount()).To(Equal(0))
+					Expect(removeResponse.Err).To(Equal("error listing volume"))
+					Expect(fakeClient.RemoveCallCount()).To(Equal(0))
 				})
-				It("error when remove fileset returns an error", func() {
-					fileset := &core.Fileset{Name: "fileset1"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					fakeClient.RemoveFilesetReturns(fmt.Errorf("error removing fileset"))
-					removeRequest := &models.GenericRequest{Name: "fileset1"}
+				It("error when remove dockerVolume returns an error", func() {
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.RemoveReturns(fmt.Errorf("error removing volume"))
+					removeRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
-					Expect(removeResponse.Err).To(Equal("error removing fileset"))
-					Expect(fakeClient.RemoveFilesetCallCount()).To(Equal(1))
+					Expect(removeResponse.Err).To(Equal("error removing volume"))
+					Expect(fakeClient.RemoveCallCount()).To(Equal(1))
 				})
 			})
 			Context(".List", func() {
 				It("does not error when volumes exist", func() {
-					fileset := core.Fileset{Name: "fileset1"}
-					var filesets []core.Fileset
-					filesets = append(filesets, fileset)
-					fakeClient.ListFilesetsReturns(filesets, nil)
+					dockerVolume := models.VolumeMetadata{Name: "dockerVolume1"}
+					var dockerVolumes []models.VolumeMetadata
+					dockerVolumes = append(dockerVolumes, dockerVolume)
+					fakeClient.ListReturns(dockerVolumes, nil)
 					listResponse := controller.List()
 					Expect(listResponse.Err).To(Equal(""))
 					Expect(listResponse.Volumes).ToNot(Equal(nil))
 					Expect(len(listResponse.Volumes)).To(Equal(1))
 				})
 				It("does not error when no volumes exist", func() {
-					var filesets []core.Fileset
-					fakeClient.ListFilesetsReturns(filesets, nil)
+					var dockerVolumes []models.VolumeMetadata
+					fakeClient.ListReturns(dockerVolumes, nil)
 					listResponse := controller.List()
 					Expect(listResponse.Err).To(Equal(""))
 					Expect(listResponse.Volumes).ToNot(Equal(nil))
 					Expect(len(listResponse.Volumes)).To(Equal(0))
 				})
-				It("errors when client fails to list filesets", func() {
-					fakeClient.ListFilesetsReturns(nil, fmt.Errorf("failed to list filesets"))
+				It("errors when client fails to list dockerVolumes", func() {
+					fakeClient.ListReturns(nil, fmt.Errorf("failed to list volumes"))
 					listResponse := controller.List()
-					Expect(listResponse.Err).To(Equal("failed to list filesets"))
+					Expect(listResponse.Err).To(Equal("failed to list volumes"))
 				})
 			})
 			Context(".Get", func() {
 				It("does not error when volume exist", func() {
-					fileset := &core.Fileset{DockerVolumeName: "fileset1"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					getRequest := &models.GenericRequest{Name: "fileset1"}
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					getRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal(""))
 					Expect(getResponse.Volume).ToNot(Equal(nil))
-					Expect(getResponse.Volume.Name).To(Equal("fileset1"))
+					Expect(getResponse.Volume.Name).To(Equal("dockerVolume1"))
 				})
-				It("errors when list fileset returns an error", func() {
-					fakeClient.ListFilesetReturns(nil, fmt.Errorf("failed listing fileset"))
-					getRequest := &models.GenericRequest{Name: "fileset1"}
+				It("errors when list dockerVolume returns an error", func() {
+					fakeClient.GetReturns(nil, fmt.Errorf("failed listing volume"))
+					getRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
-					Expect(getResponse.Err).To(Equal("failed listing fileset"))
+					Expect(getResponse.Err).To(Equal("failed listing volume"))
 				})
 				It("errors when volume does not exist", func() {
-					getRequest := &models.GenericRequest{Name: "fileset1"}
+					getRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal("volume does not exist"))
 				})
 			})
 			Context(".Path", func() {
 				It("does not error when volume exists and is mounted", func() {
-					fileset := &core.Fileset{Name: "fileset1", Mountpoint: "some-mountpoint"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					pathRequest := &models.GenericRequest{Name: "fileset1"}
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1", Mountpoint: "some-mountpoint"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					pathRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal(""))
 					Expect(pathResponse.Mountpoint).To(Equal("some-mountpoint"))
 				})
 				It("errors when volume exists but is not mounted", func() {
-					fileset := &core.Fileset{Name: "fileset1"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					pathRequest := &models.GenericRequest{Name: "fileset1"}
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					pathRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal("volume not mounted"))
 				})
-				It("errors when list fileset returns an error", func() {
-					fakeClient.ListFilesetReturns(nil, fmt.Errorf("failed listing fileset"))
-					pathRequest := &models.GenericRequest{Name: "fileset1"}
+				It("errors when list dockerVolume returns an error", func() {
+					fakeClient.GetReturns(nil, fmt.Errorf("failed listing volume"))
+					pathRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
-					Expect(pathResponse.Err).To(Equal("failed listing fileset"))
+					Expect(pathResponse.Err).To(Equal("failed listing volume"))
 				})
 				It("errors when volume does not exist", func() {
-					pathRequest := &models.GenericRequest{Name: "fileset1"}
+					pathRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal("volume does not exist"))
 				})
 			})
 			Context(".Mount", func() {
 				It("does not error when volume exists and is not currently mounted", func() {
-					fileset := &core.Fileset{Name: "fileset1"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					fakeClient.LinkFilesetReturns("some-mountpath", nil)
-					mountRequest := &models.GenericRequest{Name: "fileset1"}
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.AttachReturns("some-mountpath", nil)
+					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
 					Expect(mountResponse.Err).To(Equal(""))
 					Expect(mountResponse.Mountpoint).To(Equal("some-mountpath"))
-					Expect(fakeClient.LinkFilesetCallCount()).To(Equal(1))
+					Expect(fakeClient.AttachCallCount()).To(Equal(1))
 				})
 				It("errors when volume list returns error", func() {
-					fakeClient.ListFilesetReturns(nil, fmt.Errorf("error listing fileset"))
-					mountRequest := &models.GenericRequest{Name: "fileset1"}
+					fakeClient.GetReturns(nil, fmt.Errorf("error listing volume"))
+					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
-					Expect(mountResponse.Err).To(Equal("error listing fileset"))
+					Expect(mountResponse.Err).To(Equal("error listing volume"))
 				})
 				It("errors when volume does not exist", func() {
-					fakeClient.ListFilesetReturns(nil, nil)
-					mountRequest := &models.GenericRequest{Name: "fileset1"}
+					fakeClient.GetReturns(nil, nil)
+					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
-					Expect(mountResponse.Err).To(Equal("fileset not found"))
+					Expect(mountResponse.Err).To(Equal("volume not found"))
 				})
 				It("errors when volume exists and is currently mounted", func() {
-					fileset := &core.Fileset{Name: "fileset1", Mountpoint: "some-mountpoint"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					mountRequest := &models.GenericRequest{Name: "fileset1"}
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1", Mountpoint: "some-mountpoint"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
-					Expect(mountResponse.Err).To(Equal("fileset already mounted"))
-					Expect(fakeClient.LinkFilesetCallCount()).To(Equal(0))
+					Expect(mountResponse.Err).To(Equal("volume already mounted"))
+					Expect(fakeClient.AttachCallCount()).To(Equal(0))
 				})
-				It("errors when volume exists and Linkfileset errors", func() {
-					fileset := &core.Fileset{Name: "fileset1"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					fakeClient.LinkFilesetReturns("", fmt.Errorf("failed to link fileset"))
-					mountRequest := &models.GenericRequest{Name: "fileset1"}
+				It("errors when volume exists and LinkdockerVolume errors", func() {
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.AttachReturns("", fmt.Errorf("failed to link volume"))
+					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
-					Expect(mountResponse.Err).To(Equal("failed to link fileset"))
+					Expect(mountResponse.Err).To(Equal("failed to link volume"))
 				})
 			})
 			Context(".Unmount", func() {
 				It("does not error when volume exists and is currently mounted", func() {
-					fileset := &core.Fileset{Name: "fileset1", Mountpoint: "some-mountpoint"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					unmountRequest := &models.GenericRequest{Name: "fileset1"}
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1", Mountpoint: "some-mountpoint"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
 					Expect(unmountResponse.Err).To(Equal(""))
 				})
 				It("errors when volume list returns error", func() {
-					fakeClient.ListFilesetReturns(nil, fmt.Errorf("error listing fileset"))
-					unmountRequest := &models.GenericRequest{Name: "fileset1"}
+					fakeClient.GetReturns(nil, fmt.Errorf("error listing volume"))
+					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
-					Expect(unmountResponse.Err).To(Equal("error listing fileset"))
+					Expect(unmountResponse.Err).To(Equal("error listing volume"))
 				})
 				It("errors when volume does not exist", func() {
-					fakeClient.ListFilesetReturns(nil, nil)
-					unmountRequest := &models.GenericRequest{Name: "fileset1"}
+					fakeClient.GetReturns(nil, nil)
+					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
-					Expect(unmountResponse.Err).To(Equal("fileset not found"))
+					Expect(unmountResponse.Err).To(Equal("volume not found"))
 				})
 				It("errors when volume exists and is currently not mounted", func() {
-					fileset := &core.Fileset{Name: "fileset1"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					unmountRequest := &models.GenericRequest{Name: "fileset1"}
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
-					Expect(unmountResponse.Err).To(Equal("fileset already unmounted"))
-					Expect(fakeClient.UnlinkFilesetCallCount()).To(Equal(0))
+					Expect(unmountResponse.Err).To(Equal("volume already unmounted"))
+					Expect(fakeClient.DetachCallCount()).To(Equal(0))
 				})
-				It("errors when volume exists and UnLinkfileset errors", func() {
-					fileset := &core.Fileset{Name: "fileset1", Mountpoint: "some-mountpoint"}
-					fakeClient.ListFilesetReturns(fileset, nil)
-					fakeClient.UnlinkFilesetReturns(fmt.Errorf("failed to unlink fileset"))
-					unmountRequest := &models.GenericRequest{Name: "fileset1"}
+				It("errors when volume exists and UnLinkdockerVolume errors", func() {
+					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1", Mountpoint: "some-mountpoint"}
+					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.DetachReturns(fmt.Errorf("failed to unlink volume"))
+					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
-					Expect(unmountResponse.Err).To(Equal("failed to unlink fileset"))
+					Expect(unmountResponse.Err).To(Equal("failed to unlink volume"))
 				})
 			})
 		})

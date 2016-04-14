@@ -11,17 +11,19 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/models"
 )
 
 //go:generate counterfeiter -o ../fakes/fake_spectrum_client.go . SpectrumClient
 
 type SpectrumClient interface {
-	CreateFileset(fileset *Fileset) error
-	RemoveFileset(fileset *Fileset) error
-	LinkFileset(fileset *Fileset) (string, error)
-	UnlinkFileset(fileset *Fileset) error
-	ListFilesets() ([]Fileset, error)
-	ListFileset(fileset string) (*Fileset, error)
+	Create(name string, opts map[string]interface{}) error
+	Remove(name string) error
+	Attach(name string) (string, error)
+	Detach(name string) error
+	List() ([]models.VolumeMetadata, error)
+	Get(name string) (*models.VolumeMetadata, error)
 	IsMounted() (bool, error)
 	Mount() error
 }
@@ -36,36 +38,48 @@ type MappingConfig struct {
 }
 
 func NewSpectrumClient(logger *log.Logger, filesystem, mountpoint string) SpectrumClient {
-	return &MMCliSpectrumClient{log: logger, Filesystem: filesystem, Mountpoint: mountpoint}
+	return &MMCliFilesetClient{log: logger, Filesystem: filesystem, Mountpoint: mountpoint}
 }
 
-type MMCliSpectrumClient struct {
+type MMCliFilesetClient struct {
 	Filesystem string
 	Mountpoint string
 	log        *log.Logger
 }
 
-func (m *MMCliSpectrumClient) CreateFileset(fileset *Fileset) error {
+func (m *MMCliFilesetClient) Create(name string, opts map[string]interface{}) error {
+	m.log.Println("MMCliFilesetClient: create start")
+	defer m.log.Println("MMCliFilesetClient: create end")
 	mappingConfig, err := m.retrieveMappingConfig()
 	if err != nil {
 		return err
 	}
-	_, ok := mappingConfig.Mappings[fileset.DockerVolumeName]
+	_, ok := mappingConfig.Mappings[name]
 	if ok == true {
 		return fmt.Errorf("Volume already exists")
 	}
-	fileset.Name = generateFilesetName()
-	// create fileset
-	spectrumCommand := "mmcrfileset"
-	args := []string{m.Filesystem, fileset.Name}
-	cmd := exec.Command(spectrumCommand, args...)
-	output, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("Failed to create fileset")
+	userSpecifiedFileset, exists := opts["fileset"]
+	if exists == true {
+		return m.updateMappingWithExistingFileset(name, userSpecifiedFileset.(string), mappingConfig)
+	} else {
+		return m.create(name, opts, mappingConfig)
 	}
-	m.log.Printf("Createfileset output: %s\n", string(output))
-	// add it to mapping config
-	mappingConfig.Mappings[fileset.DockerVolumeName] = *fileset
+
+}
+func (m *MMCliFilesetClient) updateMappingWithExistingFileset(name, userSpecifiedFileset string, mappingConfig MappingConfig) error {
+	m.log.Println("MMCliFilesetClient:  updateMappingWithExistingFileset start")
+	defer m.log.Println("MMCliFilesetClient: updateMappingWithExistingFileset end")
+	m.log.Printf("User specified fileset: %s\n", userSpecifiedFileset)
+
+	spectrumCommand := "mmlsfileset"
+	args := []string{m.Filesystem, userSpecifiedFileset, "-Y"}
+	cmd := exec.Command(spectrumCommand, args...)
+	_, err := cmd.Output()
+	if err != nil {
+		m.log.Println(err)
+		return err
+	}
+	mappingConfig.Mappings[name] = Fileset{Name: userSpecifiedFileset, DockerVolumeName: name}
 	// persist mapping config
 	err = m.persistMappingConfig(mappingConfig)
 	if err != nil {
@@ -73,22 +87,50 @@ func (m *MMCliSpectrumClient) CreateFileset(fileset *Fileset) error {
 	}
 	return nil
 }
-func (m *MMCliSpectrumClient) RemoveFileset(fileset *Fileset) error {
+
+func (m *MMCliFilesetClient) create(name string, opts map[string]interface{}, mappingConfig MappingConfig) error {
+	m.log.Println("MMCliFilesetClient: createNew start")
+	defer m.log.Println("MMCliFilesetClient: createNew end")
+
+	filesetName := generateFilesetName()
+	m.log.Printf("creating a new fileset: %s\n", filesetName)
+	// create fileset
+	spectrumCommand := "mmcrfileset"
+	args := []string{m.Filesystem, filesetName}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Failed to create fileset")
+	}
+	m.log.Printf("Createfileset output: %s\n", string(output))
+	// add it to mapping config
+	mappingConfig.Mappings[name] = Fileset{Name: filesetName, DockerVolumeName: name}
+	// persist mapping config
+	err = m.persistMappingConfig(mappingConfig)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *MMCliFilesetClient) Remove(name string) error {
+	m.log.Println("MMCliFilesetClient: remove start")
+	defer m.log.Println("MMCliFilesetClient: remove end")
 	mappingConfig, err := m.retrieveMappingConfig()
 	if err != nil {
 		return err
 	}
-	existingMapping, ok := mappingConfig.Mappings[fileset.DockerVolumeName]
+	existingMapping, ok := mappingConfig.Mappings[name]
 	if ok == true {
 		spectrumCommand := "mmdelfileset"
-		args := []string{m.Filesystem, existingMapping.Name}
+		args := []string{m.Filesystem, existingMapping.Name, "-f"}
 		cmd := exec.Command(spectrumCommand, args...)
 		output, err := cmd.Output()
 		if err != nil {
 			return fmt.Errorf("Failed to remove fileset")
 		}
-		m.log.Printf("Deletefileset output: %s\n", string(output))
-		delete(mappingConfig.Mappings, fileset.DockerVolumeName)
+		m.log.Printf("MMCliFilesetClient: Deletefileset output: %s\n", string(output))
+		delete(mappingConfig.Mappings, name)
 		err = m.persistMappingConfig(mappingConfig)
 		if err != nil {
 			return err
@@ -96,13 +138,14 @@ func (m *MMCliSpectrumClient) RemoveFileset(fileset *Fileset) error {
 	}
 	return nil
 }
-func (m *MMCliSpectrumClient) LinkFileset(fileset *Fileset) (string, error) {
-	m.log.Println("Linkfileset called")
+func (m *MMCliFilesetClient) Attach(name string) (string, error) {
+	m.log.Println("MMCliFilesetClient: attach start")
+	defer m.log.Println("MMCliFilesetClient: attach end")
 	mappingConfig, err := m.retrieveMappingConfig()
 	if err != nil {
 		return "", err
 	}
-	mapping, ok := mappingConfig.Mappings[fileset.DockerVolumeName]
+	mapping, ok := mappingConfig.Mappings[name]
 	if ok == false {
 		return "", fmt.Errorf("fileset couldn't be located")
 	}
@@ -110,17 +153,17 @@ func (m *MMCliSpectrumClient) LinkFileset(fileset *Fileset) (string, error) {
 		return "", fmt.Errorf("fileset already linked")
 	}
 	spectrumCommand := "mmlinkfileset"
-	filesetPath := path.Join(m.Mountpoint, fileset.Name)
-	args := []string{m.Filesystem, fileset.Name, "-J", filesetPath}
+	filesetPath := path.Join(m.Mountpoint, mapping.Name)
+	args := []string{m.Filesystem, mapping.Name, "-J", filesetPath}
 	cmd := exec.Command(spectrumCommand, args...)
 	output, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("Failed to link fileset")
 	}
-	m.log.Printf("Linkfileset output: %s\n", string(output))
+	m.log.Printf("MMCliFilesetClient: Linkfileset output: %s\n", string(output))
 
 	mapping.Mountpoint = filesetPath
-	mappingConfig.Mappings[fileset.DockerVolumeName] = mapping
+	mappingConfig.Mappings[name] = mapping
 	err = m.persistMappingConfig(mappingConfig)
 	if err != nil {
 		return "", fmt.Errorf("internal error updating mapping")
@@ -128,12 +171,14 @@ func (m *MMCliSpectrumClient) LinkFileset(fileset *Fileset) (string, error) {
 	return filesetPath, nil
 }
 
-func (m *MMCliSpectrumClient) UnlinkFileset(fileset *Fileset) error {
+func (m *MMCliFilesetClient) Detach(name string) error {
+	m.log.Println("MMCliFilesetClient: detach start")
+	defer m.log.Println("MMCliFilesetClient: detach end")
 	mappingConfig, err := m.retrieveMappingConfig()
 	if err != nil {
 		return err
 	}
-	mapping, ok := mappingConfig.Mappings[fileset.DockerVolumeName]
+	mapping, ok := mappingConfig.Mappings[name]
 	if ok == false {
 		return fmt.Errorf("fileset couldn't be located")
 	}
@@ -141,16 +186,16 @@ func (m *MMCliSpectrumClient) UnlinkFileset(fileset *Fileset) error {
 		return fmt.Errorf("fileset not linked")
 	}
 	spectrumCommand := "mmunlinkfileset"
-	args := []string{m.Filesystem, fileset.Name}
+	args := []string{m.Filesystem, mapping.Name}
 	cmd := exec.Command(spectrumCommand, args...)
 	output, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("Failed to unlink fileset")
 	}
-	m.log.Printf("unLinkfileset output: %s\n", string(output))
+	m.log.Printf("MMCliFilesetClient: unLinkfileset output: %s\n", string(output))
 
 	mapping.Mountpoint = ""
-	mappingConfig.Mappings[fileset.DockerVolumeName] = mapping
+	mappingConfig.Mappings[name] = mapping
 	err = m.persistMappingConfig(mappingConfig)
 	if err != nil {
 		return fmt.Errorf("internal error updating mapping")
@@ -158,32 +203,36 @@ func (m *MMCliSpectrumClient) UnlinkFileset(fileset *Fileset) error {
 	return nil
 }
 
-func (m *MMCliSpectrumClient) ListFilesets() ([]Fileset, error) {
+func (m *MMCliFilesetClient) List() ([]models.VolumeMetadata, error) {
+	m.log.Println("MMCliFilesetClient: list start")
+	defer m.log.Println("MMCliFilesetClient: list end")
 	mappingConfig, err := m.retrieveMappingConfig()
 	if err != nil {
 		return nil, err
 	}
-	var filesets []Fileset
+	var volumes []models.VolumeMetadata
 	for _, fileset := range mappingConfig.Mappings {
-		filesets = append(filesets, fileset)
+		volumes = append(volumes, models.VolumeMetadata{Name: fileset.DockerVolumeName, Mountpoint: fileset.Mountpoint})
 	}
-	return filesets, nil
+	return volumes, nil
 }
 
-func (m *MMCliSpectrumClient) ListFileset(name string) (*Fileset, error) {
-	m.log.Println("MMCLI List fileset called")
+func (m *MMCliFilesetClient) Get(name string) (*models.VolumeMetadata, error) {
+	m.log.Println("MMCliFilesetClient: get start")
+	defer m.log.Println("MMCliFilesetClient: get finish")
 	mappingConfig, err := m.retrieveMappingConfig()
 	if err != nil {
 		return nil, err
 	}
 	fileset, ok := mappingConfig.Mappings[name]
 	if ok == true {
-		return &fileset, nil
+		return &models.VolumeMetadata{Name: fileset.DockerVolumeName, Mountpoint: fileset.Mountpoint}, nil
 	}
 	return nil, nil
 }
-func (m *MMCliSpectrumClient) IsMounted() (bool, error) {
-	m.log.Println("IsMounted called")
+func (m *MMCliFilesetClient) IsMounted() (bool, error) {
+	m.log.Println("MMCliFilesetClient: isMounted start")
+	defer m.log.Println("MMCliFilesetClient: isMounted end")
 	spectrumCommand := "mmlsmount"
 	args := []string{m.Filesystem, "-L", "-Y"}
 	cmd := exec.Command(spectrumCommand, args...)
@@ -200,7 +249,7 @@ func (m *MMCliSpectrumClient) IsMounted() (bool, error) {
 	} else {
 		// checkif mounted on current node -- compare node name
 		currentNode, _ := os.Hostname()
-		m.log.Printf("node name: %s\n", currentNode)
+		m.log.Printf("MMCliFilesetClient: node name: %s\n", currentNode)
 		for _, node := range mountedNodes {
 			if node == currentNode {
 				return true, nil
@@ -209,8 +258,9 @@ func (m *MMCliSpectrumClient) IsMounted() (bool, error) {
 	}
 	return false, nil
 }
-func (m *MMCliSpectrumClient) Mount() error {
-	m.log.Println("Spectrum mount called")
+func (m *MMCliFilesetClient) Mount() error {
+	m.log.Println("MMCliFilesetClient: mount start")
+	defer m.log.Println("MMCliFilesetClient: mount end")
 	spectrumCommand := "mmmount"
 	args := []string{m.Filesystem, m.Mountpoint}
 	cmd := exec.Command(spectrumCommand, args...)
@@ -239,8 +289,9 @@ func extractMountedNodes(spectrumOutput string) []string {
 	return nodes
 }
 
-func (m *MMCliSpectrumClient) retrieveMappingConfig() (MappingConfig, error) {
-	m.log.Println("MMCLI retrieveMappingConfig called")
+func (m *MMCliFilesetClient) retrieveMappingConfig() (MappingConfig, error) {
+	//m.log.Println("MMCliFilesetClient: retrieveMappingConfig start")
+	//defer m.log.Println("MMCliFilesetClient: retrieveMappingConfig end")
 	mappingFile, err := os.Open(path.Join(m.Mountpoint, ".docker.json"))
 	if err != nil {
 		m.log.Println(err.Error())
@@ -263,8 +314,9 @@ func (m *MMCliSpectrumClient) retrieveMappingConfig() (MappingConfig, error) {
 	}
 	return mappingConfig, nil
 }
-func (m *MMCliSpectrumClient) persistMappingConfig(mappingConfig MappingConfig) error {
-	m.log.Println("MMCLI persisteMappingConfig called")
+func (m *MMCliFilesetClient) persistMappingConfig(mappingConfig MappingConfig) error {
+	//m.log.Println("MMCliFilesetClient: persisteMappingConfig start")
+	//defer m.log.Println("MMCliFilesetClient: persisteMappingConfig end")
 	data, err := json.Marshal(&mappingConfig)
 	if err != nil {
 		return fmt.Errorf("Error marshalling mapping config to file: %s", err.Error())

@@ -91,7 +91,16 @@ var _ = Describe("Main", func() {
 					})
 					It("should not error if volume already exists", func() {
 						successfullCreateRequest(volumeName)
-						successfullCreateRequest(volumeName)
+						createRequest := models.CreateRequest{Name: volumeName, Opts: map[string]interface{}{}}
+						createRequestBody, err := json.Marshal(createRequest)
+						Expect(err).ToNot(HaveOccurred())
+						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(status).To(Equal("400 Bad Request"))
+						var createResponse models.GenericResponse
+						err = json.Unmarshal([]byte(body), &createResponse)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(createResponse.Err).To(Equal("Volume already exists"))
 					})
 				})
 				Context(".Remove", func() {
@@ -119,7 +128,7 @@ var _ = Describe("Main", func() {
 						var removeResponse models.GenericResponse
 						err = json.Unmarshal([]byte(body), &removeResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(removeResponse.Err).To(Equal("Fileset not found"))
+						Expect(removeResponse.Err).To(Equal("Volume not found"))
 					})
 				})
 				Context(".List", func() {
@@ -179,11 +188,11 @@ var _ = Describe("Main", func() {
 					})
 				})
 				Context(".Mount", func() {
-					It("should be able to link fileset", func() {
+					It("should be able to link volume", func() {
 						successfullCreateRequest(volumeName)
 						successfullMountRequest(volumeName)
 					})
-					It("should error if fileset is already linked", func() {
+					It("should error if volume is already linked", func() {
 						successfullCreateRequest(volumeName)
 						successfullMountRequest(volumeName)
 						mountRequest := models.GenericRequest{Name: volumeName}
@@ -195,9 +204,9 @@ var _ = Describe("Main", func() {
 						var mountResponse models.MountResponse
 						err = json.Unmarshal([]byte(body), &mountResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(mountResponse.Err).To(Equal("fileset already mounted"))
+						Expect(mountResponse.Err).To(Equal("volume already mounted"))
 					})
-					It("should error if fileset does not exist", func() {
+					It("should error if volume does not exist", func() {
 						mountRequest := models.GenericRequest{Name: volumeName}
 						mountRequestBody, err := json.Marshal(mountRequest)
 						Expect(err).ToNot(HaveOccurred())
@@ -207,16 +216,16 @@ var _ = Describe("Main", func() {
 						var mountResponse models.MountResponse
 						err = json.Unmarshal([]byte(body), &mountResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(mountResponse.Err).To(Equal("fileset not found"))
+						Expect(mountResponse.Err).To(Equal("volume not found"))
 					})
 				})
 				Context(".Unmount", func() {
-					It("should be able to unlink fileset", func() {
+					It("should be able to unlink volume", func() {
 						successfullCreateRequest(volumeName)
 						successfullMountRequest(volumeName)
 						successfullUnmountRequest(volumeName)
 					})
-					It("should error when fileset is not linked", func() {
+					It("should error when volume is not linked", func() {
 						successfullCreateRequest(volumeName)
 						unmountRequest := models.GenericRequest{Name: volumeName}
 						unmountRequestBody, err := json.Marshal(unmountRequest)
@@ -227,9 +236,9 @@ var _ = Describe("Main", func() {
 						var unmountResponse models.GenericResponse
 						err = json.Unmarshal([]byte(body), &unmountResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(unmountResponse.Err).To(Equal("fileset already unmounted"))
+						Expect(unmountResponse.Err).To(Equal("volume already unmounted"))
 					})
-					It("should error when fileset does not exist", func() {
+					It("should error when volume does not exist", func() {
 						unmountRequest := models.GenericRequest{Name: volumeName}
 						unmountRequestBody, err := json.Marshal(unmountRequest)
 						Expect(err).ToNot(HaveOccurred())
@@ -239,11 +248,11 @@ var _ = Describe("Main", func() {
 						var unmountResponse models.GenericResponse
 						err = json.Unmarshal([]byte(body), &unmountResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(unmountResponse.Err).To(Equal("fileset not found"))
+						Expect(unmountResponse.Err).To(Equal("volume not found"))
 					})
 				})
 				Context(".Path", func() {
-					It("should return path when fileset is linked", func() {
+					It("should return path when volume is linked", func() {
 						successfullCreateRequest(volumeName)
 						successfullMountRequest(volumeName)
 						pathRequest := models.GenericRequest{Name: volumeName}
@@ -258,7 +267,7 @@ var _ = Describe("Main", func() {
 						Expect(pathResponse.Err).To(Equal(""))
 						Expect(pathResponse.Mountpoint).ToNot(Equal(""))
 					})
-					It("should error when fileset is not linked", func() {
+					It("should error when volume is not linked", func() {
 						successfullCreateRequest(volumeName)
 						pathRequest := models.GenericRequest{Name: volumeName}
 						pathRequestBody, err := json.Marshal(pathRequest)
@@ -368,7 +377,7 @@ func cleanupGpfs() error {
 	}
 
 	spectrumCommand = "mmcrfs"
-	args = []string{filesystemName, "-F", "/root/stanza", "-A", "yes", "-T", filesystemMountpoint}
+	args = []string{filesystemName, "-F", "/root/stanza", "-A", "yes", "-T", filesystemMountpoint, "-Q", "yes", "--perfileset-quota"}
 	cmd = exec.Command(spectrumCommand, args...)
 	//testLogger.Printf("Cmd: %#v\n", cmd)
 	_, err = cmd.Output()

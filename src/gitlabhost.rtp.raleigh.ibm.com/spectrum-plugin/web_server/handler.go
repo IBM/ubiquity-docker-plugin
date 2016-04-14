@@ -21,12 +21,14 @@ func NewHandler(logger *log.Logger, filesystem, mountpath string) *Handler {
 }
 
 func (c *Handler) Activate(w http.ResponseWriter, r *http.Request) {
-	c.log.Println("activate request called")
+	c.log.Println("Handler: activate start")
+	defer c.log.Println("Handler: activate end")
 	activateResponse := c.Controller.Activate()
 	activateResponse.WriteResponse(w)
 }
 func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	c.log.Println("create request called")
+	c.log.Println("Handler: create start")
+	defer c.log.Println("Handler: create end")
 	var createRequest models.CreateRequest
 	err := extractRequestObject(r, &createRequest)
 	if err != nil {
@@ -40,7 +42,8 @@ func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
-	c.log.Println("Remove request called")
+	c.log.Println("Handler: remove start")
+	defer c.log.Println("Handler: remove end")
 	var removeRequest models.GenericRequest
 	err := extractRequestObject(r, &removeRequest)
 	if err != nil {
@@ -53,7 +56,8 @@ func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
-	c.log.Println("Mount request called")
+	c.log.Println("Handler: mount start")
+	defer c.log.Println("Handler: mount end")
 	var mountRequest models.GenericRequest
 	err := extractRequestObject(r, &mountRequest)
 	if err != nil {
@@ -66,7 +70,8 @@ func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
-	c.log.Println("Unmount request called")
+	c.log.Println("Handler: unmount start")
+	defer c.log.Println("Handler: unmount end")
 	var unmountRequest models.GenericRequest
 	err := extractRequestObject(r, &unmountRequest)
 	if err != nil {
@@ -79,7 +84,8 @@ func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
-	c.log.Println("Path request called")
+	c.log.Println("Handler: path start")
+	defer c.log.Println("Handler: path end")
 	var pathRequest models.GenericRequest
 	err := extractRequestObject(r, &pathRequest)
 	if err != nil {
@@ -92,7 +98,8 @@ func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	c.log.Println("Get request called")
+	c.log.Println("Handler: get start")
+	defer c.log.Println("Handler: get end")
 	var getRequest models.GenericRequest
 	err := extractRequestObject(r, &getRequest)
 	if err != nil {
@@ -105,7 +112,8 @@ func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Handler) List(w http.ResponseWriter, r *http.Request) {
-	c.log.Println("List request called")
+	c.log.Println("Handler: list start")
+	defer c.log.Println("Handler: list end")
 	listResponse := c.Controller.List()
 	listResponse.WriteResponse(w)
 }

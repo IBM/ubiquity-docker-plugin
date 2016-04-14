@@ -7,8 +7,9 @@ import (
 )
 
 type Controller struct {
-	Client SpectrumClient
-	log    *log.Logger
+	Client      SpectrumClient
+	log         *log.Logger
+	isActivated bool
 }
 
 func NewController(logger *log.Logger, filesystem, mountpath string) *Controller {
@@ -19,7 +20,11 @@ func NewControllerWithClient(logger *log.Logger, client SpectrumClient) *Control
 }
 
 func (c *Controller) Activate() *models.ActivateResponse {
-	c.log.Println("activate request called")
+	c.log.Println("Controller: activate start")
+	defer c.log.Println("Controller: activate end")
+	if c.isActivated == true {
+		return &models.ActivateResponse{Implements: []string{"VolumeDriver"}}
+	}
 	//check if filesystem is mounted
 	mounted, err := c.Client.IsMounted()
 	if err != nil {
@@ -31,21 +36,22 @@ func (c *Controller) Activate() *models.ActivateResponse {
 			return &models.ActivateResponse{}
 		}
 	}
+	c.isActivated = true
 	return &models.ActivateResponse{Implements: []string{"VolumeDriver"}}
 }
 func (c *Controller) Create(createRequest *models.CreateRequest) *models.GenericResponse {
-	c.log.Println("create request called")
+	c.log.Println("Controller: create start")
+	defer c.log.Println("Controller: create end")
 	c.log.Printf("Create details %s, %#v\n", createRequest.Name, createRequest.Opts)
-	existingFileset, err := c.Client.ListFileset(createRequest.Name)
+	existingVolume, err := c.Client.Get(createRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
 	}
-	if existingFileset != nil {
-		return &models.GenericResponse{}
+	if existingVolume != nil {
+		return &models.GenericResponse{Err: "Volume already exists"}
 	}
 
-	fileset := &Fileset{DockerVolumeName: createRequest.Name}
-	err = c.Client.CreateFileset(fileset)
+	err = c.Client.Create(createRequest.Name, createRequest.Opts)
 	var createResponse *models.GenericResponse
 	if err != nil {
 		createResponse = &models.GenericResponse{Err: err.Error()}
@@ -56,35 +62,37 @@ func (c *Controller) Create(createRequest *models.CreateRequest) *models.Generic
 }
 
 func (c *Controller) Remove(removeRequest *models.GenericRequest) *models.GenericResponse {
-	c.log.Println("Remove request called")
-	existingFileset, err := c.Client.ListFileset(removeRequest.Name)
+	c.log.Println("Controller: remove start")
+	defer c.log.Println("Controller: remove end")
+	existingVolume, err := c.Client.Get(removeRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
 	}
-	if existingFileset != nil {
-		err = c.Client.RemoveFileset(existingFileset)
+	if existingVolume != nil {
+		err = c.Client.Remove(removeRequest.Name)
 		if err != nil {
 			return &models.GenericResponse{Err: err.Error()}
 		}
 		return &models.GenericResponse{}
 	}
-	return &models.GenericResponse{Err: "Fileset not found"}
+	return &models.GenericResponse{Err: "Volume not found"}
 }
 
 func (c *Controller) Mount(mountRequest *models.GenericRequest) *models.MountResponse {
-	c.log.Println("Mount request called")
+	c.log.Println("Controller: mount start")
+	defer c.log.Println("Controller: mount end")
 
-	existingFileset, err := c.Client.ListFileset(mountRequest.Name)
+	existingVolume, err := c.Client.Get(mountRequest.Name)
 	if err != nil {
 		return &models.MountResponse{Err: err.Error()}
 	}
-	if existingFileset == nil {
-		return &models.MountResponse{Err: "fileset not found"}
+	if existingVolume == nil {
+		return &models.MountResponse{Err: "volume not found"}
 	}
-	if existingFileset.Mountpoint != "" {
-		return &models.MountResponse{Err: "fileset already mounted"}
+	if existingVolume.Mountpoint != "" {
+		return &models.MountResponse{Err: "volume already mounted"}
 	}
-	mountedPath, err := c.Client.LinkFileset(existingFileset)
+	mountedPath, err := c.Client.Attach(mountRequest.Name)
 	if err != nil {
 		return &models.MountResponse{Err: err.Error()}
 	}
@@ -94,18 +102,19 @@ func (c *Controller) Mount(mountRequest *models.GenericRequest) *models.MountRes
 }
 
 func (c *Controller) Unmount(unmountRequest *models.GenericRequest) *models.GenericResponse {
-	c.log.Println("Unmount request called")
-	existingFileset, err := c.Client.ListFileset(unmountRequest.Name)
+	c.log.Println("Controller: unmount start")
+	defer c.log.Println("Controller: unmount end")
+	existingVolume, err := c.Client.Get(unmountRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
 	}
-	if existingFileset == nil {
-		return &models.GenericResponse{Err: "fileset not found"}
+	if existingVolume == nil {
+		return &models.GenericResponse{Err: "volume not found"}
 	}
-	if existingFileset.Mountpoint == "" {
-		return &models.GenericResponse{Err: "fileset already unmounted"}
+	if existingVolume.Mountpoint == "" {
+		return &models.GenericResponse{Err: "volume already unmounted"}
 	}
-	err = c.Client.UnlinkFileset(existingFileset)
+	err = c.Client.Detach(unmountRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
 	}
@@ -114,44 +123,42 @@ func (c *Controller) Unmount(unmountRequest *models.GenericRequest) *models.Gene
 }
 
 func (c *Controller) Path(pathRequest *models.GenericRequest) *models.MountResponse {
-	c.log.Println("Path request called")
-	fileset, err := c.Client.ListFileset(pathRequest.Name)
+	c.log.Println("Controller: path start")
+	defer c.log.Println("Controller: path end")
+	volume, err := c.Client.Get(pathRequest.Name)
 	if err != nil {
 		return &models.MountResponse{Err: err.Error()}
 	}
-	if fileset == nil {
+	if volume == nil {
 		return &models.MountResponse{Err: "volume does not exist"}
 	}
-	if fileset.Mountpoint == "" {
+	if volume.Mountpoint == "" {
 		return &models.MountResponse{Err: "volume not mounted"}
 	}
-	pathResponse := &models.MountResponse{Mountpoint: fileset.Mountpoint}
+	pathResponse := &models.MountResponse{Mountpoint: volume.Mountpoint}
 	return pathResponse
 }
 
 func (c *Controller) Get(getRequest *models.GenericRequest) *models.GetResponse {
-	c.log.Println("Get request called")
-	fileset, err := c.Client.ListFileset(getRequest.Name)
+	c.log.Println("Controller: get start")
+	defer c.log.Println("Controller: get end")
+	volume, err := c.Client.Get(getRequest.Name)
 	if err != nil {
 		return &models.GetResponse{Err: err.Error()}
 	}
-	if fileset == nil {
+	if volume == nil {
 		return &models.GetResponse{Err: "volume does not exist"}
 	}
-	volume := models.VolumeMetadata{Name: fileset.DockerVolumeName, Mountpoint: fileset.Mountpoint}
-	getResponse := &models.GetResponse{Volume: volume}
+	getResponse := &models.GetResponse{Volume: *volume}
 	return getResponse
 }
 
 func (c *Controller) List() *models.ListResponse {
-	c.log.Println("List request called")
-	filesets, err := c.Client.ListFilesets()
+	c.log.Println("Controller: list start")
+	defer c.log.Println("Controller: list end")
+	volumes, err := c.Client.List()
 	if err != nil {
 		return &models.ListResponse{Err: err.Error()}
-	}
-	var volumes []models.VolumeMetadata
-	for _, fileset := range filesets {
-		volumes = append(volumes, models.VolumeMetadata{Name: fileset.DockerVolumeName, Mountpoint: fileset.Mountpoint})
 	}
 	listResponse := &models.ListResponse{Volumes: volumes}
 	return listResponse

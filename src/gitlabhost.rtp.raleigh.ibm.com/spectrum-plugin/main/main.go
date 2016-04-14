@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -50,12 +51,13 @@ func main() {
 }
 
 func setupLogger(logPath string) (*log.Logger, *os.File) {
-	logFile, err := os.OpenFile(path.Join(logPath, "spectrum-scale-plugin.log"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile(path.Join(logPath, "spectrum-scale-plugin.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
 	if err != nil {
 		fmt.Printf("Failed to setup logger: %s\n", err.Error())
 		return nil, nil
 	}
-	logger := log.New(logFile, "spectrum: ", log.Lshortfile|log.LstdFlags)
+	log.SetOutput(logFile)
+	logger := log.New(io.MultiWriter(logFile, os.Stdout), "spectrum: ", log.Lshortfile|log.LstdFlags)
 	return logger, logFile
 }
 

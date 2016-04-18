@@ -150,7 +150,8 @@ func (m *MMCliFilesetClient) Attach(name string) (string, error) {
 		return "", fmt.Errorf("fileset couldn't be located")
 	}
 	if mapping.Mountpoint != "" {
-		return "", fmt.Errorf("fileset already linked")
+		//return "", fmt.Errorf("fileset already linked")
+		return mapping.Mountpoint, nil
 	}
 	spectrumCommand := "mmlinkfileset"
 	filesetPath := path.Join(m.Mountpoint, mapping.Name)

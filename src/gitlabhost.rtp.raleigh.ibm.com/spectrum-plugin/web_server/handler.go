@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/core"
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/models"
+	"gitlabhost.rtp.raleigh.ibm.com/spectrum-common/core"
+	"gitlabhost.rtp.raleigh.ibm.com/spectrum-common/models"
 )
 
 type Handler struct {

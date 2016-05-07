@@ -10,8 +10,7 @@ import (
 	"os/exec"
 	"time"
 
-	_ "gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/main"
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/models"
+	"gitlabhost.rtp.raleigh.ibm.com/spectrum-common/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

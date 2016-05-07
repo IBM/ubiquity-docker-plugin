@@ -4,3 +4,6 @@
 [submodule "src/github.com/gorilla/context"]
 	path = src/github.com/gorilla/context
 	url = https://github.com/gorilla/context.git
+[submodule "src/gitlabhost.rtp.raleigh.ibm.com/spectrum-common"]
+	path = src/gitlabhost.rtp.raleigh.ibm.com/spectrum-common
+	url = git@gitlabhost.rtp.raleigh.ibm.com:spectrum/spectrum-common.git

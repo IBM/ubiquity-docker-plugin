@@ -68,7 +68,7 @@ var _ = Describe("Controller", func() {
 				})
 				It("errors on create with valid opts if dockerVolume already exists", func() {
 					dockerVolume := models.VolumeMetadata{Name: "dockerVolume1"}
-					fakeClient.GetReturns(&dockerVolume, nil)
+					fakeClient.GetReturns(&dockerVolume, nil, nil)
 					createRequest := &models.CreateRequest{Name: "dockerVolume1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
 					Expect(createResponse.Err).To(Equal("Volume already exists"))
@@ -80,7 +80,7 @@ var _ = Describe("Controller", func() {
 					Expect(createResponse.Err).To(Equal("Spectrum plugin internal error"))
 				})
 				It("does error on create when plugin fails to list existing dockerVolume", func() {
-					fakeClient.GetReturns(nil, fmt.Errorf("Spectrum plugin internal error"))
+					fakeClient.GetReturns(nil, nil, fmt.Errorf("Spectrum plugin internal error"))
 					createRequest := &models.CreateRequest{Name: "dockerVolume1", Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
 					Expect(createResponse.Err).To(Equal("Spectrum plugin internal error"))
@@ -89,20 +89,20 @@ var _ = Describe("Controller", func() {
 			Context(".Remove", func() {
 				It("does not error when existing dockerVolume name is given", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					removeRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
 					Expect(removeResponse.Err).To(Equal(""))
 				})
 				It("error when dockerVolume not found", func() {
-					fakeClient.GetReturns(nil, nil)
+					fakeClient.GetReturns(nil, nil, nil)
 					removeRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
 					Expect(removeResponse.Err).To(Equal("Volume not found"))
 					Expect(fakeClient.RemoveCallCount()).To(Equal(0))
 				})
 				It("error when list dockerVolume returns an error", func() {
-					fakeClient.GetReturns(nil, fmt.Errorf("error listing volume"))
+					fakeClient.GetReturns(nil, nil, fmt.Errorf("error listing volume"))
 					removeRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
 					Expect(removeResponse.Err).To(Equal("error listing volume"))
@@ -110,7 +110,7 @@ var _ = Describe("Controller", func() {
 				})
 				It("error when remove dockerVolume returns an error", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					fakeClient.RemoveReturns(fmt.Errorf("error removing volume"))
 					removeRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
@@ -146,7 +146,7 @@ var _ = Describe("Controller", func() {
 			Context(".Get", func() {
 				It("does not error when volume exist", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					getRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal(""))
@@ -154,7 +154,7 @@ var _ = Describe("Controller", func() {
 					Expect(getResponse.Volume.Name).To(Equal("dockerVolume1"))
 				})
 				It("errors when list dockerVolume returns an error", func() {
-					fakeClient.GetReturns(nil, fmt.Errorf("failed listing volume"))
+					fakeClient.GetReturns(nil, nil, fmt.Errorf("failed listing volume"))
 					getRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal("failed listing volume"))
@@ -168,7 +168,7 @@ var _ = Describe("Controller", func() {
 			Context(".Path", func() {
 				It("does not error when volume exists and is mounted", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1", Mountpoint: "some-mountpoint"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					pathRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal(""))
@@ -176,13 +176,13 @@ var _ = Describe("Controller", func() {
 				})
 				It("errors when volume exists but is not mounted", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					pathRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal("volume not mounted"))
 				})
 				It("errors when list dockerVolume returns an error", func() {
-					fakeClient.GetReturns(nil, fmt.Errorf("failed listing volume"))
+					fakeClient.GetReturns(nil, nil, fmt.Errorf("failed listing volume"))
 					pathRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal("failed listing volume"))
@@ -196,7 +196,7 @@ var _ = Describe("Controller", func() {
 			Context(".Mount", func() {
 				It("does not error when volume exists and is not currently mounted", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					fakeClient.AttachReturns("some-mountpath", nil)
 					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
@@ -205,20 +205,20 @@ var _ = Describe("Controller", func() {
 					Expect(fakeClient.AttachCallCount()).To(Equal(1))
 				})
 				It("errors when volume list returns error", func() {
-					fakeClient.GetReturns(nil, fmt.Errorf("error listing volume"))
+					fakeClient.GetReturns(nil, nil, fmt.Errorf("error listing volume"))
 					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
 					Expect(mountResponse.Err).To(Equal("error listing volume"))
 				})
 				It("errors when volume does not exist", func() {
-					fakeClient.GetReturns(nil, nil)
+					fakeClient.GetReturns(nil, nil, nil)
 					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
 					Expect(mountResponse.Err).To(Equal("volume not found"))
 				})
 				It("errors when volume exists and LinkdockerVolume errors", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					fakeClient.AttachReturns("", fmt.Errorf("failed to link volume"))
 					mountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
@@ -228,26 +228,26 @@ var _ = Describe("Controller", func() {
 			Context(".Unmount", func() {
 				It("does not error when volume exists and is currently mounted", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1", Mountpoint: "some-mountpoint"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
 					Expect(unmountResponse.Err).To(Equal(""))
 				})
 				It("errors when volume list returns error", func() {
-					fakeClient.GetReturns(nil, fmt.Errorf("error listing volume"))
+					fakeClient.GetReturns(nil, nil, fmt.Errorf("error listing volume"))
 					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
 					Expect(unmountResponse.Err).To(Equal("error listing volume"))
 				})
 				It("errors when volume does not exist", func() {
-					fakeClient.GetReturns(nil, nil)
+					fakeClient.GetReturns(nil, nil, nil)
 					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
 					Expect(unmountResponse.Err).To(Equal("volume not found"))
 				})
 				It("errors when volume exists and is currently not mounted", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
 					Expect(unmountResponse.Err).To(Equal("volume already unmounted"))
@@ -255,7 +255,7 @@ var _ = Describe("Controller", func() {
 				})
 				It("errors when volume exists and UnLinkdockerVolume errors", func() {
 					dockerVolume := &models.VolumeMetadata{Name: "dockerVolume1", Mountpoint: "some-mountpoint"}
-					fakeClient.GetReturns(dockerVolume, nil)
+					fakeClient.GetReturns(dockerVolume, nil, nil)
 					fakeClient.DetachReturns(fmt.Errorf("failed to unlink volume"))
 					unmountRequest := &models.GenericRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
@@ -264,5 +264,4 @@ var _ = Describe("Controller", func() {
 			})
 		})
 	})
-
 })

@@ -44,7 +44,7 @@ func (c *Controller) Create(createRequest *models.CreateRequest) *models.Generic
 	c.log.Println("Controller: create start")
 	defer c.log.Println("Controller: create end")
 	c.log.Printf("Create details %s, %#v\n", createRequest.Name, createRequest.Opts)
-	existingVolume, err := c.Client.Get(createRequest.Name)
+	existingVolume, _, err := c.Client.Get(createRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
 	}
@@ -65,7 +65,7 @@ func (c *Controller) Create(createRequest *models.CreateRequest) *models.Generic
 func (c *Controller) Remove(removeRequest *models.GenericRequest) *models.GenericResponse {
 	c.log.Println("Controller: remove start")
 	defer c.log.Println("Controller: remove end")
-	existingVolume, err := c.Client.Get(removeRequest.Name)
+	existingVolume, _, err := c.Client.Get(removeRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
 	}
@@ -83,7 +83,7 @@ func (c *Controller) Mount(mountRequest *models.GenericRequest) *models.MountRes
 	c.log.Println("Controller: mount start")
 	defer c.log.Println("Controller: mount end")
 
-	existingVolume, err := c.Client.Get(mountRequest.Name)
+	existingVolume, _, err := c.Client.Get(mountRequest.Name)
 	if err != nil {
 		return &models.MountResponse{Err: err.Error()}
 	}
@@ -102,7 +102,7 @@ func (c *Controller) Mount(mountRequest *models.GenericRequest) *models.MountRes
 func (c *Controller) Unmount(unmountRequest *models.GenericRequest) *models.GenericResponse {
 	c.log.Println("Controller: unmount start")
 	defer c.log.Println("Controller: unmount end")
-	existingVolume, err := c.Client.Get(unmountRequest.Name)
+	existingVolume, _, err := c.Client.Get(unmountRequest.Name)
 	if err != nil {
 		return &models.GenericResponse{Err: err.Error()}
 	}
@@ -123,7 +123,7 @@ func (c *Controller) Unmount(unmountRequest *models.GenericRequest) *models.Gene
 func (c *Controller) Path(pathRequest *models.GenericRequest) *models.MountResponse {
 	c.log.Println("Controller: path start")
 	defer c.log.Println("Controller: path end")
-	volume, err := c.Client.Get(pathRequest.Name)
+	volume, _, err := c.Client.Get(pathRequest.Name)
 	if err != nil {
 		return &models.MountResponse{Err: err.Error()}
 	}
@@ -139,7 +139,7 @@ func (c *Controller) Path(pathRequest *models.GenericRequest) *models.MountRespo
 func (c *Controller) Get(getRequest *models.GenericRequest) *models.GetResponse {
 	c.log.Println("Controller: get start")
 	defer c.log.Println("Controller: get end")
-	volume, err := c.Client.Get(getRequest.Name)
+	volume, _, err := c.Client.Get(getRequest.Name)
 	if err != nil {
 		return &models.GetResponse{Err: err.Error()}
 	}

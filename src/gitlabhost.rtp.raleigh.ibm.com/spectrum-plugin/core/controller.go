@@ -45,7 +45,7 @@ func (c *Controller) Create(createRequest *models.CreateRequest) *models.Generic
 	defer c.log.Println("Controller: create end")
 	c.log.Printf("Create details %s, %#v\n", createRequest.Name, createRequest.Opts)
 	existingVolume, _, err := c.Client.Get(createRequest.Name)
-	if err != nil {
+	if err != nil && err.Error() != "Cannot find info" {
 		return &models.GenericResponse{Err: err.Error()}
 	}
 	if existingVolume != nil {
@@ -66,7 +66,7 @@ func (c *Controller) Remove(removeRequest *models.GenericRequest) *models.Generi
 	c.log.Println("Controller: remove start")
 	defer c.log.Println("Controller: remove end")
 	existingVolume, _, err := c.Client.Get(removeRequest.Name)
-	if err != nil {
+	if err != nil && err.Error() != "Cannot find info" {
 		return &models.GenericResponse{Err: err.Error()}
 	}
 	if existingVolume != nil {
@@ -84,11 +84,14 @@ func (c *Controller) Mount(mountRequest *models.GenericRequest) *models.MountRes
 	defer c.log.Println("Controller: mount end")
 
 	existingVolume, _, err := c.Client.Get(mountRequest.Name)
-	if err != nil {
+	if err != nil && err.Error() != "Cannot find info" {
 		return &models.MountResponse{Err: err.Error()}
 	}
 	if existingVolume == nil {
 		return &models.MountResponse{Err: "volume not found"}
+	}
+        if existingVolume.Mountpoint != "" {
+		return &models.MountResponse{Err: "volume already mounted"}
 	}
 	mountedPath, err := c.Client.Attach(mountRequest.Name)
 	if err != nil {
@@ -103,7 +106,7 @@ func (c *Controller) Unmount(unmountRequest *models.GenericRequest) *models.Gene
 	c.log.Println("Controller: unmount start")
 	defer c.log.Println("Controller: unmount end")
 	existingVolume, _, err := c.Client.Get(unmountRequest.Name)
-	if err != nil {
+	if err != nil && err.Error() != "Cannot find info" {
 		return &models.GenericResponse{Err: err.Error()}
 	}
 	if existingVolume == nil {
@@ -140,7 +143,7 @@ func (c *Controller) Get(getRequest *models.GenericRequest) *models.GetResponse 
 	c.log.Println("Controller: get start")
 	defer c.log.Println("Controller: get end")
 	volume, _, err := c.Client.Get(getRequest.Name)
-	if err != nil {
+	if err != nil && err.Error() != "Cannot find info" {
 		return &models.GetResponse{Err: err.Error()}
 	}
 	if volume == nil {

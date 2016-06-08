@@ -90,9 +90,6 @@ func (c *Controller) Mount(mountRequest *models.GenericRequest) *models.MountRes
 	if existingVolume == nil {
 		return &models.MountResponse{Err: "volume not found"}
 	}
-        if existingVolume.Mountpoint != "" {
-		return &models.MountResponse{Err: "volume already mounted"}
-	}
 	mountedPath, err := c.Client.Attach(mountRequest.Name)
 	if err != nil {
 		return &models.MountResponse{Err: err.Error()}

@@ -191,7 +191,7 @@ var _ = Describe("Main", func() {
 						successfullCreateRequest(volumeName)
 						successfullMountRequest(volumeName)
 					})
-					It("should error if volume is already linked", func() {
+					It("should not error if volume is already linked", func() {
 						successfullCreateRequest(volumeName)
 						successfullMountRequest(volumeName)
 						mountRequest := models.GenericRequest{Name: volumeName}
@@ -199,11 +199,12 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Mount", mountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("400 Bad Request"))
+						Expect(status).To(Equal("200 OK"))
 						var mountResponse models.MountResponse
 						err = json.Unmarshal([]byte(body), &mountResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(mountResponse.Err).To(Equal("volume already mounted"))
+                                                Expect(mountResponse.Mountpoint).ToNot(Equal(nil))
+                                                Expect(len(mountResponse.Mountpoint)).To(BeNumerically(">", 0))
 					})
 					It("should error if volume does not exist", func() {
 						mountRequest := models.GenericRequest{Name: volumeName}

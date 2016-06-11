@@ -3,7 +3,7 @@ Spectrum Scale volume plugin provides access to persistent storage, utilizing Sp
 
 # Installation
 #### Prerequisites
-* Provision a system running GPFS client or NSD server, but preferably on a GPFS client
+* Provision a system running GPFS client or NSD server, but preferably running a GPFS client
 * Install [docker](https://docs.docker.com/engine/installation/) 
 * Install [direnv](http://direnv.net/) 
 * Install [GoLang](https://golang.org/dl/)

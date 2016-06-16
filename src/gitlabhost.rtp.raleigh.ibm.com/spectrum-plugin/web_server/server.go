@@ -38,7 +38,7 @@ func (s *Server) Start(address string, port int, pluginsPath string) {
 	router.HandleFunc("/VolumeDriver.Path", s.handler.Path).Methods("POST")
 	router.HandleFunc("/VolumeDriver.List", s.handler.List).Methods("POST")
 	http.Handle("/", router)
-	serverInfo := &ServerInfo{Name: fmt.Sprintf("spectrum-scale-%s.json", s.filesystem), Addr: fmt.Sprintf("http://%s:%d", address, port)}
+	serverInfo := &ServerInfo{Name: fmt.Sprintf("spectrum-scale-%s", s.filesystem), Addr: fmt.Sprintf("http://%s:%d", address, port)}
 	err := s.writeSpecFile(serverInfo, pluginsPath)
 	if err != nil {
 		s.log.Fatal("Error writing plugin config, aborting...(: %s)\n", err.Error())

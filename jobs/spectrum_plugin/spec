@@ -1,0 +1,10 @@
+---
+name: spectrum_plugin
+templates:
+  install.erb: bin/pre-start
+  ctl.erb: bin/spectrum_plugin_ctl
+
+packages:
+- golang
+- pid_utils
+- spectrum_plugin

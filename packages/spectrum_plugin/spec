@@ -1,0 +1,8 @@
+---
+name: spectrum_plugin
+
+dependencies:
+  - golang
+
+files:
+  - gitlabhost.rtp.raleigh.ibm.com/**/*

@@ -1,0 +1,5 @@
+check process spectrum_plugin
+  with pidfile /var/vcap/sys/run/spectrum_plugin/pid
+  start program "/var/vcap/jobs/spectrum_plugin/bin/spectrum_plugin_ctl start"
+  stop program "/var/vcap/jobs/spectrum_plugin/bin/spectrum_plugin_ctl stop"
+  group vcap

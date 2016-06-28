@@ -1,3 +1,17 @@
+.blobs
+blobs
+.nvim
+.nvimrc
+scripts/config
+.dev_builds
+.DS_Store
+dev_releases/**/*
+.final_builds/jobs/**/*.tgz
+.final_builds/packages/**/*.tgz
+*.swp
+config/private.yml
+config/dev.yml
+.idea
 bin/*
 pkg/*
 src/github.com/maxbrunsfeld/*

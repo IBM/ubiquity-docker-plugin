@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e -x
+
+RUN_DIR=/var/vcap/sys/run/spectrum_plugin
+LOG_DIR=/var/vcap/sys/log/spectrum_plugin
+PIDFILE=${RUN_DIR}/pid
+
+source /var/vcap/packages/pid_utils/pid_utils.sh
+case $1 in
+
+start)
+    pid_guard $PIDFILE "spectrum_plugin"
+    mkdir -p $RUN_DIR $LOG_DIR
+    chown -R vcap:vcap $RUN_DIR $LOG_DIR
+    export GOMAXPROCS=$(nproc)
+    export GODEUG=netdns=cgo
+
+    echo $$ > $PIDFILE
+    ulimit -n 100000
+
+    # start plugin server
+    exec chpst -u vcap:vcap /var/vcap/packages/spectrum_plugin/bin/main \
+      --listenAddr="0.0.0.0" \
+      2> >(tee -a $LOG_DIR/spectrum_plugin.stderr.log | logger -p user.error -t vcap.spectrum_plugin) \
+      1> >(tee -a $LOG_DIR/spectrum_plugin.stdout.log | logger -p user.info -t vcap.spectrum_plugin
+    ;;
+
+  stop)
+    kill_and_wait $PIDFILE
+    ;;
+
+  *)
+    echo "Usage: spectrum_plugin_ctl {start|stop}" ;;
+
+esac

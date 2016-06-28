@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e -x
+
+echo "untaring golang"
+echo "untaring golang" > /tmp/log.txt
+tar -xvf golang/go1.6.linux-amd64.tar
+echo "copying golang to ${BOSH_INSTALL_TARGET}"
+cp -R go/* ${BOSH_INSTALL_TARGET}
+
+exit 0

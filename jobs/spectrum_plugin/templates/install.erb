@@ -39,6 +39,8 @@ echo "$GPFS_SERVER_IP $GPFS_SERVER_HOSTNAME" >> /etc/hosts
 
 # Add GPFS client and server IP details to hosts file on the GPFS server
 echo "Updating /etc/hosts file on the GPFS Server"
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no sed -i -- '/^10.0.4.191/d' /etc/hosts
+
 cmd1="echo \"$GPFS_CLIENT_IP $GPFS_CLIENT_HOSTNAME\" >> /etc/hosts"
 sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $cmd1
 
@@ -51,27 +53,42 @@ ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 
 # Enable passwordless ssh between GPFS client cell and the GPFS server
 echo "Enabling passwordless ssh between GPFS client cell and server"
+eval `ssh-agent`
+ssh-add ~/.ssh/id_rsa
+echo "Home: $HOME"
+export HOME=/root
+
 sshpass -e ssh-copy-id root@$GPFS_SERVER_HOSTNAME
 
-cmd3="sshpass -p $SSHPASS ssh-copy-id root@$GPFS_CLIENT_HOSTNAME"
-sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $cmd3
+
+# enable root ssh
+echo -e "gpfsr0x\ngpfsr0x" | passwd
+# update sshd.conf
+sed -i -- 's/PermitRootLogin no/PermitRootLogin yes/g' /etc/ssh/sshd_config
+sed -i -- 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+# restart ssh
+service ssh restart
+
+
+cmd3="sshpass -p $SSHPASS ssh-copy-id -o StrictHostKeyChecking=no root@$GPFS_CLIENT_HOSTNAME"
+ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $cmd3
 
 # Configuring Cell as GPFS Client
 echo "Configuring Cell as GPFS Client"
-mmCmd1="mmaddnode -N $GPFS_CLIENT_HOSTNAME"
-sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd1
+mmCmd1="/usr/lpp/mmfs/bin/mmaddnode -N $GPFS_CLIENT_HOSTNAME"
+ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd1
 
-mmCmd2="mmchlicense client --accept -N $GPFS_CLIENT_HOSTNAME"
-sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd2
+mmCmd2="/usr/lpp/mmfs/bin/mmchlicense client --accept -N $GPFS_CLIENT_HOSTNAME"
+ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd2
 
-mmCmd3="mmstartup -N $GPFS_CLIENT_HOSTNAME"
-sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd3
+mmCmd3="/usr/lpp/mmfs/bin/mmstartup -N $GPFS_CLIENT_HOSTNAME"
+ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd3
 
 mmCmd4="sleep 15s"
-sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd4
+ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd4
 
-mmCmd5="mmmount all -N $GPFS_CLIENT_HOSTNAME"
-sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd5
+mmCmd5="/usr/lpp/mmfs/bin/mmmount all -N $GPFS_CLIENT_HOSTNAME"
+ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd5
 
 echo "Successfully configured cell $HOSTNAME as GPFS Client for Server $GPFS_SERVER_HOSTNAME"
 

@@ -1,9 +1,9 @@
- set -e
-
- mkdir -p ${BOSH_INSTALL_TARGET}/src
- cp -a . ${BOSH_INSTALL_TARGET}/src
- export GOPATH=$BOSH_INSTALL_TARGET
- export GOROOT=$(readlink -nf /var/vcap/packages/golang)
- export PATH=$GOPATH/bin:$PATH
- cd src
- go install gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/main
+#!/bin/bash
+set -e
+mkdir -p ${BOSH_INSTALL_TARGET}/src
+cp -a . ${BOSH_INSTALL_TARGET}/src
+export GOPATH=/var/vcap/packages/spectrum_plugin
+export GOROOT=/var/vcap/packages/golang/go
+export PATH=$GOPATH/bin:/var/vcap/packages/golang/go/bin:$PATH
+cd ${BOSH_INSTALL_TARGET}/src
+go install gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/main

@@ -5,4 +5,5 @@
  export GOPATH=$BOSH_INSTALL_TARGET
  export GOROOT=$(readlink -nf /var/vcap/packages/golang)
  export PATH=$GOPATH/bin:$PATH
+ cd src
  go install gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/main

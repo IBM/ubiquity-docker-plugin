@@ -1,7 +1,84 @@
 #!/bin/bash
-
 set -e -x
 
 echo "Installing spectrum-scale-driver"
+echo "Current dir: $PWD"
+ls -alh
+
+GPFS_INSTALL_DIR=$HOME/GPFS_latest
+GPFS_BIN_PATH=/usr/lpp/mmfs/bin
+GPFS_ROOT_PASSWD="gpfsr0x"
+export SSHPASS=$GPFS_ROOT_PASSWD
+
+GPFS_SERVER_HOSTNAME="gpfs"
+GPFS_SERVER_IP="10.0.4.4"
+GPFS_CLIENT_HOSTNAME=$HOSTNAME
+GPFS_CLIENT_IP=$(hostname -I | cut -f1 -d ' ')
+
+# Install Dependencies
+echo "Installing dependencies required for setting up GPFS Client"
+apt-get -y install python nfs-common ksh binutils libaio1 m4 gawk alien devscripts sshpass
+
+# Install GPFS Client packages
+echo "Installing GPFS Client packages"
+cd /var/vcap/packages/spectrum_plugin
+dpkg -i gpfs.base*deb gpfs.gpl*deb gpfs.gskit*deb gpfs.msg*deb gpfs.ext*deb gpfs.adv*deb gpfs.crypto*deb gpfs.docs*deb
+
+# Add GPFS bin directory to PATH
+echo "Setting GPFS bin path"
+export PATH=$PATH:$GPFS_BIN_PATH
+
+# Build GPFS Kernel modules
+echo "Building GPFS Kernel Modules"
+mmbuildgpl
+
+# Add GPFS client and server IP details to hosts file on the GPFS client
+echo " Updating /etc/hosts file on the GPFS client"
+echo "$GPFS_CLIENT_IP $GPFS_CLIENT_HOSTNAME" >> /etc/hosts
+echo "$GPFS_SERVER_IP $GPFS_SERVER_HOSTNAME" >> /etc/hosts
+
+# Add GPFS client and server IP details to hosts file on the GPFS server
+echo "Updating /etc/hosts file on the GPFS Server"
+cmd1="echo \"$GPFS_CLIENT_IP $GPFS_CLIENT_HOSTNAME\" >> /etc/hosts"
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $cmd1
+
+#cmd2="echo \"$GPFS_SERVER_IP $GPFS_SERVER_HOSTNAME\" >> /etc/hosts"
+#sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $cmd2
+
+# Generate ssh keys
+echo "Generating SSH keys"
+ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+
+# Enable passwordless ssh between GPFS client cell and the GPFS server
+echo "Enabling passwordless ssh between GPFS client cell and server"
+sshpass -e ssh-copy-id root@$GPFS_SERVER_HOSTNAME
+
+cmd3="sshpass -p $SSHPASS ssh-copy-id root@$GPFS_CLIENT_HOSTNAME"
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $cmd3
+
+# Configuring Cell as GPFS Client
+echo "Configuring Cell as GPFS Client"
+mmCmd1="mmaddnode -N $GPFS_CLIENT_HOSTNAME"
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd1
+
+mmCmd2="mmchlicense client --accept -N $GPFS_CLIENT_HOSTNAME"
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd2
+
+mmCmd3="mmstartup -N $GPFS_CLIENT_HOSTNAME"
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd3
+
+mmCmd4="sleep 15s"
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd4
+
+mmCmd5="mmmount all -N $GPFS_CLIENT_HOSTNAME"
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $mmCmd5
+
+echo "Successfully configured cell $HOSTNAME as GPFS Client for Server $GPFS_SERVER_HOSTNAME"
+
+
+
+
+
+
 echo "Installed spectrum-scale-driver"
 exit 0

@@ -8,3 +8,4 @@ files:
   - gitlabhost.rtp.raleigh.ibm.com/**/*
   - github.com/**/*
   - golang.org/**/*
+  - gpfs/*

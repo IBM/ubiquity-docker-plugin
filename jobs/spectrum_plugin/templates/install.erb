@@ -39,7 +39,8 @@ echo "$GPFS_SERVER_IP $GPFS_SERVER_HOSTNAME" >> /etc/hosts
 
 # Add GPFS client and server IP details to hosts file on the GPFS server
 echo "Updating /etc/hosts file on the GPFS Server"
-sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no sed -i -- '/^10.0.4.191/d' /etc/hosts
+sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no sed -i -- "/^${GPFS_CLIENT_IP}/d" /etc/hosts
+
 
 cmd1="echo \"$GPFS_CLIENT_IP $GPFS_CLIENT_HOSTNAME\" >> /etc/hosts"
 sshpass -e ssh root@$GPFS_SERVER_HOSTNAME -o StrictHostKeyChecking=no $cmd1

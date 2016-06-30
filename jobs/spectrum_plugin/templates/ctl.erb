@@ -5,7 +5,7 @@ RUN_DIR=/var/vcap/sys/run/spectrum_plugin
 LOG_DIR=/var/vcap/sys/log/spectrum_plugin
 PIDFILE=${RUN_DIR}/pid
 
-source /var/vcap/packages/pid_utils/pid_utils.sh
+source /var/vcap/packages/spectrum_pid_utils/pid_utils.sh
 case $1 in
 
 start)
@@ -20,7 +20,7 @@ start)
 
     # start plugin server
     exec chpst -u vcap:vcap /var/vcap/packages/spectrum_plugin/bin/main \
-      --listenAddr="0.0.0.0" \
+      --listenAddr="0.0.0.0" --pluginsDirectory="/var/vcap/data/voldrivers"\
       2> >(tee -a $LOG_DIR/spectrum_plugin.stderr.log | logger -p user.error -t vcap.spectrum_plugin) \
       1> >(tee -a $LOG_DIR/spectrum_plugin.stdout.log | logger -p user.info -t vcap.spectrum_plugin
     ;;

@@ -4,7 +4,9 @@ templates:
   install.erb: bin/pre-start
   ctl.erb: bin/spectrum_plugin_ctl
 
+properties: {}
+
 packages:
 - golang
-- pid_utils
+- spectrum_pid_utils
 - spectrum_plugin

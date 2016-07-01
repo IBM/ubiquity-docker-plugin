@@ -19,7 +19,7 @@ start)
     ulimit -n 100000
 
     # start plugin server
-    exec chpst -u vcap:vcap /var/vcap/packages/spectrum_plugin/bin/main \
+    exec chpst -u root:root /var/vcap/packages/spectrum_plugin/bin/main \
       --listenAddr="127.0.0.1" --pluginsDirectory="/var/vcap/data/voldrivers"\
       2> >(tee -a $LOG_DIR/spectrum_plugin.stderr.log | logger -p user.error -t vcap.spectrum_plugin) \
       1> >(tee -a $LOG_DIR/spectrum_plugin.stdout.log | logger -p user.info -t vcap.spectrum_plugin

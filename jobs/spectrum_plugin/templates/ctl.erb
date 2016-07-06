@@ -20,16 +20,17 @@ start)
     echo $$ > $PIDFILE
     ulimit -n 100000
 
+    chpst -u root:root /var/vcap/packages/spectrum_plugin/bin/main \
+       --listenAddr="127.0.0.1" --listenPort=9001 --pluginsDirectory="/var/vcap/data/voldrivers" --mountpath="/gpfs/bronze"  --logPath=/tmp/spectrumBronze --filesystem=bronze\
+       2> >(tee -a $LOG_DIR/spectrum_plugin.stderr.log | logger -p user.error -t vcap.spectrum_plugin) \
+       1> >(tee -a $LOG_DIR/spectrum_plugin.stdout.log | logger -p user.info -t vcap.spectrum_plugin
+
     # start plugin server
     exec chpst -u root:root /var/vcap/packages/spectrum_plugin/bin/main \
-      --listenAddr="127.0.0.1" --listenPort=9000 --pluginsDirectory="/var/vcap/data/voldrivers" --mountpath="/gpfs/gold"  --logPath=/tmp/spectrumGold\
+      --listenAddr="127.0.0.1" --listenPort=9000 --pluginsDirectory="/var/vcap/data/voldrivers" --mountpath="/gpfs/gold"  --logPath=/tmp/spectrumGold --filesystem=gold\
       2> >(tee -a $LOG_DIR/spectrum_plugin.stderr.log | logger -p user.error -t vcap.spectrum_plugin) \
       1> >(tee -a $LOG_DIR/spectrum_plugin.stdout.log | logger -p user.info -t vcap.spectrum_plugin
 
-     exec chpst -u root:root /var/vcap/packages/spectrum_plugin/bin/main \
-       --listenAddr="127.0.0.1" --listenPort=9001 --pluginsDirectory="/var/vcap/data/voldrivers" --mountpath="/gpfs/bronze"  --logPath=/tmp/spectrumBronze\
-       2> >(tee -a $LOG_DIR/spectrum_plugin.stderr.log | logger -p user.error -t vcap.spectrum_plugin) \
-       1> >(tee -a $LOG_DIR/spectrum_plugin.stdout.log | logger -p user.info -t vcap.spectrum_plugin
     ;;
 
 

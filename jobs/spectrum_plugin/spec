@@ -4,7 +4,16 @@ templates:
   install.erb: bin/pre-start
   ctl.erb: bin/spectrum_plugin_ctl
 
-properties: {}
+properties:
+  spectrum_server_ip:
+    description: "address of spectrum scale nsd server"
+    default: "10.0.4.4"
+  spectrum_server_hostname:
+    description: "hostname of spectrum scale nsd server"
+    default: "gpfs"
+  spectrum_password:
+    description: "password of spectrum scale nsd server"
+    default: "gpfsr0x"
 
 packages:
 - golang

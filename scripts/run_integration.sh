@@ -1,4 +1,4 @@
 #!/bin/bash
-pushd $SPECTRUM_DIR/src/gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/main/
+pushd $GOPATH/src/github.ibm.com/almaden-containers/spectrum-container-plugin.git
 ginkgo -r -keepGoing -trace -randomizeAllSpecs -progress --race "$@"
 popd

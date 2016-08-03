@@ -163,16 +163,12 @@ docker rm `docker ps -aq`
 #### Running Unit Tests
 
 ```bash
-cd $SPECTRUM_DIR/scripts
-. run_unit.sh
+./scripts/run_unit.sh
 ```
 
 #### Running Integration Tests
 
 ```bash
-cd $SPECTRUM_DIR/scripts
-. run_integration.sh
+./scripts/run_integration.sh
 ```
-
-
 

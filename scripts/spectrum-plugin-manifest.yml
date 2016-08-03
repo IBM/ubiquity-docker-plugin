@@ -1,18 +1,18 @@
-name: spectrum-plugin
+name: spectrum-container-plugin
 director_uuid: cc57f579-8af7-49e2-b36e-fea9f4db6cce
 releases:
-  - name: spectrum-plugin
+  - name: spectrum-container-plugin
     version: latest
 jobs:
-- name: spectrum_plugin
+- name: spectrum-container-plugin
   instances: 1
   resource_pool: small
   networks:
   - name: gpfs-net
     default: [dns,gateway]
   templates:
-  - release: spectrum-plugin
-    name: spectrum_plugin
+  - release: spectrum-container-plugin
+    name: spectrum-container-plugin
   update:
     serial: true
 

@@ -3,8 +3,8 @@ package core
 import (
 	"log"
 
-	common "gitlabhost.rtp.raleigh.ibm.com/spectrum-common/core"
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-common/models"
+	common "github.ibm.com/almaden-containers/spectrum-common.git/core"
+	"github.ibm.com/almaden-containers/spectrum-common.git/models"
 )
 
 type Controller struct {

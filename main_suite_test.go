@@ -30,7 +30,7 @@ func TestMain(t *testing.T) {
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	var err error
-	spectrumPath, err := gexec.Build("gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/main", "-race")
+	spectrumPath, err := gexec.Build("github.ibm.com/almaden-containers/spectrum-container-plugin.git", "-race")
 	Expect(err).NotTo(HaveOccurred())
 
 	return []byte(spectrumPath)

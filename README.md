@@ -5,54 +5,20 @@ Spectrum Scale volume plugin provides access to persistent storage, utilizing Sp
 #### Prerequisites
 * Provision a system running GPFS client or NSD server, but preferably running a GPFS client
 * Install [docker](https://docs.docker.com/engine/installation/) 
-* Install [direnv](http://direnv.net/) 
-* Install [GoLang](https://golang.org/dl/)
+* Install [golang](https://golang.org/)
    
 
-#### Clone the repository
-Check out the source code in home directory
+#### *go get* the repository
+Assuming you have a working installation of *golang* and the GOPATH is set correctly:
 
 ```bash
-cd $HOME
-git clone git@gitlabhost.rtp.raleigh.ibm.com:spectrum/spectrum-container-plugin.git
-```
-
-#### Setup Environment
-Setup environment variables needed to build using direnv or setting environment variables manually
-
-**_Using direnv_**
-
-```bash
-cd $HOME/spectrum-container-plugin
-direnv allow
-```
- **OR**
- 
-**_Manually exporting the variables_**
-```bash
-export GOPATH=$PWD
-export PATH=$GOPATH/bin:$PATH
-export GOBIN=$GOPATH/bin
-```
-
-#### Checkout the develop branch
-
-```bash
-cd $HOME/spectrum-container-plugin
-git checkout develop
-```
-
-#### Get the Submodules 
-
-```bash
-export SPECTRUM_DIR=$HOME/spectrum-container-plugin
-. scripts/update.sh
+go get github.ibm.com/almaden-containers/spectrum-container-plugin.git
 ```
 
 #### Creating the executables
 
 ```bash
-cd $SPECTRUM_DIR/src/gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/main
+cd $GOPATH/github.ibm.com/almaden-containers/spectrum-container-plugin.git
 go install main.go
 ```
 
@@ -62,7 +28,6 @@ Running docker with the spectrum scale volume plugin.
 Instantiate a spectrum-container-plugin server for each GPFS filesystem that you wish to use to create docker volumes. Each instance of server must be listening on separate ports.
 
 ```bash     
-cd $SPECTRUM_DIR/bin
 ./main -listenAddr 127.0.0.1 -listenPort <PORT> -pluginsDirectory /etc/docker/plugins -filesystem <GPFS-FILESYSTEM-NAME> -mountpath <GPFS-FILESYSTEM-MOUNTPOINT>
 ```
 

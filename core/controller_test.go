@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-common/fakes"
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-common/models"
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/core"
+	"github.ibm.com/almaden-containers/spectrum-common.git/fakes"
+	"github.ibm.com/almaden-containers/spectrum-common.git/models"
+	"github.ibm.com/almaden-containers/spectrum-container-plugin.git/core"
 )
 
 var _ = Describe("Controller", func() {

@@ -1,0 +1,13 @@
+---
+name: spectrum-container-plugin
+
+dependencies:
+  - golang
+
+files:
+  - ./main.go
+  - core/**/*
+  - web_server/**/*
+  - vendor/**/*
+  - golang/**/*
+  - gpfs/**/*

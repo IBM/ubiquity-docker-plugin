@@ -127,8 +127,8 @@ jobs:
     release: cflinuxfs2-rootfs
   - name: metron_agent
     release: cf
-  - name: spectrum_plugin
-    release: spectrum-plugin
+  - name: spectrum-container-plugin
+    release: spectrum-container-plugin
   update:
     max_in_flight: 1
     serial: false
@@ -236,8 +236,8 @@ jobs:
     release: cflinuxfs2-rootfs
   - name: metron_agent
     release: cf
-  - name: spectrum_plugin
-    release: spectrum-plugin
+  - name: spectrum-container-plugin
+    release: spectrum-container-plugin
   update:
     max_in_flight: 1
     serial: false
@@ -2069,7 +2069,7 @@ releases:
   version: latest
 - name: cf
   version: latest
-- name: spectrum-plugin
+- name: spectrum-container-plugin
   version: latest
 resource_pools:
 - cloud_properties:

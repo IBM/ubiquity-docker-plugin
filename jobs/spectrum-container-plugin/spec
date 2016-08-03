@@ -1,5 +1,5 @@
 ---
-name: spectrum_plugin
+name: spectrum-container-plugin
 templates:
   install.erb: bin/pre-start
   ctl.erb: bin/spectrum_plugin_ctl
@@ -18,4 +18,4 @@ properties:
 packages:
 - golang
 - spectrum_pid_utils
-- spectrum_plugin
+- spectrum-container-plugin

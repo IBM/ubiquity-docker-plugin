@@ -23,7 +23,7 @@ apt-get -y install python nfs-common ksh binutils libaio1 m4 gawk alien devscrip
 
 # Install GPFS Client packages
 echo "Installing GPFS Client packages"
-cd /var/vcap/packages/spectrum_plugin
+cd /var/vcap/packages/spectrum-container-plugin
 dpkg -i gpfs.base*deb gpfs.gpl*deb gpfs.gskit*deb gpfs.msg*deb gpfs.ext*deb gpfs.adv*deb gpfs.crypto*deb gpfs.docs*deb
 
 # Add GPFS bin directory to PATH

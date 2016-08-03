@@ -3,4 +3,4 @@ blobstore:
   provider: local
   options:
     blobstore_path: /tmp/blobstore
-final_name: spectrum_plugin
+final_name: spectrum-container-plugin

@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"time"
 
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-common/models"
+	"github.ibm.com/almaden-containers/spectrum-common.git/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

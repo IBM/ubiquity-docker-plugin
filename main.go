@@ -8,7 +8,7 @@ import (
 	"os"
 	"path"
 
-	"gitlabhost.rtp.raleigh.ibm.com/spectrum-plugin/web_server"
+	"github.ibm.com/almaden-containers/spectrum-container-plugin.git/web_server"
 )
 
 var address = flag.String(

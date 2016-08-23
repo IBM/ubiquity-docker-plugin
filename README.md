@@ -6,7 +6,7 @@ Spectrum Scale volume plugin provides access to persistent storage, utilizing Sp
 * Provision a system running GPFS client or NSD server, but preferably running a GPFS client
 * Install [docker](https://docs.docker.com/engine/installation/) 
 * Install [golang](https://golang.org/)
-   
+
 
 #### *go get* the repository
 Assuming you have a working installation of *golang* and the GOPATH is set correctly:
@@ -16,6 +16,7 @@ go get github.ibm.com/almaden-containers/spectrum-container-plugin.git
 ```
 
 #### Creating the executables
+Assuming the GOPATH and GOBIN variables are set correctly:
 
 ```bash
 cd $GOPATH/github.ibm.com/almaden-containers/spectrum-container-plugin.git
@@ -27,9 +28,9 @@ go install main.go
 #### Run the Spectrum Scale Volume Plugin
 Running docker with the spectrum scale volume plugin.
 Instantiate a spectrum-container-plugin server for each GPFS filesystem that you wish to use to create docker volumes. Each instance of server must be listening on separate ports.
-
-```bash     
-./main -listenAddr 127.0.0.1 -listenPort <PORT> -pluginsDirectory /etc/docker/plugins -filesystem <GPFS-FILESYSTEM-NAME> -mountpath <GPFS-FILESYSTEM-MOUNTPOINT>
+Assuming that the GOBIN directory is on the PATH:
+```bash
+main -listenAddr 127.0.0.1 -listenPort <PORT> -pluginsDirectory /etc/docker/plugins -filesystem <GPFS-FILESYSTEM-NAME> -mountpath <GPFS-FILESYSTEM-MOUNTPOINT>
 ```
 
 ***_Example:_***
@@ -37,18 +38,18 @@ Instantiate a spectrum-container-plugin server for each GPFS filesystem that you
 For a GPFS client having 3 GPFS file systems(gold, silver and bronze) mounted as shown below, we run instance of spectrum-container-plugin server to handle each GPFS file system
 
 ```bash
-$ ~/spectrum-container-plugin/bin# df -Th | grep gpfs
+df -Th | grep gpfs
 /dev/gold      gpfs      140G  789M  139G   1% /gpfs/gold
 /dev/silver    gpfs      8.0G  457M  7.6G   6% /gpfs/silver
 /dev/bronze    gpfs      8.0G  457M  7.6G   6% /gpfs/bronze
 ```
 **_Run the server for each GPFS file system_**
 ```bash
-./main -listenAddr 127.0.0.1 -listenPort 9001 -pluginsDirectory /etc/docker/plugins -filesystem gold -mountpath /gpfs/gold
+main -listenAddr 127.0.0.1 -listenPort 9001 -pluginsDirectory /etc/docker/plugins -filesystem gold -mountpath /gpfs/gold
 
-./main -listenAddr 127.0.0.1 -listenPort 9002 -pluginsDirectory /etc/docker/plugins -filesystem silver -mountpath /gpfs/silver
+main -listenAddr 127.0.0.1 -listenPort 9002 -pluginsDirectory /etc/docker/plugins -filesystem silver -mountpath /gpfs/silver
 
-./main -listenAddr 127.0.0.1 -listenPort 9003 -pluginsDirectory /etc/docker/plugins -filesystem bronze -mountpath /gpfs/bronze
+main -listenAddr 127.0.0.1 -listenPort 9003 -pluginsDirectory /etc/docker/plugins -filesystem bronze -mountpath /gpfs/bronze
 ```
 #### Restart Docker Engine
 Restart the docker engine daemon so that it can discover the plugins in the plugin directory (/etc/docker/plugins)
@@ -138,3 +139,44 @@ docker rm `docker ps -aq`
 ./scripts/run_integration.sh
 ```
 
+# Dependency Management
+
+For dependency management, spectrum-container-plugin uses [godep](https://github.com/tools/godep).
+
+#### Get *godep*
+
+```bash
+go get github.com/tools/godep
+```
+Assuming the GOPATH, GOBIN, and PATH variables are set correctly, run godep:
+```bash
+godep version
+```
+**Make sure you have version `godep v74`** or greater.
+
+#### Modifying the code of a dependency
+
+For example, for modifying spectrum-common and make spectrum-container-plugin use the modified revision:
+
+1. Get the latest spectrum-common into your *go workspace* (get the tip of the *master* branch):<br />
+`go get github.ibm.com/almaden-containers/spectrum-common.git` (use the `-u` flag if already present in workspace)
+2. Optional: Checkout desired branch<br />
+e.g. `cd $GOPATH/src/github.ibm.com/almaden-containers/spectrum-common.git && git checkout develop`
+3. Modify spectrum-common, commit changes (note your commit SHA), push to authoritative remote repo.<br />
+e.g. `cd $GOPATH/src/github.ibm.com/almaden-containers/spectrum-common.git && vim README.md && git add . && git commit && git push origin`
+4. `cd` back to spectrum-container-plugin and run *godep update*<br />
+e.g. `cd $GOPATH/src/github.ibm.com/almaden-containers/spectrum-container-plugin.git && godep update github.ibm.com/almaden-containers/...`<br />
+Wildcard use (*`...`*) is **encouraged** as godep sometimes seems to have problems with full import path specifications of dependencies.
+5. Check with `git diff` if the correct revision (i.e., the commit SHA from Step 3) has been put into the `Godeps/Godeps.json` file and if the changes have been correctly propagated to the `vendor` folder (`$GOPATH/src/github.ibm.com/almaden-containers/spectrum-container-plugin.git/vendor`).
+6. Commit the updated dependencies.<br />
+e.g. `git add Godeps/Godeps.json && git add vendor/ && git commit -m "Updated spectrum-common dependency" && git push origin`
+
+#### Adding a new dependency
+
+1. `go get github.com/sample/sample` to get the library you want to add into your go workspace.
+2. Reference the library in your go code, i.e., use it.
+3. In the root folder of your repository, run `godep save` *without parameters*.<br />
+e.g., `cd $GOPATH/src/github.ibm.com/almaden-containers/spectrum-container-plugin.git && godep save`
+4. Check with `git diff` if the new dependency has been put into the `Godeps/Godeps.json` file and if the changes have been correctly propagated to the `vendor` folder (`$GOPATH/src/github.ibm.com/almaden-containers/spectrum-container-plugin.git/vendor`).
+5. Commit the updated dependency info.<br />
+e.g. `git add Godeps/Godeps.json && git add vendor/ && git commit -m "Added sample dependency" && git push origin`

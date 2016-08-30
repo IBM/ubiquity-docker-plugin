@@ -5,6 +5,7 @@ import (
 
 	common "github.ibm.com/almaden-containers/spectrum-common.git/core"
 	"github.ibm.com/almaden-containers/spectrum-common.git/models"
+	Db "github.ibm.com/almaden-containers/spectrum-common.git/core"
 )
 
 type Controller struct {
@@ -13,8 +14,8 @@ type Controller struct {
 	isActivated bool
 }
 
-func NewController(logger *log.Logger, filesystem, mountpath string) *Controller {
-	return &Controller{log: logger, Client: common.NewSpectrumClient(logger, filesystem, mountpath)}
+func NewController(logger *log.Logger, filesystem, mountpath string, Dbclient *Db.DatabaseClient) *Controller {
+	return &Controller{log: logger, Client: common.NewSpectrumClient(logger, filesystem, mountpath, Dbclient)}
 }
 func NewControllerWithClient(logger *log.Logger, client common.SpectrumClient) *Controller {
 	return &Controller{log: logger, Client: client}
@@ -37,6 +38,13 @@ func (c *Controller) Activate() *models.ActivateResponse {
 			return &models.ActivateResponse{}
 		}
 	}
+
+	err = c.Client.Activate()
+
+	if err != nil {
+		return &models.ActivateResponse{}
+	}
+
 	c.isActivated = true
 	return &models.ActivateResponse{Implements: []string{"VolumeDriver"}}
 }

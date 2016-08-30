@@ -163,11 +163,11 @@
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/spectrum-common.git/core",
-			"Rev": "6db9ca2e36e7d67ad91baa2592e137827a97401a"
+			"Rev": "4c2c5a58a9847d756f7e38c63ace2c17399139c9"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/spectrum-common.git/models",
-			"Rev": "6db9ca2e36e7d67ad91baa2592e137827a97401a"
+			"Rev": "4c2c5a58a9847d756f7e38c63ace2c17399139c9"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
@@ -176,6 +176,11 @@
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Comment": "v1.1.0-78-gb5c99a7",
+			"Rev": "b5c99a720374818b629fd1fbf6d2cbb4fb9a5644"
 		}
 	]
 }

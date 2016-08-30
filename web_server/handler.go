@@ -9,6 +9,7 @@ import (
 
 	"github.ibm.com/almaden-containers/spectrum-common.git/models"
 	"github.ibm.com/almaden-containers/spectrum-container-plugin.git/core"
+	Db "github.ibm.com/almaden-containers/spectrum-common.git/core"
 )
 
 type Handler struct {
@@ -16,8 +17,8 @@ type Handler struct {
 	log        *log.Logger
 }
 
-func NewHandler(logger *log.Logger, filesystem, mountpath string) *Handler {
-	return &Handler{log: logger, Controller: core.NewController(logger, filesystem, mountpath)}
+func NewHandler(logger *log.Logger, filesystem, mountpath string, Dbclient *Db.DatabaseClient) *Handler {
+	return &Handler{log: logger, Controller: core.NewController(logger, filesystem, mountpath, Dbclient)}
 }
 
 func (c *Handler) Activate(w http.ResponseWriter, r *http.Request) {

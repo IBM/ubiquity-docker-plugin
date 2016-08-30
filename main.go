@@ -9,6 +9,9 @@ import (
 	"path"
 
 	"github.ibm.com/almaden-containers/spectrum-container-plugin.git/web_server"
+	"github.ibm.com/almaden-containers/spectrum-common.git/core"
+	"os/signal"
+	"syscall"
 )
 
 var address = flag.String(
@@ -46,7 +49,25 @@ func main() {
 	flag.Parse()
 	logger, logFile := setupLogger(*logPath)
 	defer closeLogs(logFile)
-	server := web_server.NewServer(logger, *filesystemName, *defaultMountPath)
+
+	// Initialize Database connection
+	DbClient := core.NewDatabaseClient(logger, *filesystemName, *defaultMountPath)
+	err := DbClient.Init()
+	if err != nil {
+		logger.Fatalln(err.Error())
+	}
+
+	// Catch Ctrl-C / interrupts to perform DB connection cleanup
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
+	go func() {
+		<-c
+		DbClient.Close()
+		os.Exit(1)
+	}()
+
+	server := web_server.NewServer(logger, *filesystemName, *defaultMountPath, DbClient)
 	server.Start(*address, *port, *pluginsPath)
 }
 

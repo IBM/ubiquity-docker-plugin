@@ -53,7 +53,7 @@ func (l *FileLock) Lock() error {
 
 				stat := fi.Sys().(*syscall.Stat_t)
 
-				ctime := time.Unix(stat.Ctimespec.Unix())
+				ctime := time.Unix(stat.Ctim.Unix())
 
 				if time.Since(ctime) >= LOCK_STALE_TIMEOUT {
 					l.log.Printf("Found stale lock file : %s\n", lockPath)

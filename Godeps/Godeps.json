@@ -163,11 +163,11 @@
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/spectrum-common.git/core",
-			"Rev": "4c2c5a58a9847d756f7e38c63ace2c17399139c9"
+			"Rev": "c5f89fb2b52f7d2d63bf4382414ff96dce78e5a3"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/spectrum-common.git/models",
-			"Rev": "4c2c5a58a9847d756f7e38c63ace2c17399139c9"
+			"Rev": "c5f89fb2b52f7d2d63bf4382414ff96dce78e5a3"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",

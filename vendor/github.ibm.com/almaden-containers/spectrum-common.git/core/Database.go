@@ -54,6 +54,9 @@ func (d *DatabaseClient) Init() error {
 
 func (d *DatabaseClient) Close() error {
 
+	d.log.Println("DatabaseClient: DB Close start")
+	defer d.log.Println("DatabaseClient: DB Close end")
+
 	if (d.Db != nil) {
 		err := d.Db.Close()
 		if err != nil {
@@ -89,8 +92,8 @@ func (d *DatabaseClient) CreateVolumeTable() error {
 }
 
 func (d *DatabaseClient) VolumeExists(name string) (bool, error) {
-	d.log.Println("DatabaseClient: volumeExists start")
-	defer d.log.Println("DatabaseClient: volumeExists end")
+	d.log.Println("DatabaseClient: VolumeExists start")
+	defer d.log.Println("DatabaseClient: VolumeExists end")
 
 	volume_exists_stmt := `
 	SELECT EXISTS ( SELECT VolumeName FROM Volumes WHERE VolumeName = ? )
@@ -155,8 +158,8 @@ func (d *DatabaseClient) InsertFilesetVolume(fileset, volumeName string) error {
 }
 
 func (d *DatabaseClient) insertVolume(volume *Volume) error {
-	d.log.Println("DatabaseClient: InsertVolume start")
-	defer d.log.Println("DatabaseClient: InsertVolume end")
+	d.log.Println("DatabaseClient: insertVolume start")
+	defer d.log.Println("DatabaseClient: insertVolume end")
 
 	insert_volume_stmt := `
 	INSERT INTO Volumes(VolumeName, VolumeType, ClusterId, Filesystem, Fileset, Directory, MountPoint, AdditionalData)
@@ -184,8 +187,8 @@ func (d *DatabaseClient) insertVolume(volume *Volume) error {
 }
 
 func (d *DatabaseClient) UpdateVolumeMountpoint(name, mountpoint string) error {
-	d.log.Println("DatabaseClient: GetVolume start")
-	defer d.log.Println("DatabaseClient: GetVolume end")
+	d.log.Println("DatabaseClient: UpdateVolumeMountpoint start")
+	defer d.log.Println("DatabaseClient: UpdateVolumeMountpoint end")
 
 	update_volume_stmt := `
 	UPDATE Volumes
@@ -243,8 +246,8 @@ func (d *DatabaseClient) GetVolume(name string) (*Volume, error) {
 }
 
 func (d *DatabaseClient) ListVolumes() ([]Volume, error) {
-	d.log.Println("DatabaseClient: GetVolume start")
-	defer d.log.Println("DatabaseClient: GetVolume end")
+	d.log.Println("DatabaseClient: ListVolumes start")
+	defer d.log.Println("DatabaseClient: ListVolumes end")
 
 	list_volumes_stmt := `
         SELECT *

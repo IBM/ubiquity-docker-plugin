@@ -30,7 +30,7 @@ func (l *FileLock) Lock() error {
 	var sleep_time time.Duration
 	var attempt int
 
-	lockFile := l.Filesystem + "-db" + ".lock"
+	lockFile := "spectrum-scale-" + l.Filesystem + ".lock"
 	lockPath := path.Join(l.Mountpoint, lockFile)
 
 	for sleep_time < LOCK_RETRY_TIMEOUT {
@@ -94,7 +94,7 @@ func (l *FileLock) Lock() error {
 
 func (l *FileLock) Unlock() error {
 
-	lockFile := l.Filesystem + "-db" + ".lock"
+	lockFile := "spectrum-scale-" + l.Filesystem + ".lock"
 	lockPath := path.Join(l.Mountpoint, lockFile)
 
 	l.log.Printf("Unlocking on lockPath %s\n", lockPath)

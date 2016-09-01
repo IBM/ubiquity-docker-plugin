@@ -40,7 +40,7 @@ func (d *DatabaseClient) Init() error {
 	d.log.Println("DatabaseClient: DB Init start")
 	defer d.log.Println("DatabaseClient: DB Init end")
 
-	dbPath := path.Join(d.Mountpoint, "gpfs.db")
+	dbPath := path.Join(d.Mountpoint, "spectrum-scale-",d.Filesystem,".db")
 
 	Db, err := sql.Open("sqlite3", dbPath)
 

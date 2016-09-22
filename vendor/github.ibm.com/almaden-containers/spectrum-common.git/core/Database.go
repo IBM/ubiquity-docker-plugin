@@ -1,10 +1,11 @@
 package core
 
 import (
-	"log"
 	"database/sql"
-	"path"
 	"fmt"
+	"log"
+	"path"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -13,14 +14,16 @@ type DatabaseClient struct {
 	Mountpoint string
 	log        *log.Logger
 	Db         *sql.DB
-        ClusterId  string
+	ClusterId  string
 }
 
 const (
 	FILESET = iota
+	LIGHTWEIGHT
 )
 
 type Volume struct {
+	VolumeId       int
 	VolumeName     string
 	VolumeType     int
 	ClusterId      string
@@ -32,7 +35,7 @@ type Volume struct {
 }
 
 func NewDatabaseClient(log *log.Logger, filesystem, mountpoint string) *DatabaseClient {
-	return &DatabaseClient{log:log, Filesystem:filesystem, Mountpoint:mountpoint}
+	return &DatabaseClient{log: log, Filesystem: filesystem, Mountpoint: mountpoint}
 }
 
 func (d *DatabaseClient) Init() error {
@@ -50,7 +53,7 @@ func (d *DatabaseClient) Init() error {
 	}
 	d.Db = Db
 	d.log.Printf("Established Database connection to %s via go-sqlite3 driver", dbPath)
-        return nil
+	return nil
 }
 
 func (d *DatabaseClient) Close() error {
@@ -58,7 +61,7 @@ func (d *DatabaseClient) Close() error {
 	d.log.Println("DatabaseClient: DB Close start")
 	defer d.log.Println("DatabaseClient: DB Close end")
 
-	if (d.Db != nil) {
+	if d.Db != nil {
 		err := d.Db.Close()
 		if err != nil {
 			return fmt.Errorf("Failed to close DB connection: %s\n", err.Error())
@@ -73,7 +76,8 @@ func (d *DatabaseClient) CreateVolumeTable() error {
 
 	volumes_table_create_stmt := `
 	 CREATE TABLE IF NOT EXISTS Volumes (
-	     VolumeName     TEXT NOT NULL PRIMARY KEY,
+	     VolumeId       INTEGER PRIMARY KEY AUTOINCREMENT,
+	     VolumeName     TEXT NOT NULL,
 	     VolumeType     INTEGER NOT NULL,
 	     ClusterId      TEXT NOT NULL,
              Filesystem     TEXT NOT NULL,
@@ -119,7 +123,7 @@ func (d *DatabaseClient) VolumeExists(name string) (bool, error) {
 		return true, nil
 	}
 
-	return false,nil
+	return false, nil
 }
 
 func (d *DatabaseClient) DeleteVolume(name string) error {
@@ -152,8 +156,18 @@ func (d *DatabaseClient) InsertFilesetVolume(fileset, volumeName string) error {
 	d.log.Println("DatabaseClient: InsertFilesetVolume start")
 	defer d.log.Println("DatabaseClient: InsertFilesetVolume end")
 
-	volume := &Volume{VolumeName:volumeName,VolumeType:FILESET, ClusterId:d.ClusterId, FileSystem:d.Filesystem,
-		Fileset:fileset}
+	volume := &Volume{VolumeName: volumeName, VolumeType: FILESET, ClusterId: d.ClusterId, FileSystem: d.Filesystem,
+		Fileset: fileset}
+
+	return d.insertVolume(volume)
+}
+
+func (d *DatabaseClient) InsertLightweightVolume(fileset, directory, volumeName string) error {
+	d.log.Println("DatabaseClient: InsertLightweightVolume start")
+	defer d.log.Println("DatabaseClient: InsertLightweightVolume end")
+
+	volume := &Volume{VolumeName: volumeName, VolumeType: LIGHTWEIGHT, ClusterId: d.ClusterId, FileSystem: d.Filesystem,
+		Fileset: fileset, Directory:directory}
 
 	return d.insertVolume(volume)
 }
@@ -205,15 +219,14 @@ func (d *DatabaseClient) UpdateVolumeMountpoint(name, mountpoint string) error {
 
 	defer stmt.Close()
 
-	_,err = stmt.Exec(mountpoint, name)
+	_, err = stmt.Exec(mountpoint, name)
 
 	if err != nil {
-		return  fmt.Errorf("Failed to Update Volume %s : %s", name, err.Error())
+		return fmt.Errorf("Failed to Update Volume %s : %s", name, err.Error())
 	}
 
 	return nil
 }
-
 
 func (d *DatabaseClient) GetVolume(name string) (*Volume, error) {
 	d.log.Println("DatabaseClient: GetVolume start")
@@ -232,18 +245,45 @@ func (d *DatabaseClient) GetVolume(name string) (*Volume, error) {
 	defer stmt.Close()
 
 	var volName, clusterId, filesystem, fileset, directory, mountpoint, addData string
-	var volType int
+	var volType, volId int
 
-	err = stmt.QueryRow(name).Scan(&volName, &volType, &clusterId, &filesystem, &fileset, &directory, &mountpoint, &addData)
+	err = stmt.QueryRow(name).Scan(&volId, &volName, &volType, &clusterId, &filesystem, &fileset, &directory, &mountpoint, &addData)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to Get Volume for %s : %s", name, err.Error())
 	}
 
-	scannedVolume := &Volume{VolumeName:volName, VolumeType:volType, ClusterId:clusterId, FileSystem:filesystem,
-		Fileset:fileset, Directory:directory, Mountpoint:mountpoint}
+	scannedVolume := &Volume{VolumeId: volId, VolumeName: volName, VolumeType: volType, ClusterId: clusterId, FileSystem: filesystem,
+		Fileset: fileset, Directory: directory, Mountpoint: mountpoint}
 
-	return scannedVolume,nil
+	return scannedVolume, nil
+}
+
+func (d *DatabaseClient) GetVolumeForMountPoint(mountpoint string) (string, error) {
+	d.log.Println("DatabaseClient: GetVolumeForMountPoint start")
+	defer d.log.Println("DatabaseClient: GetVolumeForMountPoint end")
+
+	read_volume_stmt := `
+        SELECT VolumeName FROM Volumes WHERE MountPoint = ?
+        `
+
+	stmt, err := d.Db.Prepare(read_volume_stmt)
+
+	if err != nil {
+		return "", fmt.Errorf("Failed to create GetVolumeForMountPoint Stmt for %s : %s", mountpoint, err.Error())
+	}
+
+	defer stmt.Close()
+
+	var volName string
+
+	err = stmt.QueryRow(mountpoint).Scan(&volName)
+
+	if err != nil {
+		return "", fmt.Errorf("Failed to Get Volume for %s : %s", mountpoint, err.Error())
+	}
+
+	return volName, nil
 }
 
 func (d *DatabaseClient) ListVolumes() ([]Volume, error) {
@@ -264,18 +304,18 @@ func (d *DatabaseClient) ListVolumes() ([]Volume, error) {
 
 	var volumes []Volume
 	var volName, clusterId, filesystem, fileset, directory, mountpoint, addData string
-	var volType int
+	var volType, volId int
 
 	for rows.Next() {
 
-		err = rows.Scan(&volName, &volType, &clusterId, &filesystem, &fileset, &directory, &mountpoint, &addData)
+		err = rows.Scan(&volId, &volName, &volType, &clusterId, &filesystem, &fileset, &directory, &mountpoint, &addData)
 
 		if err != nil {
 			return nil, fmt.Errorf("Failed to scan rows while listing volumes: %s", err.Error())
 		}
 
-		scannedVolume := Volume{VolumeName:volName, VolumeType:volType, ClusterId:clusterId,
-			FileSystem:filesystem, Fileset:fileset, Directory:directory, Mountpoint:mountpoint}
+		scannedVolume := Volume{VolumeId: volId, VolumeName: volName, VolumeType: volType, ClusterId: clusterId,
+			FileSystem: filesystem, Fileset: fileset, Directory: directory, Mountpoint: mountpoint}
 
 		volumes = append(volumes, scannedVolume)
 	}
@@ -283,8 +323,8 @@ func (d *DatabaseClient) ListVolumes() ([]Volume, error) {
 	err = rows.Err()
 
 	if err != nil {
-		return  nil, fmt.Errorf("Failure while iterating rows : %s", err.Error())
+		return nil, fmt.Errorf("Failure while iterating rows : %s", err.Error())
 	}
 
-	return volumes,nil
+	return volumes, nil
 }

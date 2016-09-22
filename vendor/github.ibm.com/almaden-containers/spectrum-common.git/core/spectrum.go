@@ -139,31 +139,27 @@ func (m *MMCliFilesetClient) Create(name string, opts map[string]interface{}) (e
 		userSpecifiedFileset, filesetExists := opts["fileset"]
 		userSpecifiedDirectory, dirExists := opts["directory"]
 
-		userSpecifiedType = userSpecifiedType.(string)
-		userSpecifiedFileset = userSpecifiedFileset.(string)
-		userSpecifiedDirectory = userSpecifiedDirectory.(string)
-
 		if len(opts) == 1 {
 			if typeExists {
 				return m.create(name, opts)
 			} else if filesetExists {
-				return m.updateDBWithExistingFileset(name, userSpecifiedFileset)
+				return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
 			} else if dirExists {
-				return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory)
+				return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
 			} else {
 				return errors.New("Invalid arguments")
 			}
 		} else if len(opts) == 2 {
 			if typeExists {
-				if userSpecifiedType == "fileset" && filesetExists {
-					return m.updateDBWithExistingFileset(name, userSpecifiedFileset)
-				} else if userSpecifiedType == "lightweight" && dirExists {
-					return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory)
+				if userSpecifiedType.(string) == "fileset" && filesetExists {
+					return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
+				} else if userSpecifiedType.(string) == "lightweight" && dirExists {
+					return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
 				} else {
 					return errors.New("Invalid arguments")
 				}
 			} else if filesetExists && dirExists {
-				return m.updateDBWithExistingDirectory(name, userSpecifiedFileset, userSpecifiedDirectory)
+				return m.updateDBWithExistingDirectory(name, userSpecifiedFileset.(string), userSpecifiedDirectory.(string))
 			}
 		} else {
 			return errors.New("Invalid number of arguments")
@@ -345,7 +341,7 @@ func (m *MMCliFilesetClient) create(name string, opts map[string]interface{}) er
 		userSpecifiedType, typeExists := opts["type"]
 
 		if typeExists {
-			if userSpecifiedType == "fileset" {
+			if userSpecifiedType.(string) == "fileset" {
 
 				err := m.createFilesetVolume(name)
 
@@ -353,7 +349,7 @@ func (m *MMCliFilesetClient) create(name string, opts map[string]interface{}) er
 					m.log.Println(err.Error())
 					return err
 				}
-			} else if userSpecifiedType == "lightweight" {
+			} else if userSpecifiedType.(string) == "lightweight" {
 
 				err := m.createLightweightVolume(name)
 
@@ -362,7 +358,7 @@ func (m *MMCliFilesetClient) create(name string, opts map[string]interface{}) er
 					return err
 				}
 			} else {
-				return fmt.Errorf("Invalid type %s", userSpecifiedType)
+				return fmt.Errorf("Invalid type %s", userSpecifiedType.(string))
 			}
 		}
 	} else {

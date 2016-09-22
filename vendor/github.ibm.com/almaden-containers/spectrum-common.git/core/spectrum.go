@@ -695,7 +695,7 @@ func (m *MMCliFilesetClient) Attach(name string) (Mountpoint string, err error) 
 
 		if err != nil {
 			m.log.Println(err.Error())
-			return err
+			return "",err
 		}
 
 		if !isFilesetLinked {

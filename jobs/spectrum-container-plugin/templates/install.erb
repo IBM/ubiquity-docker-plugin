@@ -18,6 +18,7 @@ GPFS_CLIENT_IP=$(hostname -I | cut -f1 -d ' ')
 
 # Install Dependencies
 echo "Installing dependencies required for setting up GPFS Client"
+sudo rm -rvf /var/lib/apt/lists/*
 apt-get update
 apt-get -y install python nfs-common ksh binutils libaio1 m4 gawk alien devscripts sshpass
 

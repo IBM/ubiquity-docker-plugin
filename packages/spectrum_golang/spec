@@ -1,5 +1,5 @@
 ---
-name: golang
+name: spectrum_golang
 
 files:
   - golang/go1.6.linux-amd64.tar.gz

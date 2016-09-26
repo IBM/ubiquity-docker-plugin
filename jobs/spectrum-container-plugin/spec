@@ -16,6 +16,6 @@ properties:
     default: "gpfsr0x"
 
 packages:
-- golang
+- spectrum_golang
 - spectrum_pid_utils
 - spectrum-container-plugin

@@ -2,7 +2,7 @@
 name: spectrum-container-plugin
 
 dependencies:
-  - golang
+  - spectrum_golang
 
 files:
   - ./main.go

@@ -2,6 +2,7 @@ package core
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -219,16 +220,17 @@ func (m *MMCliFilesetClient) filesetExists(name string) error {
 	m.log.Printf("filesetExists: %s\n", name)
 
 	spectrumCommand := "/usr/lpp/mmfs/bin/mmlsfileset"
-	args := []string{m.Filesystem, name, "-Y"}
+	args := []string{m.Filesystem, name}
 	cmd := exec.Command(spectrumCommand, args...)
 
-	_, err := cmd.Output()
+	out, err := cmd.Output()
 	if err != nil {
 		m.log.Printf("error checking fileset %#v", err)
 		return err
 	}
 	var line string
-	scanner := bufio.NewScanner(cmd.Stdin)
+	reader := bytes.NewBufferString(string(out))
+	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line = (scanner.Text())
 		lineSlice := strings.Split(line, " ")

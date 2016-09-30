@@ -139,32 +139,48 @@ func (m *MMCliFilesetClient) Create(name string, opts map[string]interface{}) (e
 		userSpecifiedType, typeExists := opts["type"]
 		userSpecifiedFileset, filesetExists := opts["fileset"]
 		userSpecifiedDirectory, dirExists := opts["directory"]
+		userSpecifiedQuota, quotaExists := opts["quota"]
 
 		if len(opts) == 1 {
-			if typeExists {
+			if typeExists || quotaExists {
 				return m.create(name, opts)
 			} else if filesetExists {
 				return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
 			} else if dirExists {
 				return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
-			} else {
-				return errors.New("Invalid arguments")
 			}
+			return errors.New("Invalid arguments")
 		} else if len(opts) == 2 {
 			if typeExists {
-				if userSpecifiedType.(string) == "fileset" && filesetExists {
-					return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
-				} else if userSpecifiedType.(string) == "lightweight" && dirExists {
-					return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
-				} else {
+				if userSpecifiedType.(string) == "fileset" {
+					if filesetExists {
+						return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
+					} else if quotaExists {
+						return m.create(name, opts)
+					}
 					return errors.New("Invalid arguments")
+				} else if userSpecifiedType.(string) == "lightweight"  && dirExists {
+					return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
 				}
-			} else if filesetExists && dirExists {
-				return m.updateDBWithExistingDirectory(name, userSpecifiedFileset.(string), userSpecifiedDirectory.(string))
+				return errors.New("Invalid arguments")
+			} else if filesetExists {
+				if dirExists {
+					return m.updateDBWithExistingDirectory(name, userSpecifiedFileset.(string), userSpecifiedDirectory.(string))
+				} else if quotaExists {
+					return m.updateDBWithExistingFilesetQuota(name, userSpecifiedFileset.(string), userSpecifiedQuota.(string))
+				}
 			}
-		} else {
-			return errors.New("Invalid number of arguments")
+			return errors.New("Invalid arguments")
+		} else if len(opts) == 3 {
+			if typeExists {
+				if userSpecifiedType.(string) == "fileset" && filesetExists && quotaExists {
+					return m.updateDBWithExistingFilesetQuota(name, userSpecifiedFileset.(string), userSpecifiedQuota.(string))
+				} else if userSpecifiedType.(string) == "lightweight" && filesetExists && dirExists {
+					return m.updateDBWithExistingDirectory(name, userSpecifiedFileset.(string), userSpecifiedDirectory.(string))
+				}
+			}
 		}
+		return errors.New("Invalid number of arguments")
 	}
 
 	return m.create(name, opts)
@@ -265,6 +281,26 @@ func (m *MMCliFilesetClient) updateDBWithExistingFileset(name, userSpecifiedFile
 	return nil
 }
 
+func (m *MMCliFilesetClient) updateDBWithExistingFilesetQuota(name, userSpecifiedFileset, quota string) error {
+	m.log.Println("MMCliFilesetClient:  updateDBWithExistingFilesetQuota start")
+	defer m.log.Println("MMCliFilesetClient: updateDBWithExistingFilesetQuota end")
+
+	err := m.verifyFilesetQuota(userSpecifiedFileset, quota)
+
+	if err != nil {
+		m.log.Println(err.Error())
+		return err
+	}
+
+	err = m.DbClient.InsertFilesetQuotaVolume(userSpecifiedFileset, quota, name)
+
+	if err != nil {
+		m.log.Println(err.Error())
+		return err
+	}
+	return nil
+}
+
 func (m *MMCliFilesetClient) updateDBWithExistingDirectory(name, userSpecifiedFileset, userSpecifiedDirectory string) error {
 	m.log.Println("MMCliFilesetClient:  updateDBWithExistingDirectory start")
 	defer m.log.Println("MMCliFilesetClient: updateDBWithExistingDirectory end")
@@ -339,37 +375,33 @@ func (m *MMCliFilesetClient) create(name string, opts map[string]interface{}) er
 	m.log.Println("MMCliFilesetClient: createNew start")
 	defer m.log.Println("MMCliFilesetClient: createNew end")
 
+	var err error
 	if len(opts) > 0 {
 		userSpecifiedType, typeExists := opts["type"]
+		userSpecifiedQuota, quotaExists := opts["quota"]
 
 		if typeExists {
 			if userSpecifiedType.(string) == "fileset" {
-
-				err := m.createFilesetVolume(name)
-
-				if err != nil {
-					m.log.Println(err.Error())
-					return err
+				if quotaExists {
+					err = m.createFilesetQuotaVolume(name, userSpecifiedQuota.(string))
+				} else {
+					err = m.createFilesetVolume(name)
 				}
 			} else if userSpecifiedType.(string) == "lightweight" {
-
-				err := m.createLightweightVolume(name)
-
-				if err != nil {
-					m.log.Println(err.Error())
-					return err
-				}
+				err = m.createLightweightVolume(name)
 			} else {
 				return fmt.Errorf("Invalid type %s", userSpecifiedType.(string))
 			}
+		} else if quotaExists {
+			err = m.createFilesetQuotaVolume(name, userSpecifiedQuota.(string))
 		}
 	} else {
-		err := m.createFilesetVolume(name)
+		err = m.createFilesetVolume(name)
+	}
 
-		if err != nil {
-			m.log.Println(err.Error())
-			return err
-		}
+	if err != nil {
+		m.log.Println(err.Error())
+		return err
 	}
 
 	return nil
@@ -388,6 +420,27 @@ func (m *MMCliFilesetClient) createFilesetVolume(name string) error {
 	}
 
 	return m.DbClient.InsertFilesetVolume(filesetName, name)
+}
+
+func (m *MMCliFilesetClient) createFilesetQuotaVolume(name, quota string) error {
+	m.log.Println("MMCliFilesetClient: createFilesetQuotaVolume start")
+	defer m.log.Println("MMCliFilesetClient: createFilesetQuotaVolume end")
+
+	filesetName := generateFilesetName()
+
+	err := m.createFileset(filesetName)
+
+	if err != nil {
+		return err
+	}
+
+	err = m.setFilesetQuota(filesetName, quota)
+
+	if err != nil {
+		return err
+	}
+
+	return m.DbClient.InsertFilesetQuotaVolume(filesetName, quota, name)
 }
 
 func (m *MMCliFilesetClient) createLightweightVolume(name string) error {
@@ -523,6 +576,57 @@ func (m *MMCliFilesetClient) deleteFileset(filesetName string) error {
 	return nil
 }
 
+func (m *MMCliFilesetClient) verifyFilesetQuota(filesetName, quota string) error {
+	m.log.Println("MMCliFilesetClient: verifyFilesetQuota start")
+	defer m.log.Println("MMCliFilesetClient: verifyFilesetQuota end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmlsquota"
+	args := []string{"-j", filesetName, m.Filesystem, "--block-size", "auto"}
+
+	cmd := exec.Command(spectrumCommand, args...)
+	outputBytes, err := cmd.Output()
+
+	if err != nil {
+		return fmt.Errorf("Failed to list quota for fileset %s: %s", filesetName, err.Error())
+	}
+
+	spectrumOutput := string(outputBytes)
+
+	lines := strings.Split(spectrumOutput, "\n")
+
+	if len(lines) > 2 {
+		tokens := strings.Fields(lines[2])
+
+		if len(tokens) > 3 {
+			if tokens[3] == quota {
+				return nil
+			}
+		} else {
+			fmt.Errorf("Error parsing tokens while listing quota for fileset %s", filesetName)
+		}
+	}
+        return fmt.Errorf("Mismatch between user-specified and listed quota for fileset %s", filesetName)
+}
+
+func (m *MMCliFilesetClient) setFilesetQuota(filesetName, quota string) error {
+	m.log.Println("MMCliFilesetClient: setFilesetQuota start")
+	defer m.log.Println("MMCliFilesetClient: setFilesetQuota end")
+
+	m.log.Printf("setting quota to %s for fileset %s\n", quota, filesetName)
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmsetquota"
+	args := []string{m.Filesystem + ":" + filesetName, "--block", quota + ":" + quota}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+
+	if err != nil {
+		return fmt.Errorf("Failed to set quota for fileset %s", filesetName)
+	}
+
+	m.log.Printf("setFilesetQuota output: %s\n", string(output))
+	return nil
+}
+
 func (m *MMCliFilesetClient) initLightweightVolumes() error {
 	m.log.Println("MMCliFilesetClient: InitLightweightVolumes start")
 	defer m.log.Println("MMCliFilesetClient: InitLightweightVolumes end")
@@ -597,7 +701,8 @@ func (m *MMCliFilesetClient) Remove(name string) (err error) {
 			return err
 		}
 
-		if existingVolume.VolumeType == FILESET {
+		if existingVolume.VolumeType == FILESET ||
+			existingVolume.VolumeType == FILESET_QUOTA {
 
 			isFilesetLinked,err := m.isFilesetLinked(existingVolume.Fileset)
 
@@ -691,7 +796,8 @@ func (m *MMCliFilesetClient) Attach(name string) (Mountpoint string, err error) 
 	}
 
 	var mountPath string
-	if existingVolume.VolumeType == FILESET {
+	if existingVolume.VolumeType == FILESET ||
+		existingVolume.VolumeType == FILESET_QUOTA {
 
 		isFilesetLinked, err := m.isFilesetLinked(existingVolume.Fileset)
 

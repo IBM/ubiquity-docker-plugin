@@ -7,6 +7,7 @@ import (
 	"path"
 
 	_ "github.com/mattn/go-sqlite3"
+	"strings"
 )
 
 type DatabaseClient struct {
@@ -20,6 +21,7 @@ type DatabaseClient struct {
 const (
 	FILESET = iota
 	LIGHTWEIGHT
+	FILESET_QUOTA
 )
 
 type Volume struct {
@@ -172,6 +174,19 @@ func (d *DatabaseClient) InsertLightweightVolume(fileset, directory, volumeName 
 	return d.insertVolume(volume)
 }
 
+func (d *DatabaseClient) InsertFilesetQuotaVolume(fileset, quota, volumeName string) error {
+	d.log.Println("DatabaseClient: InsertFilesetQuotaVolume start")
+	defer d.log.Println("DatabaseClient: InsertFilesetQuotaVolume end")
+
+	volume := &Volume{VolumeName: volumeName, VolumeType: FILESET_QUOTA, ClusterId: d.ClusterId, FileSystem: d.Filesystem,
+		Fileset: fileset}
+
+	volume.AdditionalData = make(map[string]string)
+	volume.AdditionalData["quota"] = quota
+
+	return d.insertVolume(volume)
+}
+
 func (d *DatabaseClient) insertVolume(volume *Volume) error {
 	d.log.Println("DatabaseClient: insertVolume start")
 	defer d.log.Println("DatabaseClient: insertVolume end")
@@ -189,7 +204,7 @@ func (d *DatabaseClient) insertVolume(volume *Volume) error {
 
 	defer stmt.Close()
 
-	var additionalData string
+	additionalData := getAdditionalData(volume)
 
 	_, err = stmt.Exec(volume.VolumeName, volume.VolumeType, volume.ClusterId, volume.FileSystem, volume.Fileset,
 		volume.Directory, volume.Mountpoint, additionalData)
@@ -256,6 +271,8 @@ func (d *DatabaseClient) GetVolume(name string) (*Volume, error) {
 	scannedVolume := &Volume{VolumeId: volId, VolumeName: volName, VolumeType: volType, ClusterId: clusterId, FileSystem: filesystem,
 		Fileset: fileset, Directory: directory, Mountpoint: mountpoint}
 
+	setAdditionalData(addData, scannedVolume)
+
 	return scannedVolume, nil
 }
 
@@ -317,6 +334,8 @@ func (d *DatabaseClient) ListVolumes() ([]Volume, error) {
 		scannedVolume := Volume{VolumeId: volId, VolumeName: volName, VolumeType: volType, ClusterId: clusterId,
 			FileSystem: filesystem, Fileset: fileset, Directory: directory, Mountpoint: mountpoint}
 
+		setAdditionalData(addData, &scannedVolume)
+
 		volumes = append(volumes, scannedVolume)
 	}
 
@@ -327,4 +346,32 @@ func (d *DatabaseClient) ListVolumes() ([]Volume, error) {
 	}
 
 	return volumes, nil
+}
+
+func getAdditionalData(volume *Volume) string {
+
+	var addData string
+
+	if len(volume.AdditionalData) > 0 {
+
+		for key, value := range volume.AdditionalData {
+			addData += key + "=" + value + ","
+		}
+		addData = strings.TrimSuffix(addData, ",")
+	}
+	return addData
+}
+
+func setAdditionalData(addData string, volume *Volume) {
+
+	if len(addData) > 0 {
+		volume.AdditionalData = make(map[string]string)
+
+		lines := strings.Split(addData, ",")
+
+		for _, line := range lines {
+			tokens := strings.Split(line, "=")
+			volume.AdditionalData[tokens[0]] = tokens[1]
+		}
+	}
 }

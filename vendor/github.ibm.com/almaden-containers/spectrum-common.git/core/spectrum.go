@@ -93,7 +93,7 @@ func (m *MMCliFilesetClient) Activate() (err error) {
 	}
 
 	//check if filesystem is mounted
-	mounted, err := m.isMounted()
+	mounted, err := m.isSpectrumScaleMounted()
 
 	if err != nil {
 		m.log.Println(err.Error())
@@ -1084,7 +1084,7 @@ func (m *MMCliFilesetClient) Get(name string) (volumeMetadata *models.VolumeMeta
 	return nil, nil, errors.New("Volume not found")
 }
 
-func (m *MMCliFilesetClient) isMounted() (isMounted bool, err error) {
+func (m *MMCliFilesetClient) isSpectrumScaleMounted() (isMounted bool, err error) {
 	m.log.Println("MMCliFilesetClient: isMounted start")
 	defer m.log.Println("MMCliFilesetClient: isMounted end")
 

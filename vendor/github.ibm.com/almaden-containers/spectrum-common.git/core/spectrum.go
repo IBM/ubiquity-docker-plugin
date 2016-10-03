@@ -32,8 +32,6 @@ type SpectrumClient interface {
 	UnexportNfs(name string) error
 	List() ([]models.VolumeMetadata, error)
 	Get(name string) (*models.VolumeMetadata, *models.SpectrumConfig, error)
-	IsMounted() (bool, error)
-	Mount() error
 	RemoveWithoutDeletingVolume(string) error
 	GetFileSetForMountPoint(mountPoint string) (string, error)
 }
@@ -48,7 +46,18 @@ type MappingConfig struct {
 	Mappings map[string]Fileset
 }
 
-const LIGHTWEIGHT_VOLUME_FILESET string = "LightweightVolumes"
+const (
+	LIGHTWEIGHT_VOLUME_FILESET string = "LightweightVolumes"
+
+	TYPE_OPT string = "type"
+	DIR_OPT string = "directory"
+	QUOTA_OPT string = "quota"
+	FILESET_OPT string = "fileset"
+
+	FILESET_TYPE string = "fileset"
+	LTWT_VOL_TYPE string = "lightweight"
+
+)
 
 func NewSpectrumClient(logger *log.Logger, filesystem, mountpoint string, dbclient *DatabaseClient) SpectrumClient {
 	return &MMCliFilesetClient{log: logger, Filesystem: filesystem, Mountpoint: mountpoint, DbClient: dbclient,
@@ -81,6 +90,23 @@ func (m *MMCliFilesetClient) Activate() (err error) {
 
 	if m.isActivated {
 		return nil
+	}
+
+	//check if filesystem is mounted
+	mounted, err := m.isMounted()
+
+	if err != nil {
+		m.log.Println(err.Error())
+		return err
+	}
+
+	if mounted == false {
+		err = m.mount()
+
+		if err != nil {
+			m.log.Println(err.Error())
+			return err
+		}
 	}
 
 	clusterId, err := getClusterId()
@@ -136,10 +162,10 @@ func (m *MMCliFilesetClient) Create(name string, opts map[string]interface{}) (e
 
 	if len(opts) > 0 {
 
-		userSpecifiedType, typeExists := opts["type"]
-		userSpecifiedFileset, filesetExists := opts["fileset"]
-		userSpecifiedDirectory, dirExists := opts["directory"]
-		userSpecifiedQuota, quotaExists := opts["quota"]
+		userSpecifiedType, typeExists := opts[TYPE_OPT]
+		userSpecifiedFileset, filesetExists := opts[FILESET_OPT]
+		userSpecifiedDirectory, dirExists := opts[DIR_OPT]
+		userSpecifiedQuota, quotaExists := opts[QUOTA_OPT]
 
 		if len(opts) == 1 {
 			if typeExists || quotaExists {
@@ -152,15 +178,19 @@ func (m *MMCliFilesetClient) Create(name string, opts map[string]interface{}) (e
 			return errors.New("Invalid arguments")
 		} else if len(opts) == 2 {
 			if typeExists {
-				if userSpecifiedType.(string) == "fileset" {
+				if userSpecifiedType.(string) == FILESET_TYPE {
 					if filesetExists {
 						return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
 					} else if quotaExists {
 						return m.create(name, opts)
 					}
 					return errors.New("Invalid arguments")
-				} else if userSpecifiedType.(string) == "lightweight"  && dirExists {
-					return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
+				} else if userSpecifiedType.(string) == LTWT_VOL_TYPE {
+					if filesetExists {
+						return m.create(name, opts)
+					} else if dirExists {
+						return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
+					}
 				}
 				return errors.New("Invalid arguments")
 			} else if filesetExists {
@@ -173,9 +203,9 @@ func (m *MMCliFilesetClient) Create(name string, opts map[string]interface{}) (e
 			return errors.New("Invalid arguments")
 		} else if len(opts) == 3 {
 			if typeExists {
-				if userSpecifiedType.(string) == "fileset" && filesetExists && quotaExists {
+				if userSpecifiedType.(string) == FILESET_TYPE && filesetExists && quotaExists {
 					return m.updateDBWithExistingFilesetQuota(name, userSpecifiedFileset.(string), userSpecifiedQuota.(string))
-				} else if userSpecifiedType.(string) == "lightweight" && filesetExists && dirExists {
+				} else if userSpecifiedType.(string) == LTWT_VOL_TYPE && filesetExists && dirExists {
 					return m.updateDBWithExistingDirectory(name, userSpecifiedFileset.(string), userSpecifiedDirectory.(string))
 				}
 			}
@@ -208,7 +238,7 @@ func (m *MMCliFilesetClient) CreateWithoutProvisioning(name string, opts map[str
 	if volExists {
 		return fmt.Errorf("Volume already exists")
 	}
-	userSpecifiedFileset, exists := opts["fileset"]
+	userSpecifiedFileset, exists := opts[FILESET_OPT]
 	if exists == true {
 		return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
 	} else {
@@ -322,7 +352,13 @@ func (m *MMCliFilesetClient) updateDBWithExistingDirectory(name, userSpecifiedFi
 		}
 	} else {
 		if !m.isLightweightVolumeInitialized {
-			return fmt.Errorf("%s Fileset isn't initialized", m.LightweightVolumeFileset)
+			err := m.initLightweightVolumes()
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
+			}
+			m.isLightweightVolumeInitialized = true
 		}
 	}
 
@@ -377,18 +413,18 @@ func (m *MMCliFilesetClient) create(name string, opts map[string]interface{}) er
 
 	var err error
 	if len(opts) > 0 {
-		userSpecifiedType, typeExists := opts["type"]
-		userSpecifiedQuota, quotaExists := opts["quota"]
+		userSpecifiedType, typeExists := opts[TYPE_OPT]
+		userSpecifiedQuota, quotaExists := opts[QUOTA_OPT]
 
 		if typeExists {
-			if userSpecifiedType.(string) == "fileset" {
+			if userSpecifiedType.(string) == FILESET_TYPE {
 				if quotaExists {
 					err = m.createFilesetQuotaVolume(name, userSpecifiedQuota.(string))
 				} else {
 					err = m.createFilesetVolume(name)
 				}
-			} else if userSpecifiedType.(string) == "lightweight" {
-				err = m.createLightweightVolume(name)
+			} else if userSpecifiedType.(string) == LTWT_VOL_TYPE {
+				err = m.createLightweightVolume(name, opts)
 			} else {
 				return fmt.Errorf("Invalid type %s", userSpecifiedType.(string))
 			}
@@ -419,7 +455,14 @@ func (m *MMCliFilesetClient) createFilesetVolume(name string) error {
 		return err
 	}
 
-	return m.DbClient.InsertFilesetVolume(filesetName, name)
+	err =  m.DbClient.InsertFilesetVolume(filesetName, name)
+
+	if err != nil {
+		return err
+	}
+
+	m.log.Printf("Created fileset volume with fileset %s\n", filesetName)
+	return nil
 }
 
 func (m *MMCliFilesetClient) createFilesetQuotaVolume(name, quota string) error {
@@ -440,26 +483,63 @@ func (m *MMCliFilesetClient) createFilesetQuotaVolume(name, quota string) error 
 		return err
 	}
 
-	return m.DbClient.InsertFilesetQuotaVolume(filesetName, quota, name)
+	err = m.DbClient.InsertFilesetQuotaVolume(filesetName, quota, name)
+
+	if err != nil {
+		return err
+	}
+
+	m.log.Printf("Created fileset volume with fileset %s, quota %s\n", filesetName, quota)
+	return nil
 }
 
-func (m *MMCliFilesetClient) createLightweightVolume(name string) error {
+func (m *MMCliFilesetClient) createLightweightVolume(name string, opts map[string]interface{}) error {
 	m.log.Println("MMCliFilesetClient: createLightweightVolume start")
 	defer m.log.Println("MMCliFilesetClient: createLightweightVolume end")
 
-	if !m.isLightweightVolumeInitialized {
-		err := m.initLightweightVolumes()
+	var lightweightVolumeFileset string
 
-		if err != nil {
-			m.log.Println(err.Error())
-			return err
+	if len(opts) > 0 {
+		if len(opts) == 2 {
+			userSpecifiedType, typeExists := opts[TYPE_OPT]
+			userSpecifiedFileset, filesetExists := opts[FILESET_OPT]
+
+			if typeExists && userSpecifiedType.(string) == LTWT_VOL_TYPE && filesetExists {
+
+				filesetLinked,err := m.isFilesetLinked(userSpecifiedFileset.(string))
+
+				if err != nil {
+					m.log.Println(err.Error())
+					return err
+				}
+
+				if !filesetLinked {
+					err = m.linkFileset(userSpecifiedFileset.(string))
+
+					if err != nil {
+						m.log.Println(err.Error())
+						return err
+					}
+				}
+				lightweightVolumeFileset = userSpecifiedFileset.(string)
+			}
 		}
-		m.isLightweightVolumeInitialized = true
+	} else {
+		if !m.isLightweightVolumeInitialized {
+			err := m.initLightweightVolumes()
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
+			}
+			m.isLightweightVolumeInitialized = true
+		}
+		lightweightVolumeFileset = m.LightweightVolumeFileset
 	}
 
 	lightweightVolumeName := generateLightweightVolumeName()
 
-	lightweightVolumePath := path.Join(m.Mountpoint, m.LightweightVolumeFileset, lightweightVolumeName)
+	lightweightVolumePath := path.Join(m.Mountpoint, lightweightVolumeFileset, lightweightVolumeName)
 
 	err := os.Mkdir(lightweightVolumePath, 0755)
 
@@ -467,7 +547,14 @@ func (m *MMCliFilesetClient) createLightweightVolume(name string) error {
 		return fmt.Errorf("Failed to create directory path %s : %s", lightweightVolumePath, err.Error())
 	}
 
-	return m.DbClient.InsertLightweightVolume(m.LightweightVolumeFileset, lightweightVolumeName, name)
+	err = m.DbClient.InsertLightweightVolume(m.LightweightVolumeFileset, lightweightVolumeName, name)
+
+	if err != nil {
+		return err
+	}
+
+	m.log.Printf("Created LightWeight volume at directory path: %s\n",lightweightVolumePath)
+	return nil
 }
 
 func (m *MMCliFilesetClient) createFileset(filesetName string) error {
@@ -745,8 +832,9 @@ func (m *MMCliFilesetClient) Remove(name string) (err error) {
 			m.log.Println(err.Error())
 			return err
 		}
+		return nil
 	}
-	return nil
+	return errors.New("Volume not found")
 }
 
 func (m *MMCliFilesetClient) RemoveWithoutDeletingVolume(name string) error {
@@ -780,7 +868,7 @@ func (m *MMCliFilesetClient) Attach(name string) (Mountpoint string, err error) 
 	}
 
 	if !volExists {
-		return "", fmt.Errorf("volume couldn't be located")
+		return "", errors.New("Volume not found")
 	}
 
 	existingVolume, err := m.DbClient.GetVolume(name)
@@ -852,7 +940,7 @@ func (m *MMCliFilesetClient) Detach(name string) (err error) {
 	}
 
 	if !volExists {
-		return fmt.Errorf("volume couldn't be located")
+		return errors.New("Volume not found")
 	}
 
 	existingVolume, err := m.DbClient.GetVolume(name)
@@ -993,20 +1081,12 @@ func (m *MMCliFilesetClient) Get(name string) (volumeMetadata *models.VolumeMeta
 		volumeConfigDetails = &models.SpectrumConfig{FilesetId: existingVolume.Fileset, Filesystem: m.Filesystem}
 		return volumeMetadata, volumeConfigDetails, nil
 	}
-	return nil, nil, fmt.Errorf("Cannot find info")
+	return nil, nil, errors.New("Volume not found")
 }
 
-func (m *MMCliFilesetClient) IsMounted() (isMounted bool, err error) {
+func (m *MMCliFilesetClient) isMounted() (isMounted bool, err error) {
 	m.log.Println("MMCliFilesetClient: isMounted start")
 	defer m.log.Println("MMCliFilesetClient: isMounted end")
-
-	m.filelock.Lock()
-	defer func() {
-		lockErr := m.filelock.Unlock()
-		if lockErr != nil && err == nil {
-			err = lockErr
-		}
-	}()
 
 	if m.isMounted == true {
 		isMounted = true
@@ -1043,17 +1123,9 @@ func (m *MMCliFilesetClient) IsMounted() (isMounted bool, err error) {
 	return isMounted, nil
 }
 
-func (m *MMCliFilesetClient) Mount() (err error) {
+func (m *MMCliFilesetClient) mount() (err error) {
 	m.log.Println("MMCliFilesetClient: mount start")
 	defer m.log.Println("MMCliFilesetClient: mount end")
-
-	m.filelock.Lock()
-	defer func() {
-		lockErr := m.filelock.Unlock()
-		if lockErr != nil && err == nil {
-			err = lockErr
-		}
-	}()
 
 	if m.isMounted == true {
 		return nil
@@ -1166,5 +1238,5 @@ func generateFilesetName() string {
 }
 
 func generateLightweightVolumeName() string {
-	return "LightweightVolume" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	return "LtwtVol" + strconv.FormatInt(time.Now().UnixNano(), 10)
 }

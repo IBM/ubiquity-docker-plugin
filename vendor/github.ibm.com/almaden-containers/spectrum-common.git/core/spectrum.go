@@ -498,32 +498,27 @@ func (m *MMCliFilesetClient) createLightweightVolume(name string, opts map[strin
 	defer m.log.Println("MMCliFilesetClient: createLightweightVolume end")
 
 	var lightweightVolumeFileset string
+	userSpecifiedType, typeExists := opts[TYPE_OPT]
+	userSpecifiedFileset, filesetExists := opts[FILESET_OPT]
 
-	if len(opts) > 0 {
-		if len(opts) == 2 {
-			userSpecifiedType, typeExists := opts[TYPE_OPT]
-			userSpecifiedFileset, filesetExists := opts[FILESET_OPT]
+	if len(opts) == 2 && typeExists && userSpecifiedType.(string) == LTWT_VOL_TYPE && filesetExists {
 
-			if typeExists && userSpecifiedType.(string) == LTWT_VOL_TYPE && filesetExists {
+		filesetLinked,err := m.isFilesetLinked(userSpecifiedFileset.(string))
 
-				filesetLinked,err := m.isFilesetLinked(userSpecifiedFileset.(string))
+		if err != nil {
+			m.log.Println(err.Error())
+			return err
+		}
 
-				if err != nil {
-					m.log.Println(err.Error())
-					return err
-				}
+		if !filesetLinked {
+			err = m.linkFileset(userSpecifiedFileset.(string))
 
-				if !filesetLinked {
-					err = m.linkFileset(userSpecifiedFileset.(string))
-
-					if err != nil {
-						m.log.Println(err.Error())
-						return err
-					}
-				}
-				lightweightVolumeFileset = userSpecifiedFileset.(string)
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
 			}
 		}
+		lightweightVolumeFileset = userSpecifiedFileset.(string)
 	} else {
 		if !m.isLightweightVolumeInitialized {
 			err := m.initLightweightVolumes()

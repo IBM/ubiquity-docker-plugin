@@ -542,7 +542,7 @@ func (m *MMCliFilesetClient) createLightweightVolume(name string, opts map[strin
 		return fmt.Errorf("Failed to create directory path %s : %s", lightweightVolumePath, err.Error())
 	}
 
-	err = m.DbClient.InsertLightweightVolume(m.LightweightVolumeFileset, lightweightVolumeName, name)
+	err = m.DbClient.InsertLightweightVolume(lightweightVolumeFileset, lightweightVolumeName, name)
 
 	if err != nil {
 		return err

@@ -982,19 +982,19 @@ func (m *MMCliFilesetClient) UnexportNfs(name string) error {
 
 	if err != nil {
 		m.log.Println(err.Error())
-		return "", err
+		return err
 	}
 
 	if !volExists {
 		m.log.Println("MMCliFilesetClient UnexportNfs: fileset not found")
-		return "", fmt.Errorf("fileset couldn't be located")
+		return fmt.Errorf("fileset couldn't be located")
 	}
 
 	existingVolume, err := m.DbClient.GetVolume(name)
 
 	if err != nil {
 		m.log.Println(err.Error())
-		return "", err
+		return err
 	}
 
 	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"

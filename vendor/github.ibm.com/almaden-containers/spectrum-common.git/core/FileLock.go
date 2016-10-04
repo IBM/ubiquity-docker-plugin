@@ -48,7 +48,11 @@ func (l *FileLock) Lock() error {
 				fi,err := os.Stat(lockPath)
 
 				if err != nil {
-					return fmt.Errorf("Failed to stat %s : %s\n", lockPath, err.Error())
+					if os.IsNotExist(err) {
+						continue
+					} else  {
+						return fmt.Errorf("Failed to stat %s : %s\n", lockPath, err.Error())
+					}
 				}
 
 				stat := fi.Sys().(*syscall.Stat_t)
@@ -61,7 +65,11 @@ func (l *FileLock) Lock() error {
 					err := os.Remove(lockPath)
 
 					if err != nil {
-						return fmt.Errorf("Failed to delete stale lock file %s\n", lockPath)
+						if os.IsNotExist(err) {
+							continue
+						} else {
+							return fmt.Errorf("Failed to delete stale lock file %s\n", lockPath)
+						}
 					} else {
 						l.log.Printf("Successfully deleted stale lock file %s\n", lockPath)
 					}
@@ -102,7 +110,9 @@ func (l *FileLock) Unlock() error {
 	err := os.Remove(lockPath)
 
 	if err != nil {
-		return fmt.Errorf("Failed to delete lock file %s : %s\n", lockPath, err.Error())
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("Failed to delete lock file %s : %s\n", lockPath, err.Error())
+		}
 	}
 
 	l.log.Printf("Successfully unlocked on lockpath %s\n", lockPath)

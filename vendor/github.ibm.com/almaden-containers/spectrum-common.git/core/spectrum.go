@@ -2,9 +2,8 @@ package core
 
 import (
 	"bufio"
-	"encoding/json"
+	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -13,8 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.ibm.com/almaden-containers/spectrum-common.git/models"
 	"errors"
+
+	"github.ibm.com/almaden-containers/spectrum-common.git/models"
 )
 
 //go:generate counterfeiter -o ../fakes/fake_spectrum_client.go . SpectrumClient
@@ -30,8 +30,6 @@ type SpectrumClient interface {
 	UnexportNfs(name string) error
 	List() ([]models.VolumeMetadata, error)
 	Get(name string) (*models.VolumeMetadata, *models.SpectrumConfig, error)
-	IsMounted() (bool, error)
-	Mount() error
 	RemoveWithoutDeletingVolume(string) error
 	GetFileSetForMountPoint(mountPoint string) (string, error)
 }
@@ -46,22 +44,37 @@ type MappingConfig struct {
 	Mappings map[string]Fileset
 }
 
+const (
+	LIGHTWEIGHT_VOLUME_FILESET string = "LightweightVolumes"
+
+	TYPE_OPT string = "type"
+	DIR_OPT string = "directory"
+	QUOTA_OPT string = "quota"
+	FILESET_OPT string = "fileset"
+
+	FILESET_TYPE string = "fileset"
+	LTWT_VOL_TYPE string = "lightweight"
+
+)
+
 func NewSpectrumClient(logger *log.Logger, filesystem, mountpoint string, dbclient *DatabaseClient) SpectrumClient {
 	return &MMCliFilesetClient{log: logger, Filesystem: filesystem, Mountpoint: mountpoint, DbClient: dbclient,
-		filelock:NewFileLock(logger, filesystem, mountpoint)}
+		filelock: NewFileLock(logger, filesystem, mountpoint), LightweightVolumeFileset: LIGHTWEIGHT_VOLUME_FILESET}
 }
 
 type MMCliFilesetClient struct {
-	Filesystem  string
-	Mountpoint  string
-	log         *log.Logger
-	DbClient    *DatabaseClient
-	isMounted   bool
-	isActivated bool
-	filelock    *FileLock
+	Filesystem                     string
+	Mountpoint                     string
+	log                            *log.Logger
+	DbClient                       *DatabaseClient
+	isMounted                      bool
+	isActivated                    bool
+	filelock                       *FileLock
+	LightweightVolumeFileset       string
+	isLightweightVolumeInitialized bool
 }
 
-func (m * MMCliFilesetClient) Activate() (err error) {
+func (m *MMCliFilesetClient) Activate() (err error) {
 	m.log.Println("MMCliFilesetClient: Activate start")
 	defer m.log.Println("MMCliFilesetClient: Activate end")
 
@@ -77,7 +90,24 @@ func (m * MMCliFilesetClient) Activate() (err error) {
 		return nil
 	}
 
-	clusterId,err := getClusterId()
+	//check if filesystem is mounted
+	mounted, err := m.isSpectrumScaleMounted()
+
+	if err != nil {
+		m.log.Println(err.Error())
+		return err
+	}
+
+	if mounted == false {
+		err = m.mount()
+
+		if err != nil {
+			m.log.Println(err.Error())
+			return err
+		}
+	}
+
+	clusterId, err := getClusterId()
 
 	if err != nil {
 		m.log.Println(err.Error())
@@ -98,6 +128,9 @@ func (m * MMCliFilesetClient) Activate() (err error) {
 		m.log.Println(err.Error())
 		return err
 	}
+
+	m.isLightweightVolumeInitialized, _ = m.isLightweightVolumesInitialized()
+
 	m.isActivated = true
 	return nil
 }
@@ -114,7 +147,7 @@ func (m *MMCliFilesetClient) Create(name string, opts map[string]interface{}) (e
 		}
 	}()
 
-	volExists,err := m.DbClient.VolumeExists(name)
+	volExists, err := m.DbClient.VolumeExists(name)
 
 	if err != nil {
 		m.log.Println(err.Error())
@@ -125,31 +158,87 @@ func (m *MMCliFilesetClient) Create(name string, opts map[string]interface{}) (e
 		return fmt.Errorf("Volume already exists")
 	}
 
-	userSpecifiedFileset, exists := opts["fileset"]
-	if exists == true {
-		return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
-	} else {
-		return m.create(name, opts)
+	if len(opts) > 0 {
+
+		userSpecifiedType, typeExists := opts[TYPE_OPT]
+		userSpecifiedFileset, filesetExists := opts[FILESET_OPT]
+		userSpecifiedDirectory, dirExists := opts[DIR_OPT]
+		userSpecifiedQuota, quotaExists := opts[QUOTA_OPT]
+
+		if len(opts) == 1 {
+			if typeExists || quotaExists {
+				return m.create(name, opts)
+			} else if filesetExists {
+				return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
+			} else if dirExists {
+				return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
+			}
+			return errors.New("Invalid arguments")
+		} else if len(opts) == 2 {
+			if typeExists {
+				if userSpecifiedType.(string) == FILESET_TYPE {
+					if filesetExists {
+						return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
+					} else if quotaExists {
+						return m.create(name, opts)
+					}
+					return errors.New("Invalid arguments")
+				} else if userSpecifiedType.(string) == LTWT_VOL_TYPE {
+					if filesetExists {
+						return m.create(name, opts)
+					} else if dirExists {
+						return m.updateDBWithExistingDirectory(name, m.LightweightVolumeFileset, userSpecifiedDirectory.(string))
+					}
+				}
+				return errors.New("Invalid arguments")
+			} else if filesetExists {
+				if dirExists {
+					return m.updateDBWithExistingDirectory(name, userSpecifiedFileset.(string), userSpecifiedDirectory.(string))
+				} else if quotaExists {
+					return m.updateDBWithExistingFilesetQuota(name, userSpecifiedFileset.(string), userSpecifiedQuota.(string))
+				}
+			}
+			return errors.New("Invalid arguments")
+		} else if len(opts) == 3 {
+			if typeExists {
+				if userSpecifiedType.(string) == FILESET_TYPE && filesetExists && quotaExists {
+					return m.updateDBWithExistingFilesetQuota(name, userSpecifiedFileset.(string), userSpecifiedQuota.(string))
+				} else if userSpecifiedType.(string) == LTWT_VOL_TYPE && filesetExists && dirExists {
+					return m.updateDBWithExistingDirectory(name, userSpecifiedFileset.(string), userSpecifiedDirectory.(string))
+				}
+			}
+		}
+		return errors.New("Invalid number of arguments")
 	}
 
+	return m.create(name, opts)
 }
 
-func (m *MMCliFilesetClient) CreateWithoutProvisioning(name string, opts map[string]interface{}) error {
+func (m *MMCliFilesetClient) CreateWithoutProvisioning(name string, opts map[string]interface{}) (err error) {
 	m.log.Println("MMCliFilesetClient: CreateWithoutProvisioning start")
 	defer m.log.Println("MMCliFilesetClient: createWithoutProvisioning end")
-	mappingConfig, err := m.retrieveMappingConfig()
+
+	m.filelock.Lock()
+	defer func() {
+		lockErr := m.filelock.Unlock()
+		if lockErr != nil && err == nil {
+			err = lockErr
+		}
+	}()
+
+	volExists, err := m.DbClient.VolumeExists(name)
+
 	if err != nil {
-		m.log.Printf("error retrieving mapping %#v", err)
+		m.log.Println(err.Error())
 		return err
 	}
-	_, ok := mappingConfig.Mappings[name]
-	if ok == true {
-		m.log.Printf("Volume %s already exists", name)
+
+	if volExists {
 		return fmt.Errorf("Volume already exists")
 	}
-	userSpecifiedFileset, exists := opts["fileset"]
+	userSpecifiedFileset, exists := opts[FILESET_OPT]
 	if exists == true {
-		return m.updateMappingWithExistingFileset(name, userSpecifiedFileset.(string), mappingConfig)
+		return m.updateDBWithExistingFileset(name, userSpecifiedFileset.(string))
 	} else {
 
 		err := m.filesetExists(name)
@@ -158,12 +247,13 @@ func (m *MMCliFilesetClient) CreateWithoutProvisioning(name string, opts map[str
 			return err
 		}
 
-		mappingConfig.Mappings[name] = Fileset{Name: name}
-		err = m.persistMappingConfig(mappingConfig)
+		err = m.DbClient.InsertFilesetVolume(userSpecifiedFileset.(string), name)
+
 		if err != nil {
 			m.log.Printf("Error persisting mapping %#v", err)
 			return err
 		}
+
 	}
 	return nil
 }
@@ -174,16 +264,17 @@ func (m *MMCliFilesetClient) filesetExists(name string) error {
 	m.log.Printf("filesetExists: %s\n", name)
 
 	spectrumCommand := "/usr/lpp/mmfs/bin/mmlsfileset"
-	args := []string{m.Filesystem, name, "-Y"}
+	args := []string{m.Filesystem, name}
 	cmd := exec.Command(spectrumCommand, args...)
 
-	_, err := cmd.Output()
+	out, err := cmd.Output()
 	if err != nil {
 		m.log.Printf("error checking fileset %#v", err)
 		return err
 	}
 	var line string
-	scanner := bufio.NewScanner(cmd.Stdin)
+	reader := bytes.NewBufferString(string(out))
+	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line = (scanner.Text())
 		lineSlice := strings.Split(line, " ")
@@ -218,23 +309,75 @@ func (m *MMCliFilesetClient) updateDBWithExistingFileset(name, userSpecifiedFile
 	return nil
 }
 
-func (m *MMCliFilesetClient) updateMappingWithExistingFileset(name, userSpecifiedFileset string, mappingConfig MappingConfig) error {
-	m.log.Println("MMCliFilesetClient:  updateMappingWithExistingFileset start")
-	defer m.log.Println("MMCliFilesetClient: updateMappingWithExistingFileset end")
-	m.log.Printf("User specified fileset: %s\n", userSpecifiedFileset)
+func (m *MMCliFilesetClient) updateDBWithExistingFilesetQuota(name, userSpecifiedFileset, quota string) error {
+	m.log.Println("MMCliFilesetClient:  updateDBWithExistingFilesetQuota start")
+	defer m.log.Println("MMCliFilesetClient: updateDBWithExistingFilesetQuota end")
 
-	spectrumCommand := "/usr/lpp/mmfs/bin/mmlsfileset"
-	args := []string{m.Filesystem, userSpecifiedFileset, "-Y"}
-	cmd := exec.Command(spectrumCommand, args...)
-	_, err := cmd.Output()
+	err := m.verifyFilesetQuota(userSpecifiedFileset, quota)
+
 	if err != nil {
-		m.log.Printf("error updating mapping with existing fileset %#v", err)
+		m.log.Println(err.Error())
 		return err
 	}
-	mappingConfig.Mappings[name] = Fileset{Name: userSpecifiedFileset, DockerVolumeName: name}
-	// persist mapping config
-	err = m.persistMappingConfig(mappingConfig)
+
+	err = m.DbClient.InsertFilesetQuotaVolume(userSpecifiedFileset, quota, name)
+
 	if err != nil {
+		m.log.Println(err.Error())
+		return err
+	}
+	return nil
+}
+
+func (m *MMCliFilesetClient) updateDBWithExistingDirectory(name, userSpecifiedFileset, userSpecifiedDirectory string) error {
+	m.log.Println("MMCliFilesetClient:  updateDBWithExistingDirectory start")
+	defer m.log.Println("MMCliFilesetClient: updateDBWithExistingDirectory end")
+	m.log.Printf("User specified fileset: %s, User specified directory: %s\n", userSpecifiedFileset, userSpecifiedDirectory)
+
+	if userSpecifiedFileset != m.LightweightVolumeFileset {
+
+		filesetLinked,err := m.isFilesetLinked(userSpecifiedFileset)
+
+		if err != nil {
+			m.log.Println(err.Error())
+			return err
+		}
+
+		if !filesetLinked {
+			err = fmt.Errorf("fileset %s not linked", userSpecifiedFileset)
+			m.log.Println(err.Error())
+			return err
+		}
+	} else {
+		if !m.isLightweightVolumeInitialized {
+			err := m.initLightweightVolumes()
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
+			}
+			m.isLightweightVolumeInitialized = true
+		}
+	}
+
+	directoryPath := path.Join(m.Mountpoint, userSpecifiedFileset, userSpecifiedDirectory)
+
+	_, err := os.Stat(directoryPath)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			m.log.Printf("directory path %s doesn't exist", directoryPath)
+			return err
+		}
+
+		m.log.Printf("Error stating directoryPath %s: %s", directoryPath, err.Error())
+		return err
+	}
+
+	err = m.DbClient.InsertLightweightVolume(userSpecifiedFileset, userSpecifiedDirectory, name)
+
+	if err != nil {
+		m.log.Println(err.Error())
 		return err
 	}
 	return nil
@@ -244,25 +387,348 @@ func (m *MMCliFilesetClient) create(name string, opts map[string]interface{}) er
 	m.log.Println("MMCliFilesetClient: createNew start")
 	defer m.log.Println("MMCliFilesetClient: createNew end")
 
-	filesetName := generateFilesetName()
-	m.log.Printf("creating a new fileset: %s\n", filesetName)
-	// create fileset
-	spectrumCommand := "/usr/lpp/mmfs/bin/mmcrfileset"
-	args := []string{m.Filesystem, filesetName}
-	cmd := exec.Command(spectrumCommand, args...)
-	output, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("Failed to create fileset")
-	}
-	m.log.Printf("Createfileset output: %s\n", string(output))
+	var err error
+	if len(opts) > 0 {
+		userSpecifiedType, typeExists := opts[TYPE_OPT]
+		userSpecifiedQuota, quotaExists := opts[QUOTA_OPT]
 
-	err = m.DbClient.InsertFilesetVolume(filesetName, name)
+		if typeExists {
+			if userSpecifiedType.(string) == FILESET_TYPE {
+				if quotaExists {
+					err = m.createFilesetQuotaVolume(name, userSpecifiedQuota.(string))
+				} else {
+					err = m.createFilesetVolume(name)
+				}
+			} else if userSpecifiedType.(string) == LTWT_VOL_TYPE {
+				err = m.createLightweightVolume(name, opts)
+			} else {
+				return fmt.Errorf("Invalid type %s", userSpecifiedType.(string))
+			}
+		} else if quotaExists {
+			err = m.createFilesetQuotaVolume(name, userSpecifiedQuota.(string))
+		}
+	} else {
+		err = m.createFilesetVolume(name)
+	}
 
 	if err != nil {
 		m.log.Println(err.Error())
 		return err
 	}
+
 	return nil
+}
+
+func (m *MMCliFilesetClient) createFilesetVolume(name string) error {
+	m.log.Println("MMCliFilesetClient: createFilesetVolume start")
+	defer m.log.Println("MMCliFilesetClient: createFilesetVolume end")
+
+	filesetName := generateFilesetName()
+
+	err := m.createFileset(filesetName)
+
+	if err != nil {
+		return err
+	}
+
+	err =  m.DbClient.InsertFilesetVolume(filesetName, name)
+
+	if err != nil {
+		return err
+	}
+
+	m.log.Printf("Created fileset volume with fileset %s\n", filesetName)
+	return nil
+}
+
+func (m *MMCliFilesetClient) createFilesetQuotaVolume(name, quota string) error {
+	m.log.Println("MMCliFilesetClient: createFilesetQuotaVolume start")
+	defer m.log.Println("MMCliFilesetClient: createFilesetQuotaVolume end")
+
+	filesetName := generateFilesetName()
+
+	err := m.createFileset(filesetName)
+
+	if err != nil {
+		return err
+	}
+
+	err = m.setFilesetQuota(filesetName, quota)
+
+	if err != nil {
+		return err
+	}
+
+	err = m.DbClient.InsertFilesetQuotaVolume(filesetName, quota, name)
+
+	if err != nil {
+		return err
+	}
+
+	m.log.Printf("Created fileset volume with fileset %s, quota %s\n", filesetName, quota)
+	return nil
+}
+
+func (m *MMCliFilesetClient) createLightweightVolume(name string, opts map[string]interface{}) error {
+	m.log.Println("MMCliFilesetClient: createLightweightVolume start")
+	defer m.log.Println("MMCliFilesetClient: createLightweightVolume end")
+
+	var lightweightVolumeFileset string
+	userSpecifiedType, typeExists := opts[TYPE_OPT]
+	userSpecifiedFileset, filesetExists := opts[FILESET_OPT]
+
+	if len(opts) == 2 && typeExists && userSpecifiedType.(string) == LTWT_VOL_TYPE && filesetExists {
+
+		filesetLinked,err := m.isFilesetLinked(userSpecifiedFileset.(string))
+
+		if err != nil {
+			m.log.Println(err.Error())
+			return err
+		}
+
+		if !filesetLinked {
+			err = m.linkFileset(userSpecifiedFileset.(string))
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
+			}
+		}
+		lightweightVolumeFileset = userSpecifiedFileset.(string)
+	} else {
+		if !m.isLightweightVolumeInitialized {
+			err := m.initLightweightVolumes()
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
+			}
+			m.isLightweightVolumeInitialized = true
+		}
+		lightweightVolumeFileset = m.LightweightVolumeFileset
+	}
+
+	lightweightVolumeName := generateLightweightVolumeName()
+
+	lightweightVolumePath := path.Join(m.Mountpoint, lightweightVolumeFileset, lightweightVolumeName)
+
+	err := os.Mkdir(lightweightVolumePath, 0755)
+
+	if err != nil {
+		return fmt.Errorf("Failed to create directory path %s : %s", lightweightVolumePath, err.Error())
+	}
+
+	err = m.DbClient.InsertLightweightVolume(lightweightVolumeFileset, lightweightVolumeName, name)
+
+	if err != nil {
+		return err
+	}
+
+	m.log.Printf("Created LightWeight volume at directory path: %s\n",lightweightVolumePath)
+	return nil
+}
+
+func (m *MMCliFilesetClient) createFileset(filesetName string) error {
+	m.log.Println("MMCliFilesetClient: createFileset start")
+	defer m.log.Println("MMCliFilesetClient: createFileset end")
+
+	m.log.Printf("creating a new fileset: %s\n", filesetName)
+
+	// create fileset
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmcrfileset"
+	args := []string{m.Filesystem, filesetName}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+
+	if err != nil {
+		return fmt.Errorf("Failed to create fileset %s", filesetName)
+	}
+
+	m.log.Printf("Createfileset output: %s\n", string(output))
+	return nil
+}
+
+func (m *MMCliFilesetClient) isFilesetLinked( filesetName string) (bool,error) {
+	m.log.Println("MMCliFilesetClient: isFilesetLinked start")
+	defer m.log.Println("MMCliFilesetClient: isFilesetLinked end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmlsfileset"
+	args := []string{m.Filesystem, filesetName, "-Y"}
+	cmd := exec.Command(spectrumCommand, args...)
+	outputBytes, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+
+	spectrumOutput := string(outputBytes)
+
+	lines := strings.Split(spectrumOutput, "\n")
+
+	if len(lines) == 1 {
+		return false,fmt.Errorf("Error listing fileset %s", filesetName)
+	}
+
+	tokens := strings.Split(lines[1], ":")
+	if len(tokens) >= 11 {
+		if tokens[10] == "Linked" {
+			return true,nil
+		} else {
+			return false,nil
+		}
+	}
+
+	return false, fmt.Errorf("Error listing fileset %s after parsing", filesetName)
+}
+
+func (m *MMCliFilesetClient) linkFileset(filesetName string) error {
+	m.log.Println("MMCliFilesetClient: linkFileset start")
+	defer m.log.Println("MMCliFilesetClient: linkFileset end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmlinkfileset"
+	filesetPath := path.Join(m.Mountpoint, filesetName)
+	args := []string{m.Filesystem, filesetName, "-J", filesetPath}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Failed to link fileset: %s", err.Error())
+	}
+	m.log.Printf("MMCliFilesetClient: Linkfileset output: %s\n", string(output))
+
+	//hack for now
+	args = []string{"-R", "777", filesetPath}
+	cmd = exec.Command("chmod", args...)
+	output, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Failed to set permissions for fileset: %s", err.Error())
+	}
+	return nil
+}
+
+func (m *MMCliFilesetClient) unlinkFileset(filesetName string) error {
+	m.log.Println("MMCliFilesetClient: unlinkFileset start")
+	defer m.log.Println("MMCliFilesetClient: unlinkFileset end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmunlinkfileset"
+	args := []string{m.Filesystem, filesetName}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Failed to unlink fileset %s: %s", filesetName, err.Error())
+	}
+	m.log.Printf("MMCliFilesetClient: unLinkfileset output: %s\n", string(output))
+	return nil
+}
+
+func (m *MMCliFilesetClient) deleteFileset(filesetName string) error {
+	m.log.Println("MMCliFilesetClient: deleteFileset start")
+	defer m.log.Println("MMCliFilesetClient: deleteFileset end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmdelfileset"
+	args := []string{m.Filesystem, filesetName, "-f"}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Failed to remove fileset %s: %s ", filesetName, err.Error())
+	}
+	m.log.Printf("MMCliFilesetClient: deleteFileset output: %s\n", string(output))
+	return nil
+}
+
+func (m *MMCliFilesetClient) verifyFilesetQuota(filesetName, quota string) error {
+	m.log.Println("MMCliFilesetClient: verifyFilesetQuota start")
+	defer m.log.Println("MMCliFilesetClient: verifyFilesetQuota end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmlsquota"
+	args := []string{"-j", filesetName, m.Filesystem, "--block-size", "auto"}
+
+	cmd := exec.Command(spectrumCommand, args...)
+	outputBytes, err := cmd.Output()
+
+	if err != nil {
+		return fmt.Errorf("Failed to list quota for fileset %s: %s", filesetName, err.Error())
+	}
+
+	spectrumOutput := string(outputBytes)
+
+	lines := strings.Split(spectrumOutput, "\n")
+
+	if len(lines) > 2 {
+		tokens := strings.Fields(lines[2])
+
+		if len(tokens) > 3 {
+			if tokens[3] == quota {
+				return nil
+			}
+		} else {
+			fmt.Errorf("Error parsing tokens while listing quota for fileset %s", filesetName)
+		}
+	}
+        return fmt.Errorf("Mismatch between user-specified and listed quota for fileset %s", filesetName)
+}
+
+func (m *MMCliFilesetClient) setFilesetQuota(filesetName, quota string) error {
+	m.log.Println("MMCliFilesetClient: setFilesetQuota start")
+	defer m.log.Println("MMCliFilesetClient: setFilesetQuota end")
+
+	m.log.Printf("setting quota to %s for fileset %s\n", quota, filesetName)
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmsetquota"
+	args := []string{m.Filesystem + ":" + filesetName, "--block", quota + ":" + quota}
+	cmd := exec.Command(spectrumCommand, args...)
+	output, err := cmd.Output()
+
+	if err != nil {
+		return fmt.Errorf("Failed to set quota for fileset %s", filesetName)
+	}
+
+	m.log.Printf("setFilesetQuota output: %s\n", string(output))
+	return nil
+}
+
+func (m *MMCliFilesetClient) initLightweightVolumes() error {
+	m.log.Println("MMCliFilesetClient: InitLightweightVolumes start")
+	defer m.log.Println("MMCliFilesetClient: InitLightweightVolumes end")
+
+	isDirFilesetLinked, err := m.isFilesetLinked(m.LightweightVolumeFileset)
+
+	if err != nil {
+		if err.Error() == "exit status 2" {
+
+			err := m.createFileset(m.LightweightVolumeFileset)
+
+			if err != nil {
+				return fmt.Errorf("Error Initializing Lightweight Volumes : %s", err.Error())
+			}
+		} else {
+			return fmt.Errorf("Error Initializing Lightweight Volumes : %s", err.Error())
+		}
+	}
+
+	if !isDirFilesetLinked {
+		err = m.linkFileset(m.LightweightVolumeFileset)
+
+		if err != nil {
+			return fmt.Errorf("Error Initializing Lightweight Volumes : %s", err.Error())
+		}
+	}
+
+	return nil
+}
+
+func (m *MMCliFilesetClient) isLightweightVolumesInitialized() (bool, error) {
+	m.log.Println("MMCliFilesetClient: isLightweightVolumesInitialized start")
+	defer m.log.Println("MMCliFilesetClient: isLightweightVolumesInitialized end")
+
+	isDirFilesetLinked, err := m.isFilesetLinked(m.LightweightVolumeFileset)
+
+	if err != nil {
+		return false, fmt.Errorf("Lightweight volumes not initialized: %s", err.Error())
+	}
+
+	if !isDirFilesetLinked {
+		return false, fmt.Errorf("Lightweight volumes not initialized: fileset %s not linked", m.LightweightVolumeFileset)
+	}
+	return true, nil
 }
 
 func (m *MMCliFilesetClient) Remove(name string) (err error) {
@@ -277,7 +743,7 @@ func (m *MMCliFilesetClient) Remove(name string) (err error) {
 		}
 	}()
 
-	volExists,err := m.DbClient.VolumeExists(name)
+	volExists, err := m.DbClient.VolumeExists(name)
 
 	if err != nil {
 		m.log.Println(err.Error())
@@ -286,21 +752,50 @@ func (m *MMCliFilesetClient) Remove(name string) (err error) {
 
 	if volExists {
 
-		existingVolume,err := m.DbClient.GetVolume(name)
+		existingVolume, err := m.DbClient.GetVolume(name)
 
 		if err != nil {
 			m.log.Println(err.Error())
 			return err
 		}
 
-		spectrumCommand := "/usr/lpp/mmfs/bin/mmdelfileset"
-		args := []string{m.Filesystem, existingVolume.Fileset, "-f"}
-		cmd := exec.Command(spectrumCommand, args...)
-		output, err := cmd.Output()
-		if err != nil {
-			return fmt.Errorf("Failed to remove fileset")
+		if existingVolume.VolumeType == FILESET ||
+			existingVolume.VolumeType == FILESET_QUOTA {
+
+			isFilesetLinked,err := m.isFilesetLinked(existingVolume.Fileset)
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
+			}
+
+			if isFilesetLinked {
+				err := m.unlinkFileset(existingVolume.Fileset)
+
+				if err != nil {
+					m.log.Println(err.Error())
+					return err
+				}
+			}
+
+			err = m.deleteFileset(existingVolume.Fileset)
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
+			}
+
+		} else if existingVolume.VolumeType == LIGHTWEIGHT {
+
+			lightweightVolumePath := path.Join(m.Mountpoint, existingVolume.Fileset, existingVolume.Directory)
+
+			err := os.RemoveAll(lightweightVolumePath)
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return err
+			}
 		}
-		m.log.Printf("MMCliFilesetClient: Deletefileset output: %s\n", string(output))
 
 		err = m.DbClient.DeleteVolume(name)
 
@@ -308,26 +803,18 @@ func (m *MMCliFilesetClient) Remove(name string) (err error) {
 			m.log.Println(err.Error())
 			return err
 		}
+		return nil
 	}
-	return nil
+	return errors.New("Volume not found")
 }
 
 func (m *MMCliFilesetClient) RemoveWithoutDeletingVolume(name string) error {
 	m.log.Println("MMCliFilesetClient: RemoveWithoutDeletingVolume start")
 	defer m.log.Println("MMCliFilesetClient: RemoveWithoutDeletingVolume end")
-	mappingConfig, err := m.retrieveMappingConfig()
+	err := m.DbClient.DeleteVolume(name)
 	if err != nil {
 		m.log.Printf("error retrieving mapping %#v", err)
 		return err
-	}
-	_, ok := mappingConfig.Mappings[name]
-	if ok == true {
-		delete(mappingConfig.Mappings, name)
-		err = m.persistMappingConfig(mappingConfig)
-		if err != nil {
-			m.log.Printf("Failed to persist mapping %#v", err)
-			return err
-		}
 	}
 	return nil
 }
@@ -344,22 +831,22 @@ func (m *MMCliFilesetClient) Attach(name string) (Mountpoint string, err error) 
 		}
 	}()
 
-	volExists,err := m.DbClient.VolumeExists(name)
+	volExists, err := m.DbClient.VolumeExists(name)
 
 	if err != nil {
 		m.log.Println(err.Error())
-		return "",err
+		return "", err
 	}
 
 	if !volExists {
-		return "", fmt.Errorf("fileset couldn't be located")
+		return "", errors.New("Volume not found")
 	}
 
-	existingVolume,err := m.DbClient.GetVolume(name)
+	existingVolume, err := m.DbClient.GetVolume(name)
 
 	if err != nil {
 		m.log.Println(err.Error())
-		return "",err
+		return "", err
 	}
 
 	if existingVolume.Mountpoint != "" {
@@ -367,32 +854,40 @@ func (m *MMCliFilesetClient) Attach(name string) (Mountpoint string, err error) 
 		return Mountpoint, nil
 	}
 
-	spectrumCommand := "/usr/lpp/mmfs/bin/mmlinkfileset"
-	filesetPath := path.Join(m.Mountpoint, existingVolume.Fileset)
-	args := []string{m.Filesystem, existingVolume.Fileset, "-J", filesetPath}
-	cmd := exec.Command(spectrumCommand, args...)
-	output, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("Failed to link fileset")
-	}
-	m.log.Printf("MMCliFilesetClient: Linkfileset output: %s\n", string(output))
+	var mountPath string
+	if existingVolume.VolumeType == FILESET ||
+		existingVolume.VolumeType == FILESET_QUOTA {
 
-	//hack for now
-	args = []string{"-R", "777", filesetPath}
-	cmd = exec.Command("chmod", args...)
-	output, err = cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("Failed to set permissions for fileset")
+		isFilesetLinked, err := m.isFilesetLinked(existingVolume.Fileset)
+
+		if err != nil {
+			m.log.Println(err.Error())
+			return "",err
+		}
+
+		if !isFilesetLinked {
+
+			err = m.linkFileset(existingVolume.Fileset)
+
+			if err != nil {
+				m.log.Println(err.Error())
+				return "", err
+			}
+		}
+
+		mountPath = path.Join(m.Mountpoint, existingVolume.Fileset)
+	} else if existingVolume.VolumeType == LIGHTWEIGHT {
+		mountPath = path.Join(m.Mountpoint, existingVolume.Fileset, existingVolume.Directory)
 	}
 
-	err = m.DbClient.UpdateVolumeMountpoint(name, filesetPath)
+	err = m.DbClient.UpdateVolumeMountpoint(name, mountPath)
 
 	if err != nil {
 		m.log.Println(err.Error())
-		return "", fmt.Errorf("internal error updating mapping")
+		return "", fmt.Errorf("internal error updating database")
 	}
 
-	Mountpoint = filesetPath
+	Mountpoint = mountPath
 	return Mountpoint, nil
 }
 
@@ -408,7 +903,7 @@ func (m *MMCliFilesetClient) Detach(name string) (err error) {
 		}
 	}()
 
-	volExists,err := m.DbClient.VolumeExists(name)
+	volExists, err := m.DbClient.VolumeExists(name)
 
 	if err != nil {
 		m.log.Println(err.Error())
@@ -416,10 +911,10 @@ func (m *MMCliFilesetClient) Detach(name string) (err error) {
 	}
 
 	if !volExists {
-		return fmt.Errorf("fileset couldn't be located")
+		return errors.New("Volume not found")
 	}
 
-	existingVolume,err := m.DbClient.GetVolume(name)
+	existingVolume, err := m.DbClient.GetVolume(name)
 
 	if err != nil {
 		m.log.Println(err.Error())
@@ -427,23 +922,14 @@ func (m *MMCliFilesetClient) Detach(name string) (err error) {
 	}
 
 	if existingVolume.Mountpoint == "" {
-		return fmt.Errorf("fileset not linked")
+		return fmt.Errorf("volume not attached")
 	}
-
-	spectrumCommand := "/usr/lpp/mmfs/bin/mmunlinkfileset"
-	args := []string{m.Filesystem, existingVolume.Fileset}
-	cmd := exec.Command(spectrumCommand, args...)
-	output, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("Failed to unlink fileset")
-	}
-	m.log.Printf("MMCliFilesetClient: unLinkfileset output: %s\n", string(output))
 
 	err = m.DbClient.UpdateVolumeMountpoint(name, "")
 
 	if err != nil {
 		m.log.Println(err.Error())
-		return fmt.Errorf("internal error updating mapping")
+		return fmt.Errorf("internal error updating database")
 	}
 	return nil
 }
@@ -451,21 +937,33 @@ func (m *MMCliFilesetClient) Detach(name string) (err error) {
 func (m *MMCliFilesetClient) ExportNfs(name string, clientCIDR string) (string, error) {
 	m.log.Println("MMCliFilesetClient: ExportNfs start")
 	defer m.log.Println("MMCliFilesetClient: ExportNfs end")
-	mappingConfig, err := m.retrieveMappingConfig()
+
+	volExists, err := m.DbClient.VolumeExists(name)
+
 	if err != nil {
+		m.log.Println(err.Error())
 		return "", err
 	}
-	mapping, ok := mappingConfig.Mappings[name]
-	if ok == false {
+
+	if !volExists {
 		m.log.Println("MMCliFilesetClient ExportNfs: fileset not found")
 		return "", fmt.Errorf("fileset couldn't be located")
 	}
-	if mapping.Mountpoint == "" {
+
+	existingVolume, err := m.DbClient.GetVolume(name)
+
+	if err != nil {
+		m.log.Println(err.Error())
+		return "", err
+	}
+
+	if existingVolume.Mountpoint == "" {
 		m.log.Println("MMCliFilesetClient ExportNfs: fileset not linked")
 		return "", fmt.Errorf("fileset not linked")
 	}
+
 	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"
-	filesetPath := path.Join(m.Mountpoint, mapping.Name)
+	filesetPath := path.Join(m.Mountpoint, existingVolume.Fileset)
 	args := []string{"export", "add", filesetPath, "--client", fmt.Sprintf("%s(Access_Type=RW,Protocols=3:4,Squash=no_root_squash)", clientCIDR)}
 	cmd := exec.Command(spectrumCommand, args...)
 	output, err := cmd.Output()
@@ -479,17 +977,28 @@ func (m *MMCliFilesetClient) ExportNfs(name string, clientCIDR string) (string, 
 func (m *MMCliFilesetClient) UnexportNfs(name string) error {
 	m.log.Println("MMCliFilesetClient: UnexportNfs start")
 	defer m.log.Println("MMCliFilesetClient: UnexportNfs end")
-	mappingConfig, err := m.retrieveMappingConfig()
+
+	volExists, err := m.DbClient.VolumeExists(name)
+
 	if err != nil {
-		return err
+		m.log.Println(err.Error())
+		return "", err
 	}
-	mapping, ok := mappingConfig.Mappings[name]
-	if ok == false {
+
+	if !volExists {
 		m.log.Println("MMCliFilesetClient UnexportNfs: fileset not found")
-		return fmt.Errorf("fileset couldn't be located")
+		return "", fmt.Errorf("fileset couldn't be located")
 	}
+
+	existingVolume, err := m.DbClient.GetVolume(name)
+
+	if err != nil {
+		m.log.Println(err.Error())
+		return "", err
+	}
+
 	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"
-	filesetPath := path.Join(m.Mountpoint, mapping.Name)
+	filesetPath := path.Join(m.Mountpoint, existingVolume.Fileset)
 	args := []string{"export", "remove", filesetPath, "--force"}
 	cmd := exec.Command(spectrumCommand, args...)
 	output, err := cmd.Output()
@@ -498,11 +1007,9 @@ func (m *MMCliFilesetClient) UnexportNfs(name string) error {
 	}
 	m.log.Printf("MMCliFilesetClient: UnexportNfs output: %s\n", string(output))
 
-	mapping.Mountpoint = ""
-	mappingConfig.Mappings[name] = mapping
-	err = m.persistMappingConfig(mappingConfig)
-	if err != nil {
-		return fmt.Errorf("internal error updating mapping")
+	if err := m.DbClient.UpdateVolumeMountpoint(name, ""); err != nil {
+		m.log.Printf("MMCliFilesetClient UnexportNfs: Could not update volume mountpoint: %s", err)
+		return err
 	}
 	return nil
 }
@@ -519,7 +1026,7 @@ func (m *MMCliFilesetClient) List() (volumeList []models.VolumeMetadata, err err
 		}
 	}()
 
-	volumesInDb,err := m.DbClient.ListVolumes()
+	volumesInDb, err := m.DbClient.ListVolumes()
 
 	if err != nil {
 		m.log.Println(err.Error())
@@ -546,40 +1053,32 @@ func (m *MMCliFilesetClient) Get(name string) (volumeMetadata *models.VolumeMeta
 		}
 	}()
 
-	volExists,err := m.DbClient.VolumeExists(name)
+	volExists, err := m.DbClient.VolumeExists(name)
 
 	if err != nil {
 		m.log.Println(err.Error())
-		return nil,nil,err
+		return nil, nil, err
 	}
 
 	if volExists {
 
-		existingVolume,err := m.DbClient.GetVolume(name)
+		existingVolume, err := m.DbClient.GetVolume(name)
 
 		if err != nil {
 			m.log.Println(err.Error())
-			return nil,nil,err
+			return nil, nil, err
 		}
 
 		volumeMetadata = &models.VolumeMetadata{Name: existingVolume.VolumeName, Mountpoint: existingVolume.Mountpoint}
 		volumeConfigDetails = &models.SpectrumConfig{FilesetId: existingVolume.Fileset, Filesystem: m.Filesystem}
 		return volumeMetadata, volumeConfigDetails, nil
 	}
-	return nil, nil, fmt.Errorf("Cannot find info")
+	return nil, nil, errors.New("Volume not found")
 }
 
-func (m *MMCliFilesetClient) IsMounted() (isMounted bool, err error) {
+func (m *MMCliFilesetClient) isSpectrumScaleMounted() (isMounted bool, err error) {
 	m.log.Println("MMCliFilesetClient: isMounted start")
 	defer m.log.Println("MMCliFilesetClient: isMounted end")
-
-	m.filelock.Lock()
-	defer func() {
-		lockErr := m.filelock.Unlock()
-		if lockErr != nil && err == nil {
-			err = lockErr
-		}
-	}()
 
 	if m.isMounted == true {
 		isMounted = true
@@ -616,17 +1115,9 @@ func (m *MMCliFilesetClient) IsMounted() (isMounted bool, err error) {
 	return isMounted, nil
 }
 
-func (m *MMCliFilesetClient) Mount() (err error) {
+func (m *MMCliFilesetClient) mount() (err error) {
 	m.log.Println("MMCliFilesetClient: mount start")
 	defer m.log.Println("MMCliFilesetClient: mount end")
-
-	m.filelock.Lock()
-	defer func() {
-		lockErr := m.filelock.Unlock()
-		if lockErr != nil && err == nil {
-			err = lockErr
-		}
-	}()
 
 	if m.isMounted == true {
 		return nil
@@ -669,7 +1160,7 @@ func getClusterId() (string, error) {
 	cmd := exec.Command(spectrumCommand)
 	outputBytes, err := cmd.Output()
 	if err != nil {
-		return "",fmt.Errorf("Error running command: %s",err.Error())
+		return "", fmt.Errorf("Error running command: %s", err.Error())
 	}
 	spectrumOutput := string(outputBytes)
 
@@ -681,61 +1172,24 @@ func getClusterId() (string, error) {
 			clusterId = strings.TrimSpace(tokens[1])
 		}
 	}
-	return clusterId,nil
-}
-
-func (m *MMCliFilesetClient) retrieveMappingConfig() (MappingConfig, error) {
-	m.log.Println("MMCliFilesetClient: retrieveMappingConfig start")
-	defer m.log.Println("MMCliFilesetClient: retrieveMappingConfig end")
-	mappingFile, err := os.Open(path.Join(m.Mountpoint, ".docker.json"))
-	if err != nil {
-		m.log.Println(err.Error())
-		if os.IsNotExist(err) == true {
-			m.log.Println("file does not exist")
-			mappingConfig := MappingConfig{Mappings: map[string]Fileset{}}
-			err = m.persistMappingConfig(mappingConfig)
-			if err != nil {
-				return MappingConfig{}, fmt.Errorf("error initializing config file (%s)", err.Error())
-			}
-			return mappingConfig, nil
-		} else {
-			return MappingConfig{}, fmt.Errorf("error opening config file (%s)", err.Error())
-		}
-	}
-	jsonParser := json.NewDecoder(mappingFile)
-	var mappingConfig MappingConfig
-	if err = jsonParser.Decode(&mappingConfig); err != nil {
-		return MappingConfig{}, fmt.Errorf("error parsing config file (%s)", err.Error())
-	}
-	return mappingConfig, nil
+	return clusterId, nil
 }
 
 func (m *MMCliFilesetClient) GetFileSetForMountPoint(mountPoint string) (string, error) {
-	mappingConfig, err := m.retrieveMappingConfig()
+
+	volume, err := m.DbClient.GetVolumeForMountPoint(mountPoint)
+
 	if err != nil {
+		m.log.Println(err.Error())
 		return "", err
 	}
-	for indexName, fileset := range mappingConfig.Mappings {
-		if fileset.Mountpoint == mountPoint {
-			return indexName, nil
-		}
-	}
-	return "", nil
+	return volume, nil
 }
 
-func (m *MMCliFilesetClient) persistMappingConfig(mappingConfig MappingConfig) error {
-	m.log.Println("MMCliFilesetClient: persisteMappingConfig start")
-	defer m.log.Println("MMCliFilesetClient: persisteMappingConfig end")
-	data, err := json.Marshal(&mappingConfig)
-	if err != nil {
-		return fmt.Errorf("Error marshalling mapping config to file: %s", err.Error())
-	}
-	err = ioutil.WriteFile(path.Join(m.Mountpoint, ".docker.json"), data, 0644)
-	if err != nil {
-		return fmt.Errorf("Error writing json spec: %s", err.Error())
-	}
-	return nil
-}
 func generateFilesetName() string {
 	return strconv.FormatInt(time.Now().UnixNano(), 10)
+}
+
+func generateLightweightVolumeName() string {
+	return "LtwtVol" + strconv.FormatInt(time.Now().UnixNano(), 10)
 }

@@ -3,9 +3,7 @@ package core
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -380,28 +378,6 @@ func (m *MMCliFilesetClient) updateDBWithExistingDirectory(name, userSpecifiedFi
 
 	if err != nil {
 		m.log.Println(err.Error())
-		return err
-	}
-	return nil
-}
-
-func (m *MMCliFilesetClient) updateMappingWithExistingFileset(name, userSpecifiedFileset string, mappingConfig MappingConfig) error {
-	m.log.Println("MMCliFilesetClient:  updateMappingWithExistingFileset start")
-	defer m.log.Println("MMCliFilesetClient: updateMappingWithExistingFileset end")
-	m.log.Printf("User specified fileset: %s\n", userSpecifiedFileset)
-
-	spectrumCommand := "/usr/lpp/mmfs/bin/mmlsfileset"
-	args := []string{m.Filesystem, userSpecifiedFileset, "-Y"}
-	cmd := exec.Command(spectrumCommand, args...)
-	_, err := cmd.Output()
-	if err != nil {
-		m.log.Printf("error updating mapping with existing fileset %#v", err)
-		return err
-	}
-	mappingConfig.Mappings[name] = Fileset{Name: userSpecifiedFileset, DockerVolumeName: name}
-	// persist mapping config
-	err = m.persistMappingConfig(mappingConfig)
-	if err != nil {
 		return err
 	}
 	return nil
@@ -961,21 +937,33 @@ func (m *MMCliFilesetClient) Detach(name string) (err error) {
 func (m *MMCliFilesetClient) ExportNfs(name string, clientCIDR string) (string, error) {
 	m.log.Println("MMCliFilesetClient: ExportNfs start")
 	defer m.log.Println("MMCliFilesetClient: ExportNfs end")
-	mappingConfig, err := m.retrieveMappingConfig()
+
+	volExists, err := m.DbClient.VolumeExists(name)
+
 	if err != nil {
+		m.log.Println(err.Error())
 		return "", err
 	}
-	mapping, ok := mappingConfig.Mappings[name]
-	if ok == false {
+
+	if !volExists {
 		m.log.Println("MMCliFilesetClient ExportNfs: fileset not found")
 		return "", fmt.Errorf("fileset couldn't be located")
 	}
-	if mapping.Mountpoint == "" {
+
+	existingVolume, err := m.DbClient.GetVolume(name)
+
+	if err != nil {
+		m.log.Println(err.Error())
+		return "", err
+	}
+
+	if existingVolume.Mountpoint == "" {
 		m.log.Println("MMCliFilesetClient ExportNfs: fileset not linked")
 		return "", fmt.Errorf("fileset not linked")
 	}
+
 	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"
-	filesetPath := path.Join(m.Mountpoint, mapping.Name)
+	filesetPath := path.Join(m.Mountpoint, existingVolume.Fileset)
 	args := []string{"export", "add", filesetPath, "--client", fmt.Sprintf("%s(Access_Type=RW,Protocols=3:4,Squash=no_root_squash)", clientCIDR)}
 	cmd := exec.Command(spectrumCommand, args...)
 	output, err := cmd.Output()
@@ -989,17 +977,28 @@ func (m *MMCliFilesetClient) ExportNfs(name string, clientCIDR string) (string, 
 func (m *MMCliFilesetClient) UnexportNfs(name string) error {
 	m.log.Println("MMCliFilesetClient: UnexportNfs start")
 	defer m.log.Println("MMCliFilesetClient: UnexportNfs end")
-	mappingConfig, err := m.retrieveMappingConfig()
+
+	volExists, err := m.DbClient.VolumeExists(name)
+
 	if err != nil {
-		return err
+		m.log.Println(err.Error())
+		return "", err
 	}
-	mapping, ok := mappingConfig.Mappings[name]
-	if ok == false {
+
+	if !volExists {
 		m.log.Println("MMCliFilesetClient UnexportNfs: fileset not found")
-		return fmt.Errorf("fileset couldn't be located")
+		return "", fmt.Errorf("fileset couldn't be located")
 	}
+
+	existingVolume, err := m.DbClient.GetVolume(name)
+
+	if err != nil {
+		m.log.Println(err.Error())
+		return "", err
+	}
+
 	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"
-	filesetPath := path.Join(m.Mountpoint, mapping.Name)
+	filesetPath := path.Join(m.Mountpoint, existingVolume.Fileset)
 	args := []string{"export", "remove", filesetPath, "--force"}
 	cmd := exec.Command(spectrumCommand, args...)
 	output, err := cmd.Output()
@@ -1008,11 +1007,9 @@ func (m *MMCliFilesetClient) UnexportNfs(name string) error {
 	}
 	m.log.Printf("MMCliFilesetClient: UnexportNfs output: %s\n", string(output))
 
-	mapping.Mountpoint = ""
-	mappingConfig.Mappings[name] = mapping
-	err = m.persistMappingConfig(mappingConfig)
-	if err != nil {
-		return fmt.Errorf("internal error updating mapping")
+	if err := m.DbClient.UpdateVolumeMountpoint(name, ""); err != nil {
+		m.log.Printf("MMCliFilesetClient UnexportNfs: Could not update volume mountpoint: %s", err)
+		return err
 	}
 	return nil
 }
@@ -1178,32 +1175,6 @@ func getClusterId() (string, error) {
 	return clusterId, nil
 }
 
-func (m *MMCliFilesetClient) retrieveMappingConfig() (MappingConfig, error) {
-	m.log.Println("MMCliFilesetClient: retrieveMappingConfig start")
-	defer m.log.Println("MMCliFilesetClient: retrieveMappingConfig end")
-	mappingFile, err := os.Open(path.Join(m.Mountpoint, ".docker.json"))
-	if err != nil {
-		m.log.Println(err.Error())
-		if os.IsNotExist(err) == true {
-			m.log.Println("file does not exist")
-			mappingConfig := MappingConfig{Mappings: map[string]Fileset{}}
-			err = m.persistMappingConfig(mappingConfig)
-			if err != nil {
-				return MappingConfig{}, fmt.Errorf("error initializing config file (%s)", err.Error())
-			}
-			return mappingConfig, nil
-		} else {
-			return MappingConfig{}, fmt.Errorf("error opening config file (%s)", err.Error())
-		}
-	}
-	jsonParser := json.NewDecoder(mappingFile)
-	var mappingConfig MappingConfig
-	if err = jsonParser.Decode(&mappingConfig); err != nil {
-		return MappingConfig{}, fmt.Errorf("error parsing config file (%s)", err.Error())
-	}
-	return mappingConfig, nil
-}
-
 func (m *MMCliFilesetClient) GetFileSetForMountPoint(mountPoint string) (string, error) {
 
 	volume, err := m.DbClient.GetVolumeForMountPoint(mountPoint)
@@ -1215,19 +1186,6 @@ func (m *MMCliFilesetClient) GetFileSetForMountPoint(mountPoint string) (string,
 	return volume, nil
 }
 
-func (m *MMCliFilesetClient) persistMappingConfig(mappingConfig MappingConfig) error {
-	m.log.Println("MMCliFilesetClient: persisteMappingConfig start")
-	defer m.log.Println("MMCliFilesetClient: persisteMappingConfig end")
-	data, err := json.Marshal(&mappingConfig)
-	if err != nil {
-		return fmt.Errorf("Error marshalling mapping config to file: %s", err.Error())
-	}
-	err = ioutil.WriteFile(path.Join(m.Mountpoint, ".docker.json"), data, 0644)
-	if err != nil {
-		return fmt.Errorf("Error writing json spec: %s", err.Error())
-	}
-	return nil
-}
 func generateFilesetName() string {
 	return strconv.FormatInt(time.Now().UnixNano(), 10)
 }

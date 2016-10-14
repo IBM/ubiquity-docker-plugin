@@ -9,7 +9,6 @@ import (
 	"path"
 
 	"github.com/gorilla/mux"
-	"github.ibm.com/almaden-containers/spectrum-common.git/core"
 )
 
 type Server struct {
@@ -23,8 +22,12 @@ type ServerInfo struct {
 	Addr string
 }
 
-func NewServer(logger *log.Logger, filesystem, mountpath string, DbClient *core.DatabaseClient) *Server {
-	return &Server{log: logger, handler: NewHandler(logger, filesystem, mountpath, DbClient), filesystem: filesystem}
+func NewServer(logger *log.Logger, filesystem, mountpath, storageApiURL string, backendName string) (*Server, error) {
+	handler, err := NewHandler(logger, filesystem, mountpath, storageApiURL, backendName)
+	if err != nil {
+		return nil, err
+	}
+	return &Server{log: logger, handler: handler, filesystem: filesystem}, nil
 }
 
 func (s *Server) Start(address string, port int, pluginsPath string) {

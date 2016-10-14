@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.ibm.com/almaden-containers/spectrum-common.git/models"
+	"github.ibm.com/almaden-containers/ubiquity.git/model"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -44,7 +44,7 @@ var _ = Describe("Main", func() {
 				body, status, err := submitRequest("POST", "/Plugin.Activate")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(status).To(Equal("200 OK"))
-				var activateResponse models.ActivateResponse
+				var activateResponse model.ActivateResponse
 				err = json.Unmarshal([]byte(body), &activateResponse)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(len(activateResponse.Implements)).To(Equal(1))
@@ -54,7 +54,7 @@ var _ = Describe("Main", func() {
 				body, status, err := submitRequest("POST", "/Plugin.Activate")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(status).To(Equal("200 OK"))
-				var activateResponse models.ActivateResponse
+				var activateResponse model.ActivateResponse
 				err = json.Unmarshal([]byte(body), &activateResponse)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(len(activateResponse.Implements)).To(Equal(1))
@@ -78,7 +78,7 @@ var _ = Describe("Main", func() {
 					body, status, err := submitRequest("POST", "/Plugin.Activate")
 					Expect(err).ToNot(HaveOccurred())
 					Expect(status).To(Equal("200 OK"))
-					var activateResponse models.ActivateResponse
+					var activateResponse model.ActivateResponse
 					err = json.Unmarshal([]byte(body), &activateResponse)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(len(activateResponse.Implements)).To(Equal(1))
@@ -90,13 +90,13 @@ var _ = Describe("Main", func() {
 					})
 					It("should not error if volume already exists", func() {
 						successfullCreateRequest(volumeName)
-						createRequest := models.CreateRequest{Name: volumeName, Opts: map[string]interface{}{}}
+						createRequest := model.CreateRequest{Name: volumeName, Opts: map[string]interface{}{}}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("400 Bad Request"))
-						var createResponse models.GenericResponse
+						var createResponse model.GenericResponse
 						err = json.Unmarshal([]byte(body), &createResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(createResponse.Err).To(Equal("Volume already exists"))
@@ -106,25 +106,25 @@ var _ = Describe("Main", func() {
 					It("should not error when removing an existing volume", func() {
 						successfullCreateRequest(volumeName)
 
-						removeRequest := models.GenericRequest{Name: volumeName}
+						removeRequest := model.GenericRequest{Name: volumeName}
 						removeRequestBody, err := json.Marshal(removeRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Remove", removeRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("200 OK"))
-						var removeResponse models.GenericResponse
+						var removeResponse model.GenericResponse
 						err = json.Unmarshal([]byte(body), &removeResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(removeResponse.Err).To(Equal(""))
 					})
 					It("should error if volume does not exist", func() {
-						removeRequest := models.GenericRequest{Name: volumeName}
+						removeRequest := model.GenericRequest{Name: volumeName}
 						removeRequestBody, err := json.Marshal(removeRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Remove", removeRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("400 Bad Request"))
-						var removeResponse models.GenericResponse
+						var removeResponse model.GenericResponse
 						err = json.Unmarshal([]byte(body), &removeResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(removeResponse.Err).To(Equal("Volume not found"))
@@ -136,7 +136,7 @@ var _ = Describe("Main", func() {
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.List", nil)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("200 OK"))
-						var listResponse models.ListResponse
+						var listResponse model.ListResponse
 						err = json.Unmarshal([]byte(body), &listResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(listResponse.Err).To(Equal(""))
@@ -148,7 +148,7 @@ var _ = Describe("Main", func() {
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.List", nil)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("200 OK"))
-						var listResponse models.ListResponse
+						var listResponse model.ListResponse
 						err = json.Unmarshal([]byte(body), &listResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(listResponse.Err).To(Equal(""))
@@ -159,14 +159,14 @@ var _ = Describe("Main", func() {
 				Context(".Get", func() {
 					It("should be able to Get volume details", func() {
 						successfullCreateRequest(volumeName)
-						getRequest := models.GenericRequest{Name: volumeName}
+						getRequest := model.GenericRequest{Name: volumeName}
 						getRequestBody, err := json.Marshal(getRequest)
 						Expect(err).ToNot(HaveOccurred())
 
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Get", getRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("200 OK"))
-						var getResponse models.GetResponse
+						var getResponse model.GetResponse
 						err = json.Unmarshal([]byte(body), &getResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(getResponse.Err).To(Equal(""))
@@ -174,13 +174,13 @@ var _ = Describe("Main", func() {
 						Expect(getResponse.Volume.Name).To(Equal(volumeName))
 					})
 					It("should error if volume does not exist", func() {
-						getRequest := models.GenericRequest{Name: volumeName}
+						getRequest := model.GenericRequest{Name: volumeName}
 						getRequestBody, err := json.Marshal(getRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Get", getRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("400 Bad Request"))
-						var getResponse models.GetResponse
+						var getResponse model.GetResponse
 						err = json.Unmarshal([]byte(body), &getResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(getResponse.Err).To(Equal("volume does not exist"))
@@ -194,26 +194,26 @@ var _ = Describe("Main", func() {
 					It("should not error if volume is already linked", func() {
 						successfullCreateRequest(volumeName)
 						successfullMountRequest(volumeName)
-						mountRequest := models.GenericRequest{Name: volumeName}
+						mountRequest := model.GenericRequest{Name: volumeName}
 						mountRequestBody, err := json.Marshal(mountRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Mount", mountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("200 OK"))
-						var mountResponse models.MountResponse
+						var mountResponse model.MountResponse
 						err = json.Unmarshal([]byte(body), &mountResponse)
 						Expect(err).ToNot(HaveOccurred())
-                                                Expect(mountResponse.Mountpoint).ToNot(Equal(nil))
-                                                Expect(len(mountResponse.Mountpoint)).To(BeNumerically(">", 0))
+						Expect(mountResponse.Mountpoint).ToNot(Equal(nil))
+						Expect(len(mountResponse.Mountpoint)).To(BeNumerically(">", 0))
 					})
 					It("should error if volume does not exist", func() {
-						mountRequest := models.GenericRequest{Name: volumeName}
+						mountRequest := model.GenericRequest{Name: volumeName}
 						mountRequestBody, err := json.Marshal(mountRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Mount", mountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("400 Bad Request"))
-						var mountResponse models.MountResponse
+						var mountResponse model.MountResponse
 						err = json.Unmarshal([]byte(body), &mountResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(mountResponse.Err).To(Equal("volume not found"))
@@ -227,25 +227,25 @@ var _ = Describe("Main", func() {
 					})
 					It("should error when volume is not linked", func() {
 						successfullCreateRequest(volumeName)
-						unmountRequest := models.GenericRequest{Name: volumeName}
+						unmountRequest := model.GenericRequest{Name: volumeName}
 						unmountRequestBody, err := json.Marshal(unmountRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Unmount", unmountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("400 Bad Request"))
-						var unmountResponse models.GenericResponse
+						var unmountResponse model.GenericResponse
 						err = json.Unmarshal([]byte(body), &unmountResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(unmountResponse.Err).To(Equal("volume already unmounted"))
 					})
 					It("should error when volume does not exist", func() {
-						unmountRequest := models.GenericRequest{Name: volumeName}
+						unmountRequest := model.GenericRequest{Name: volumeName}
 						unmountRequestBody, err := json.Marshal(unmountRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Unmount", unmountRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("400 Bad Request"))
-						var unmountResponse models.GenericResponse
+						var unmountResponse model.GenericResponse
 						err = json.Unmarshal([]byte(body), &unmountResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(unmountResponse.Err).To(Equal("volume not found"))
@@ -255,13 +255,13 @@ var _ = Describe("Main", func() {
 					It("should return path when volume is linked", func() {
 						successfullCreateRequest(volumeName)
 						successfullMountRequest(volumeName)
-						pathRequest := models.GenericRequest{Name: volumeName}
+						pathRequest := model.GenericRequest{Name: volumeName}
 						pathRequestBody, err := json.Marshal(pathRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Path", pathRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("200 OK"))
-						var pathResponse models.MountResponse
+						var pathResponse model.MountResponse
 						err = json.Unmarshal([]byte(body), &pathResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(pathResponse.Err).To(Equal(""))
@@ -269,13 +269,13 @@ var _ = Describe("Main", func() {
 					})
 					It("should error when volume is not linked", func() {
 						successfullCreateRequest(volumeName)
-						pathRequest := models.GenericRequest{Name: volumeName}
+						pathRequest := model.GenericRequest{Name: volumeName}
 						pathRequestBody, err := json.Marshal(pathRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Path", pathRequestBody)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("400 Bad Request"))
-						var pathResponse models.MountResponse
+						var pathResponse model.MountResponse
 						err = json.Unmarshal([]byte(body), &pathResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(pathResponse.Err).To(Equal("volume not mounted"))
@@ -317,26 +317,26 @@ func submitRequestWithBody(reqType string, path string, requestBody []byte) (bod
 	return string(bodyBytes[:]), response.Status, err
 }
 func successfullCreateRequest(volumeName string) {
-	createRequest := models.CreateRequest{Name: volumeName, Opts: map[string]interface{}{}}
+	createRequest := model.CreateRequest{Name: volumeName, Opts: map[string]interface{}{}}
 	createRequestBody, err := json.Marshal(createRequest)
 	Expect(err).ToNot(HaveOccurred())
 	body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(status).To(Equal("200 OK"))
-	var createResponse models.GenericResponse
+	var createResponse model.GenericResponse
 	err = json.Unmarshal([]byte(body), &createResponse)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(createResponse.Err).To(Equal(""))
 }
 
 func successfullMountRequest(volumeName string) {
-	mountRequest := models.GenericRequest{Name: volumeName}
+	mountRequest := model.GenericRequest{Name: volumeName}
 	mountRequestBody, err := json.Marshal(mountRequest)
 	Expect(err).ToNot(HaveOccurred())
 	body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Mount", mountRequestBody)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(status).To(Equal("200 OK"))
-	var mountResponse models.MountResponse
+	var mountResponse model.MountResponse
 	err = json.Unmarshal([]byte(body), &mountResponse)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(mountResponse.Err).To(Equal(""))
@@ -344,13 +344,13 @@ func successfullMountRequest(volumeName string) {
 }
 
 func successfullUnmountRequest(volumeName string) {
-	unmountRequest := models.GenericRequest{Name: volumeName}
+	unmountRequest := model.GenericRequest{Name: volumeName}
 	unmountRequestBody, err := json.Marshal(unmountRequest)
 	Expect(err).ToNot(HaveOccurred())
 	body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Unmount", unmountRequestBody)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(status).To(Equal("200 OK"))
-	var unmountResponse models.GenericResponse
+	var unmountResponse model.GenericResponse
 	err = json.Unmarshal([]byte(body), &unmountResponse)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(unmountResponse.Err).To(Equal(""))

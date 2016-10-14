@@ -8,10 +8,7 @@ import (
 	"os"
 	"path"
 
-	"github.ibm.com/almaden-containers/spectrum-container-plugin.git/web_server"
-	"github.ibm.com/almaden-containers/spectrum-common.git/core"
-	"os/signal"
-	"syscall"
+	"github.ibm.com/almaden-containers/ubiquity-docker-plugin.git/web_server"
 )
 
 var address = flag.String(
@@ -44,41 +41,37 @@ var logPath = flag.String(
 	"/tmp",
 	"log path",
 )
+var storageApiURL = flag.String(
+	"storageApiURL",
+	"http://127.0.0.1:8999/ubiquity_storage",
+	"Storage api server url",
+)
+var backendName = flag.String(
+	"backend",
+	"spectrum-scale",
+	"Storage backend name (spectrum-scale/spectrum-scale-nfs/manilla)",
+)
 
 func main() {
 	flag.Parse()
 	logger, logFile := setupLogger(*logPath)
 	defer closeLogs(logFile)
 
-	// Initialize Database connection
-	DbClient := core.NewDatabaseClient(logger, *filesystemName, *defaultMountPath)
-	err := DbClient.Init()
+	server, err := web_server.NewServer(logger, *filesystemName, *defaultMountPath, *storageApiURL, *backendName)
 	if err != nil {
-		logger.Fatalln(err.Error())
+		panic("Backend not valid: " + *backendName)
 	}
-
-	// Catch Ctrl-C / interrupts to perform DB connection cleanup
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
-	go func() {
-		<-c
-		DbClient.Close()
-		os.Exit(1)
-	}()
-
-	server := web_server.NewServer(logger, *filesystemName, *defaultMountPath, DbClient)
 	server.Start(*address, *port, *pluginsPath)
 }
 
 func setupLogger(logPath string) (*log.Logger, *os.File) {
-	logFile, err := os.OpenFile(path.Join(logPath, "spectrum-scale-plugin.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
+	logFile, err := os.OpenFile(path.Join(logPath, "ubiquity-docker-plugin.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
 	if err != nil {
 		fmt.Printf("Failed to setup logger: %s\n", err.Error())
 		return nil, nil
 	}
 	log.SetOutput(logFile)
-	logger := log.New(io.MultiWriter(logFile, os.Stdout), "spectrum: ", log.Lshortfile|log.LstdFlags)
+	logger := log.New(io.MultiWriter(logFile, os.Stdout), "ubiquity-docker-plugin: ", log.Lshortfile|log.LstdFlags)
 	return logger, logFile
 }
 

@@ -11,10 +11,11 @@ package reporters
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/types"
 	"os"
 	"strings"
+
+	"github.com/onsi/ginkgo/config"
+	"github.com/onsi/ginkgo/types"
 )
 
 type JUnitTestSuite struct {

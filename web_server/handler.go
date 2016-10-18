@@ -17,8 +17,8 @@ type Handler struct {
 	log        *log.Logger
 }
 
-func NewHandler(logger *log.Logger, filesystem, mountpath string, storageApiURL string, backendName string) (*Handler, error) {
-	controller, err := core.NewController(logger, filesystem, mountpath, storageApiURL, backendName)
+func NewHandler(logger *log.Logger, storageApiURL string, backendName string) (*Handler, error) {
+	controller, err := core.NewController(logger, storageApiURL, backendName)
 	if err != nil {
 		return nil, err
 	}

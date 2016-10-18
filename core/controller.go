@@ -12,8 +12,8 @@ type Controller struct {
 	logger *log.Logger
 }
 
-func NewController(logger *log.Logger, filesystem, mountpath string, storageApiURL string, backendName string) (*Controller, error) {
-	backendClient, err := remote.NewRemoteClient(logger, filesystem, mountpath, storageApiURL, backendName)
+func NewController(logger *log.Logger, storageApiURL string, backendName string) (*Controller, error) {
+	backendClient, err := remote.NewRemoteClient(logger, storageApiURL, backendName)
 	if err != nil {
 		logger.Fatal("Cannot find backend: " + backendName)
 		return nil, err

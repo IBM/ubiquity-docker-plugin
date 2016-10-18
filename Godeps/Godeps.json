@@ -170,15 +170,15 @@
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity.git/model",
-			"Rev": "d8614845a08fd2825f93c1397f36ac98053f7978"
+			"Rev": "ebb215415572b65e37f9157d729eb5147dae907c"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity.git/remote",
-			"Rev": "d8614845a08fd2825f93c1397f36ac98053f7978"
+			"Rev": "ebb215415572b65e37f9157d729eb5147dae907c"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity.git/utils",
-			"Rev": "d8614845a08fd2825f93c1397f36ac98053f7978"
+			"Rev": "ebb215415572b65e37f9157d729eb5147dae907c"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
@@ -190,15 +190,15 @@
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity.git/vendor/github.com/gorilla/mux",
-			"Rev": "d8614845a08fd2825f93c1397f36ac98053f7978"
+			"Rev": "ebb215415572b65e37f9157d729eb5147dae907c"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity.git/vendor/github.com/mattn/go-sqlite3",
-			"Rev": "d8614845a08fd2825f93c1397f36ac98053f7978"
+			"Rev": "ebb215415572b65e37f9157d729eb5147dae907c"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity.git/vendor/github.com/gorilla/context",
-			"Rev": "d8614845a08fd2825f93c1397f36ac98053f7978"
+			"Rev": "ebb215415572b65e37f9157d729eb5147dae907c"
 		}
 	]
 }

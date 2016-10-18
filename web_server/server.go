@@ -12,9 +12,8 @@ import (
 )
 
 type Server struct {
-	handler    *Handler
-	filesystem string
-	log        *log.Logger
+	handler *Handler
+	log     *log.Logger
 }
 
 type ServerInfo struct {
@@ -22,12 +21,12 @@ type ServerInfo struct {
 	Addr string
 }
 
-func NewServer(logger *log.Logger, filesystem, mountpath, storageApiURL string, backendName string) (*Server, error) {
-	handler, err := NewHandler(logger, filesystem, mountpath, storageApiURL, backendName)
+func NewServer(logger *log.Logger, storageApiURL string, backendName string) (*Server, error) {
+	handler, err := NewHandler(logger, storageApiURL, backendName)
 	if err != nil {
 		return nil, err
 	}
-	return &Server{log: logger, handler: handler, filesystem: filesystem}, nil
+	return &Server{log: logger, handler: handler}, nil
 }
 
 func (s *Server) Start(address string, port int, pluginsPath string) {
@@ -42,7 +41,7 @@ func (s *Server) Start(address string, port int, pluginsPath string) {
 	router.HandleFunc("/VolumeDriver.Path", s.handler.Path).Methods("POST")
 	router.HandleFunc("/VolumeDriver.List", s.handler.List).Methods("POST")
 	http.Handle("/", router)
-	serverInfo := &ServerInfo{Name: fmt.Sprintf("spectrum-scale-%s", s.filesystem), Addr: fmt.Sprintf("http://%s:%d", address, port)}
+	serverInfo := &ServerInfo{Name: "ubiquity", Addr: fmt.Sprintf("http://%s:%d", address, port)}
 	err := s.writeSpecFile(serverInfo, pluginsPath)
 	if err != nil {
 		s.log.Fatal("Error writing plugin config, aborting...(: %s)\n", err.Error())
@@ -57,7 +56,7 @@ func (s *Server) writeSpecFile(server *ServerInfo, pluginsPath string) error {
 	if err != nil {
 		return fmt.Errorf("Error marshalling Get response: %s", err.Error())
 	}
-	err = ioutil.WriteFile(path.Join(pluginsPath, fmt.Sprintf("spectrum-scale-%s.json", s.filesystem)), data, 0644)
+	err = ioutil.WriteFile(path.Join(pluginsPath, "ubiquity.json"), data, 0644)
 	if err != nil {
 		return fmt.Errorf("Error writing json spec: %s", err.Error())
 	}

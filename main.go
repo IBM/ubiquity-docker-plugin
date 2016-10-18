@@ -26,16 +26,7 @@ var pluginsPath = flag.String(
 	"/tmp/",
 	"docker plugins directory path",
 )
-var filesystemName = flag.String(
-	"filesystem",
-	"gpfs1",
-	"gpfs filesystem name for this plugin",
-)
-var defaultMountPath = flag.String(
-	"mountpath",
-	"/gpfs/fs1",
-	"gpfs mount path",
-)
+
 var logPath = flag.String(
 	"logPath",
 	"/tmp",
@@ -57,7 +48,7 @@ func main() {
 	logger, logFile := setupLogger(*logPath)
 	defer closeLogs(logFile)
 
-	server, err := web_server.NewServer(logger, *filesystemName, *defaultMountPath, *storageApiURL, *backendName)
+	server, err := web_server.NewServer(logger, *storageApiURL, *backendName)
 	if err != nil {
 		panic("Backend not valid: " + *backendName)
 	}

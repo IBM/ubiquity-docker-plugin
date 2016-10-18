@@ -18,8 +18,6 @@ var spectrumProcess *os.Process
 var spectrumCommand *exec.Cmd
 var listenAddr string
 var listenPort int
-var filesystemName string
-var filesystemMountpoint string
 var testLogger *log.Logger
 var logFile *os.File
 
@@ -36,8 +34,6 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	return []byte(spectrumPath)
 }, func(pathsByte []byte) {
 	spectrumPath = string(pathsByte)
-	filesystemName = "gold"
-	filesystemMountpoint = "/gpfs/gold"
 })
 
 var _ = BeforeEach(func() {
@@ -51,7 +47,7 @@ var _ = BeforeEach(func() {
 
 	listenAddr = "127.0.0.1"
 	listenPort = 9000 + GinkgoParallelNode()
-	spectrumCommand = exec.Command(spectrumPath, "-listenAddr", listenAddr, "-listenPort", strconv.Itoa(listenPort), "-filesystem", filesystemName, "-mountpath", filesystemMountpoint)
+	spectrumCommand = exec.Command(spectrumPath, "-listenAddr", listenAddr, "-listenPort", strconv.Itoa(listenPort))
 	err = spectrumCommand.Start()
 	Expect(err).ToNot(HaveOccurred())
 	spectrumProcess = spectrumCommand.Process

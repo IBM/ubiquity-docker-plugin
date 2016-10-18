@@ -30,19 +30,19 @@ func TestMain(t *testing.T) {
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	var err error
-	spectrumPath, err := gexec.Build("github.ibm.com/almaden-containers/spectrum-container-plugin.git", "-race")
+	spectrumPath, err := gexec.Build("github.ibm.com/almaden-containers/ubiquity-docker-plugin.git", "-race")
 	Expect(err).NotTo(HaveOccurred())
 
 	return []byte(spectrumPath)
 }, func(pathsByte []byte) {
 	spectrumPath = string(pathsByte)
-	filesystemName = "gpfs1"
-	filesystemMountpoint = "/gpfs/fs1"
+	filesystemName = "gold"
+	filesystemMountpoint = "/gpfs/gold"
 })
 
 var _ = BeforeEach(func() {
 	var err error
-	logFile, err = os.OpenFile("/tmp/test-spectrum-scale-plugin.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, err = os.OpenFile("/tmp/test-ubiquity-docker-plugin.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Printf("Failed to setup logger: %s\n", err.Error())
 		return

@@ -108,6 +108,7 @@ var _ = Describe("Main", func() {
 					It("should not error on creating fileset volume using type opt", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
@@ -117,6 +118,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["fileset"] = volumeName
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						newVolumeName := fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
 						successfulCreateWithOptsRequest(newVolumeName, opts)
 						successfulRemoveRequest(newVolumeName)
@@ -143,6 +145,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
@@ -219,12 +222,14 @@ var _ = Describe("Main", func() {
 					It("should not error when removing an existing fileset volume, which was created using type opt", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
 					It("should not error when removing an existing lightweight volume, which was created using type opt", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
@@ -232,6 +237,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
@@ -247,6 +253,7 @@ var _ = Describe("Main", func() {
 						successfulCreateRequest(volumeName)
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						opts["type"] = "lightweight"
 						successfulCreateWithOptsRequest(ltwtVolume, opts)
@@ -308,6 +315,7 @@ var _ = Describe("Main", func() {
 					It("should be able to Get Fileset type volume details", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						successfulGetRequest(filesetVolume)
 						successfulRemoveRequest(filesetVolume)
@@ -315,6 +323,7 @@ var _ = Describe("Main", func() {
 					It("should be able to Get lightweight type volume details", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(ltwtVolume, opts)
 						successfulGetRequest(ltwtVolume)
 						successfulRemoveRequest(ltwtVolume)
@@ -323,6 +332,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						successfulGetRequest(filesetVolume)
 						successfulRemoveRequest(filesetVolume)
@@ -345,6 +355,7 @@ var _ = Describe("Main", func() {
 					It("should be able to link volume of type fileset", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						successfulMountRequest(filesetVolume)
 						//successfulUnmountRequest(filesetVolume)
@@ -362,6 +373,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						//successfulUnmountRequest(filesetWithQuotaVolume)
@@ -377,6 +389,7 @@ var _ = Describe("Main", func() {
 					It("should not error if volume of type fileset is already linked", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						successfulMountRequest(filesetVolume)
 						successfulMountRequest(filesetVolume)
@@ -386,6 +399,7 @@ var _ = Describe("Main", func() {
 					It("should not error if volume of type lightweight is already linked", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(ltwtVolume, opts)
 						successfulMountRequest(ltwtVolume)
 						successfulMountRequest(ltwtVolume)
@@ -396,6 +410,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						successfulMountRequest(filesetWithQuotaVolume)
@@ -431,6 +446,7 @@ var _ = Describe("Main", func() {
 					It("should be able to unlink volume of type fileset", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						successfulMountRequest(filesetVolume)
 						successfulUnmountRequest(filesetVolume)
@@ -439,6 +455,7 @@ var _ = Describe("Main", func() {
 					It("should be able to unlink volume of type lightweight", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(ltwtVolume, opts)
 						successfulMountRequest(ltwtVolume)
 						successfulUnmountRequest(ltwtVolume)
@@ -448,6 +465,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						successfulUnmountRequest(filesetWithQuotaVolume)
@@ -461,6 +479,7 @@ var _ = Describe("Main", func() {
 					It("should error when volume of type fileset is not linked", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						failedUnmountRequest(filesetVolume)
 						successfulRemoveRequest(filesetVolume)
@@ -468,6 +487,7 @@ var _ = Describe("Main", func() {
 					It("should error when volume of type lightweight is not linked", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(ltwtVolume, opts)
 						failedUnmountRequest(ltwtVolume)
 						successfulRemoveRequest(ltwtVolume)
@@ -476,6 +496,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						failedUnmountRequest(filesetWithQuotaVolume)
 						successfulRemoveRequest(filesetWithQuotaVolume)
@@ -510,6 +531,7 @@ var _ = Describe("Main", func() {
 					It("should return path when volume of type fileset is linked", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						successfulMountRequest(filesetVolume)
 						successfulPathRequest(filesetVolume)
@@ -519,6 +541,7 @@ var _ = Describe("Main", func() {
 					It("should return path when volume of type lightweight is linked", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(ltwtVolume, opts)
 						successfulMountRequest(ltwtVolume)
 						successfulPathRequest(ltwtVolume)
@@ -529,6 +552,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						successfulPathRequest(filesetWithQuotaVolume)
@@ -544,6 +568,7 @@ var _ = Describe("Main", func() {
 					It("should error when volume of type fileset is not linked", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						failedPathRequest(filesetVolume)
 						successfulRemoveRequest(filesetVolume)
@@ -551,6 +576,7 @@ var _ = Describe("Main", func() {
 					It("should error when volume of type lightweight is not linked", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(ltwtVolume, opts)
 						failedPathRequest(ltwtVolume)
 						successfulRemoveRequest(ltwtVolume)
@@ -559,6 +585,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						failedPathRequest(filesetWithQuotaVolume)
 						successfulRemoveRequest(filesetWithQuotaVolume)
@@ -608,7 +635,7 @@ func successfulCreateRequest(volumeName string) {
 }
 
 func successfulCreateWithOptsRequest(volumeName string, opts map[string]interface{}) {
-	opts["filesystem"] = "silver"
+
 	createRequest := model.CreateRequest{Name: volumeName, Opts: opts}
 	createRequestBody, err := json.Marshal(createRequest)
 	Expect(err).ToNot(HaveOccurred())

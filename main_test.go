@@ -265,7 +265,10 @@ var _ = Describe("Main", func() {
 						opts["fileset"] = volumeName
 						opts["type"] = "lightweight"
 						successfulCreateWithOptsRequest(ltwtVolume, opts)
+
+						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
 						opts["quota"] = "1G"
 
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)

@@ -154,6 +154,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["fileset"] = volumeName
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "silver"
 						newVolumeName := fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
 						opts["quota"] = "1G"
 						createRequest := model.CreateRequest{Name: newVolumeName, Opts: opts}

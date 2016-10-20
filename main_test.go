@@ -118,7 +118,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["fileset"] = volumeName
 						opts["type"] = "lightweight"
-						opts["filesystem"] = "silver"
+						opts["filesystem"] = "gold"
 						newVolumeName := fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
 						successfulCreateWithOptsRequest(newVolumeName, opts)
 						successfulRemoveRequest(newVolumeName)
@@ -128,6 +128,7 @@ var _ = Describe("Main", func() {
 					It("should error on creating lightweight volume if fileset not specified", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
+						opts["filesystem"] = "gold"
 						createRequest := model.CreateRequest{Name: volumeName, Opts: opts}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
@@ -154,7 +155,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["fileset"] = volumeName
 						opts["type"] = "lightweight"
-						opts["filesystem"] = "silver"
+						opts["filesystem"] = "gold"
 						newVolumeName := fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
 						opts["quota"] = "1G"
 						createRequest := model.CreateRequest{Name: newVolumeName, Opts: opts}

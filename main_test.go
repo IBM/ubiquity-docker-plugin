@@ -146,11 +146,14 @@ var _ = Describe("Main", func() {
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
-					It("should error on creating quota based volume using type lightweight", func() {
+					FIt("should error on creating quota based volume using type lightweight", func() {
+						successfulCreateRequest(volumeName)
 						opts = make(map[string]interface{})
+						opts["fileset"] = volumeName
 						opts["type"] = "lightweight"
+						newVolumeName := fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
 						opts["quota"] = "1G"
-						createRequest := model.CreateRequest{Name: volumeName, Opts: opts}
+						createRequest := model.CreateRequest{Name: newVolumeName, Opts: opts}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
@@ -160,6 +163,7 @@ var _ = Describe("Main", func() {
 						err = json.Unmarshal([]byte(body), &createResponse)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(createResponse.Err).To(Equal("'quota' is not supported for lightweight volumes"))
+						successfulRemoveRequest(volumeName)
 					})
 					It("should error on creating quota based volume using type fileset but invalid quota", func() {
 						opts = make(map[string]interface{})

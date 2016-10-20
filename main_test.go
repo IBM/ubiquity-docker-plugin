@@ -64,7 +64,11 @@ var _ = Describe("Main", func() {
 			})
 			Context("on successful activation", func() {
 				var (
-					volumeName string
+					volumeName             string
+					filesetVolume          string
+					ltwtVolume             string
+					filesetWithQuotaVolume string
+					opts                   map[string]interface{}
 				)
 				BeforeEach(func() {
 
@@ -80,15 +84,14 @@ var _ = Describe("Main", func() {
 				Context(".Create", func() {
 					BeforeEach(func() {
 						volumeName = fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
-
 					})
 					It("should not error on create with valid opts", func() {
-						successfullCreateRequest(volumeName)
+						successfulCreateRequest(volumeName)
 						successfulRemoveRequest(volumeName)
 
 					})
 					It("should not error if volume already exists", func() {
-						successfullCreateRequest(volumeName)
+						successfulCreateRequest(volumeName)
 						createRequest := model.CreateRequest{Name: volumeName, Opts: map[string]interface{}{}}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
@@ -102,13 +105,32 @@ var _ = Describe("Main", func() {
 						successfulRemoveRequest(volumeName)
 
 					})
+					It("should not error on creating fileset volume using type opt", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
+					It("should not error on creating lightweight volume using type opt", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
+					It("should not error on creating quota based volume using type and fileset opt", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
 				})
 				Context(".Remove", func() {
 					BeforeEach(func() {
 						volumeName = fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
 					})
 					It("should not error when removing an existing volume", func() {
-						successfullCreateRequest(volumeName)
+						successfulCreateRequest(volumeName)
 						successfulRemoveRequest(volumeName)
 					})
 					It("should error if volume does not exist", func() {
@@ -123,13 +145,43 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						Expect(removeResponse.Err).To(Equal("Volume not found"))
 					})
+					It("should not error when removing an existing fileset volume, which was created using type opt", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
+					It("should not error when removing an existing lightweight volume, which was created using type opt", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
+					It("should not error when removing an exisiting quota based volume, which was created using type and fileset opt", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
 				})
 				Context(".List", func() {
 					BeforeEach(func() {
 						volumeName = fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
+						filesetVolume = fmt.Sprintf("some-filesetvolume-%d", time.Now().Nanosecond())
+						ltwtVolume = fmt.Sprintf("some-ltwvolume-%d", time.Now().Nanosecond())
+						filesetWithQuotaVolume = fmt.Sprintf("some-filesetwithquotavolume-%d", time.Now().Nanosecond())
 					})
 					It("should list volumes", func() {
-						successfullCreateRequest(volumeName)
+						successfulCreateRequest(volumeName)
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(filesetVolume,opts)
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.List", nil)
 						Expect(err).ToNot(HaveOccurred())
 						Expect(status).To(Equal("200 OK"))
@@ -141,6 +193,9 @@ var _ = Describe("Main", func() {
 						//loop thru and find
 						//Expect(listResponse.Volumes[0].Name).To(Equal(volumeName))
 						successfulRemoveRequest(volumeName)
+						successfulRemoveRequest(filesetVolume)
+						successfulRemoveRequest(ltwtVolume)
+						successfulRemoveRequest(filesetWithQuotaVolume)
 					})
 					//It("should not error if no volumes exist", func() {
 					//
@@ -158,22 +213,13 @@ var _ = Describe("Main", func() {
 				Context(".Get", func() {
 					BeforeEach(func() {
 						volumeName = fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
+						filesetVolume = fmt.Sprintf("some-filesetvolume-%d", time.Now().Nanosecond())
+						ltwtVolume = fmt.Sprintf("some-ltwvolume-%d", time.Now().Nanosecond())
+						filesetWithQuotaVolume = fmt.Sprintf("some-filesetwithquotavolume-%d", time.Now().Nanosecond())
 					})
 					It("should be able to Get volume details", func() {
-						successfullCreateRequest(volumeName)
-						getRequest := model.GenericRequest{Name: volumeName}
-						getRequestBody, err := json.Marshal(getRequest)
-						Expect(err).ToNot(HaveOccurred())
-
-						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Get", getRequestBody)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
-						var getResponse model.GetResponse
-						err = json.Unmarshal([]byte(body), &getResponse)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(getResponse.Err).To(Equal(""))
-						Expect(getResponse.Volume).ToNot(Equal(nil))
-						Expect(getResponse.Volume.Name).To(Equal(volumeName))
+						successfulCreateRequest(volumeName)
+						successfulGetRequest(volumeName)
 						successfulRemoveRequest(volumeName)
 					})
 					It("should error if volume does not exist", func() {
@@ -188,35 +234,102 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						Expect(getResponse.Err).To(Equal("Volume not found"))
 					})
+					It("should be able to Get Fileset type volume details", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(filesetVolume, opts)
+						successfulGetRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
+					It("should be able to Get lightweight type volume details", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						successfulGetRequest(ltwtVolume)
+						successfulRemoveRequest(ltwtVolume)
+					})
+					It("should be able to Get Fileset with quota type volume details", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(filesetVolume, opts)
+						successfulGetRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
 				})
 				Context(".Mount", func() {
 					BeforeEach(func() {
 						volumeName = fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
+						filesetVolume = fmt.Sprintf("some-filesetvolume-%d", time.Now().Nanosecond())
+						ltwtVolume = fmt.Sprintf("some-ltwvolume-%d", time.Now().Nanosecond())
+						filesetWithQuotaVolume = fmt.Sprintf("some-filesetwithquotavolume-%d", time.Now().Nanosecond())
 					})
 					It("should be able to link volume", func() {
-						successfullCreateRequest(volumeName)
-						successfullMountRequest(volumeName)
-						//	successfullUnmountRequest(volumeName)
+						successfulCreateRequest(volumeName)
+						successfulMountRequest(volumeName)
+						//	successfulUnmountRequest(volumeName)
 						//	successfulRemoveRequest(volumeName)
 
 					})
+					It("should be able to link volume of type fileset", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(filesetVolume,opts)
+						successfulMountRequest(filesetVolume)
+						//successfulUnmountRequest(filesetVolume)
+						//successfulRemoveRequest(filesetVolume)
+					})
+					It("should be able to link volume of type lightweight", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						successfulMountRequest(ltwtVolume)
+						//successfulUnmountRequest(ltwtVolume)
+						//successfulRemoveRequest(ltwtVolume)
+					})
+					It("should be able to link volume of type fileset with quota", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						successfulMountRequest(filesetWithQuotaVolume)
+						//successfulUnmountRequest(filesetWithQuotaVolume)
+						//successfulRemoveRequest(filesetWithQuotaVolume)
+					})
 					It("should not error if volume is already linked", func() {
-						successfullCreateRequest(volumeName)
-						successfullMountRequest(volumeName)
-						mountRequest := model.GenericRequest{Name: volumeName}
-						mountRequestBody, err := json.Marshal(mountRequest)
-						Expect(err).ToNot(HaveOccurred())
-						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Mount", mountRequestBody)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
-						var mountResponse model.MountResponse
-						err = json.Unmarshal([]byte(body), &mountResponse)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(mountResponse.Mountpoint).ToNot(Equal(nil))
-						Expect(len(mountResponse.Mountpoint)).To(BeNumerically(">", 0))
-						successfullUnmountRequest(volumeName)
+						successfulCreateRequest(volumeName)
+						successfulMountRequest(volumeName)
+						successfulMountRequest(volumeName)
+						successfulUnmountRequest(volumeName)
 						successfulRemoveRequest(volumeName)
-
+					})
+					It("should not error if volume of type fileset is already linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(filesetVolume,opts)
+						successfulMountRequest(filesetVolume)
+						successfulMountRequest(filesetVolume)
+						successfulUnmountRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
+					It("should not error if volume of type lightweight is already linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						successfulMountRequest(ltwtVolume)
+						successfulMountRequest(ltwtVolume)
+						successfulUnmountRequest(ltwtVolume)
+						successfulRemoveRequest(ltwtVolume)
+					})
+					It("should not error if volume of type fileset with quota is already linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						successfulMountRequest(filesetWithQuotaVolume)
+						successfulMountRequest(filesetWithQuotaVolume)
+						successfulUnmountRequest(filesetWithQuotaVolume)
+						successfulRemoveRequest(filesetWithQuotaVolume)
 					})
 					It("should error if volume does not exist", func() {
 						mountRequest := model.GenericRequest{Name: volumeName}
@@ -234,27 +347,67 @@ var _ = Describe("Main", func() {
 				Context(".Unmount", func() {
 					BeforeEach(func() {
 						volumeName = fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
+						filesetVolume = fmt.Sprintf("some-filesetvolume-%d", time.Now().Nanosecond())
+						ltwtVolume = fmt.Sprintf("some-ltwvolume-%d", time.Now().Nanosecond())
+						filesetWithQuotaVolume = fmt.Sprintf("some-filesetwithquotavolume-%d", time.Now().Nanosecond())
 					})
 					It("should be able to unlink volume", func() {
-						successfullCreateRequest(volumeName)
-						successfullMountRequest(volumeName)
-						successfullUnmountRequest(volumeName)
+						successfulCreateRequest(volumeName)
+						successfulMountRequest(volumeName)
+						successfulUnmountRequest(volumeName)
 						successfulRemoveRequest(volumeName)
 					})
+					It("should be able to unlink volume of type fileset", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(filesetVolume,opts)
+						successfulMountRequest(filesetVolume)
+						successfulUnmountRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
+					It("should be able to unlink volume of type lightweight", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						successfulMountRequest(ltwtVolume)
+						successfulUnmountRequest(ltwtVolume)
+						successfulRemoveRequest(ltwtVolume)
+					})
+					It("should be able to unlink volume of type fileset with quota", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						successfulMountRequest(filesetWithQuotaVolume)
+						successfulUnmountRequest(filesetWithQuotaVolume)
+						successfulRemoveRequest(filesetWithQuotaVolume)
+					})
 					It("should error when volume is not linked", func() {
-						successfullCreateRequest(volumeName)
-						unmountRequest := model.GenericRequest{Name: volumeName}
-						unmountRequestBody, err := json.Marshal(unmountRequest)
-						Expect(err).ToNot(HaveOccurred())
-						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Unmount", unmountRequestBody)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("400 Bad Request"))
-						var unmountResponse model.GenericResponse
-						err = json.Unmarshal([]byte(body), &unmountResponse)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(unmountResponse.Err).To(Equal("volume not attached"))
-
+						successfulCreateRequest(volumeName)
+						failedUnmountRequest(volumeName)
 						successfulRemoveRequest(volumeName)
+					})
+					It("should error when volume of type fileset is not linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(filesetVolume,opts)
+						failedUnmountRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
+					It("should error when volume of type lightweight is not linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						failedUnmountRequest(ltwtVolume)
+						successfulRemoveRequest(ltwtVolume)
+					})
+					It("should error when volume of type fileset with quota is not linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						failedUnmountRequest(filesetWithQuotaVolume)
+						successfulRemoveRequest(filesetWithQuotaVolume)
 					})
 					It("should error when volume does not exist", func() {
 						unmountRequest := model.GenericRequest{Name: volumeName}
@@ -272,39 +425,72 @@ var _ = Describe("Main", func() {
 				Context(".Path", func() {
 					BeforeEach(func() {
 						volumeName = fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
+						filesetVolume = fmt.Sprintf("some-filesetvolume-%d", time.Now().Nanosecond())
+						ltwtVolume = fmt.Sprintf("some-ltwvolume-%d", time.Now().Nanosecond())
+						filesetWithQuotaVolume = fmt.Sprintf("some-filesetwithquotavolume-%d", time.Now().Nanosecond())
 					})
 					It("should return path when volume is linked", func() {
-						successfullCreateRequest(volumeName)
-						successfullMountRequest(volumeName)
-						pathRequest := model.GenericRequest{Name: volumeName}
-						pathRequestBody, err := json.Marshal(pathRequest)
-						Expect(err).ToNot(HaveOccurred())
-						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Path", pathRequestBody)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("200 OK"))
-						var pathResponse model.MountResponse
-						err = json.Unmarshal([]byte(body), &pathResponse)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(pathResponse.Err).To(Equal(""))
-						Expect(pathResponse.Mountpoint).ToNot(Equal(""))
-
-						successfullUnmountRequest(volumeName)
+						successfulCreateRequest(volumeName)
+						successfulMountRequest(volumeName)
+						successfulPathRequest(volumeName)
+						successfulUnmountRequest(volumeName)
 						successfulRemoveRequest(volumeName)
 					})
-					It("should error when volume is not linked", func() {
-						successfullCreateRequest(volumeName)
-						pathRequest := model.GenericRequest{Name: volumeName}
-						pathRequestBody, err := json.Marshal(pathRequest)
-						Expect(err).ToNot(HaveOccurred())
-						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Path", pathRequestBody)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(status).To(Equal("400 Bad Request"))
-						var pathResponse model.MountResponse
-						err = json.Unmarshal([]byte(body), &pathResponse)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(pathResponse.Err).To(Equal("volume not mounted"))
+					It("should return path when volume of type fileset is linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(filesetVolume,opts)
+						successfulMountRequest(filesetVolume)
+						successfulPathRequest(filesetVolume)
+						successfulUnmountRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
+					It("should return path when volume of type lightweight is linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						successfulMountRequest(ltwtVolume)
+						successfulPathRequest(ltwtVolume)
+						successfulUnmountRequest(ltwtVolume)
+						successfulRemoveRequest(ltwtVolume)
+					})
+					It("should return path when volume of type fileset with quota is linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						successfulMountRequest(filesetWithQuotaVolume)
+						successfulPathRequest(filesetWithQuotaVolume)
+						successfulUnmountRequest(filesetWithQuotaVolume)
+						successfulRemoveRequest(filesetWithQuotaVolume)
 
+					})
+					It("should error when volume is not linked", func() {
+						successfulCreateRequest(volumeName)
+						failedPathRequest(volumeName)
 						successfulRemoveRequest(volumeName)
+					})
+					It("should error when volume of type fileset is not linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						successfulCreateWithOptsRequest(filesetVolume,opts)
+						failedPathRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
+					It("should error when volume of type lightweight is not linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "lightweight"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						failedPathRequest(ltwtVolume)
+						successfulRemoveRequest(ltwtVolume)
+					})
+					It("should error when volume of type fileset with quota is not linked", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						failedPathRequest(filesetWithQuotaVolume)
+						successfulRemoveRequest(filesetWithQuotaVolume)
 					})
 				})
 			})
@@ -319,6 +505,7 @@ func doesProcessExist(pid int) bool {
 	}
 	return true
 }
+
 func submitRequest(reqType string, path string) (body string, status string, err error) {
 	req, _ := http.NewRequest(reqType, fmt.Sprintf("http://%s:%d%s", listenAddr, listenPort, path), nil)
 	response, err := (&http.Client{}).Do(req)
@@ -330,6 +517,7 @@ func submitRequest(reqType string, path string) (body string, status string, err
 	bodyBytes, err := ioutil.ReadAll(response.Body)
 	return string(bodyBytes[:]), response.Status, err
 }
+
 func submitRequestWithBody(reqType string, path string, requestBody []byte) (body string, status string, err error) {
 	req, _ := http.NewRequest(reqType, fmt.Sprintf("http://%s:%d%s", listenAddr, listenPort, path), bytes.NewBuffer(requestBody))
 
@@ -342,8 +530,15 @@ func submitRequestWithBody(reqType string, path string, requestBody []byte) (bod
 	bodyBytes, err := ioutil.ReadAll(response.Body)
 	return string(bodyBytes[:]), response.Status, err
 }
-func successfullCreateRequest(volumeName string) {
-	createRequest := model.CreateRequest{Name: volumeName, Opts: map[string]interface{}{"filesystem": "silver"}}
+
+func successfulCreateRequest(volumeName string) {
+	opts := make(map[string]interface{})
+	successfulCreateWithOptsRequest(volumeName, opts)
+}
+
+func successfulCreateWithOptsRequest(volumeName string, opts map[string]interface{}) {
+	opts["filesystem"] = "silver"
+	createRequest := model.CreateRequest{Name: volumeName, Opts: opts}
 	createRequestBody, err := json.Marshal(createRequest)
 	Expect(err).ToNot(HaveOccurred())
 	body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
@@ -355,7 +550,23 @@ func successfullCreateRequest(volumeName string) {
 	Expect(createResponse.Err).To(Equal(""))
 }
 
-func successfullMountRequest(volumeName string) {
+func successfulGetRequest(volumeName string) {
+	getRequest := model.GenericRequest{Name: volumeName}
+	getRequestBody, err := json.Marshal(getRequest)
+	Expect(err).ToNot(HaveOccurred())
+
+	body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Get", getRequestBody)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(status).To(Equal("200 OK"))
+	var getResponse model.GetResponse
+	err = json.Unmarshal([]byte(body), &getResponse)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(getResponse.Err).To(Equal(""))
+	Expect(getResponse.Volume).ToNot(Equal(nil))
+	Expect(getResponse.Volume.Name).To(Equal(volumeName))
+}
+
+func successfulMountRequest(volumeName string) {
 	mountRequest := model.GenericRequest{Name: volumeName}
 	mountRequestBody, err := json.Marshal(mountRequest)
 	Expect(err).ToNot(HaveOccurred())
@@ -366,10 +577,12 @@ func successfullMountRequest(volumeName string) {
 	err = json.Unmarshal([]byte(body), &mountResponse)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(mountResponse.Err).To(Equal(""))
+	Expect(mountResponse.Mountpoint).ToNot(Equal(nil))
 	Expect(mountResponse.Mountpoint).ToNot(Equal(""))
+	Expect(len(mountResponse.Mountpoint)).To(BeNumerically(">", 0))
 }
 
-func successfullUnmountRequest(volumeName string) {
+func successfulUnmountRequest(volumeName string) {
 	unmountRequest := model.GenericRequest{Name: volumeName}
 	unmountRequestBody, err := json.Marshal(unmountRequest)
 	Expect(err).ToNot(HaveOccurred())
@@ -381,6 +594,47 @@ func successfullUnmountRequest(volumeName string) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(unmountResponse.Err).To(Equal(""))
 }
+
+func failedUnmountRequest(volumeName string) {
+	unmountRequest := model.GenericRequest{Name: volumeName}
+	unmountRequestBody, err := json.Marshal(unmountRequest)
+	Expect(err).ToNot(HaveOccurred())
+	body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Unmount", unmountRequestBody)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(status).To(Equal("400 Bad Request"))
+	var unmountResponse model.GenericResponse
+	err = json.Unmarshal([]byte(body), &unmountResponse)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(unmountResponse.Err).To(Equal("volume not attached"))
+}
+
+func successfulPathRequest(volumeName string) {
+	pathRequest := model.GenericRequest{Name: volumeName}
+	pathRequestBody, err := json.Marshal(pathRequest)
+	Expect(err).ToNot(HaveOccurred())
+	body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Path", pathRequestBody)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(status).To(Equal("200 OK"))
+	var pathResponse model.MountResponse
+	err = json.Unmarshal([]byte(body), &pathResponse)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(pathResponse.Err).To(Equal(""))
+	Expect(pathResponse.Mountpoint).ToNot(Equal(""))
+}
+
+func failedPathRequest(volumeName string) {
+	pathRequest := model.GenericRequest{Name: volumeName}
+	pathRequestBody, err := json.Marshal(pathRequest)
+	Expect(err).ToNot(HaveOccurred())
+	body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Path", pathRequestBody)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(status).To(Equal("400 Bad Request"))
+	var pathResponse model.MountResponse
+	err = json.Unmarshal([]byte(body), &pathResponse)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(pathResponse.Err).To(Equal("volume not mounted"))
+}
+
 func successfulRemoveRequest(volumeName string) {
 	removeRequest := model.GenericRequest{Name: volumeName}
 	removeRequestBody, err := json.Marshal(removeRequest)

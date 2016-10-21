@@ -5,27 +5,25 @@ Ubiquity volume plugin provides access to persistent storage for Docker containe
 #### Prerequisites
 * Install and start Ubiquity Service
 * Install Spectrum-Scale client and connect to Spectrum-Scale cluster
-* Install [docker](https://docs.docker.com/engine/installation/) 
+* Install [docker](https://docs.docker.com/engine/installation/)
 * Install [golang](https://golang.org/)
 
 
 #### Build Ubiquity docker plugin from source
 Assuming you have a working installation of *golang* and the GOPATH is set correctly:
-
 ```bash
-go get github.ibm.com/almaden-containers/ubiquity-docker-plugin.git
+mkdir -p $GOPATH/src/github.ibm.com/almaden-containers
+cd $GOPATH/src/github.ibm.com/almaden-containers
+git clone git@github.ibm.com:almaden-containers/ubiquity-docker-plugin.git
+cd ubiquity-docker-plugin.git
+./bin/build
 ```
 
-#### Creating the executables
-Assuming the GOPATH and GOBIN variables are set correctly:
+This will create an out folder and build ubiquity-docker-plugin in it.
 
-```bash
-cd $GOPATH/github.ibm.com/almaden-containers/spectrum-container-plugin.git
-go build -o bin/ubiquity-docker-plugin main.go
-```
 #### Running the plugin
 ```bash
-./bin/ubiquity-docker-plugin -listenAddr 127.0.0.1 -listenPort <PORT> -pluginsDirectory /etc/docker/plugins -storageApiURL "http://<ip for ubiquity service>:8999/ubiquity_storage" -logPath <>
+./out/ubiquity-docker-plugin -listenAddr 127.0.0.1 -listenPort <PORT> -pluginsDirectory /etc/docker/plugins -storageApiURL "http://<ip for ubiquity service>:8999/ubiquity_storage" -logPath <>
 ```
 Restart the docker engine daemon so that it can discover the plugins in the plugin directory (/etc/docker/plugins)
 ```bash
@@ -39,7 +37,7 @@ service docker restart
 #### Create Docker Volumes
 Create docker volumes using the volume plugins as the volume driver.
 
-```bash 
+```bash
 docker volume create -d spectrum-scale --name <DOCKER-VOLUME-NAME>
 ```
 **NOTE: The docker volume name must be unique across all the volume drivers**
@@ -47,7 +45,7 @@ docker volume create -d spectrum-scale --name <DOCKER-VOLUME-NAME>
 **_Example_**
 
 Create a volume named demo1 using volume driver for the gold GPFS file system :
- 
+
  ```bash
 docker volume create -d spectrum-scale --name demo1 --opt filesystem=gold
 ```
@@ -68,7 +66,7 @@ DRIVER                  VOLUME NAME
 spectrum-scale          demo1
 spectrum-scale          demo2
 ```
-   
+
 #### Running Docker Containers
 
 Run a container and mount the volume created above by specifying the name of the volume name and the volume driver used to create that volume.
@@ -80,7 +78,7 @@ docker run -t -i --volume-driver spectrum-scale --volume <VOLUME-NAME>:<CONTAINE
 
 let's run a docker image of Alpine Linux, a lightweight Linux Distribution, inside a container and mounting demo1 volume inside the container. 
 
-```bash       
+```bash
 docker run -t -i --volume-driver spectrum-scale --volume demo1:/data --entrypoint /bin/sh alpine
 ```
 Here demo1 was created using the volume driver spectrum-scale, a volume plugin for the gold GPFS file system. We specify that volume demo1 must be mounted at /data inside the container

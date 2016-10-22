@@ -35,6 +35,24 @@ service docker restart
 ***_Example:_***
 
 #### Create Docker Volumes
+
+The volume driver supports creation of three types of volumes:
+
+***1. Fileset Volume***
+
+Fileset Volume is a volume which maps to a fileset in spectrum scale. Fileset Volume is the default type of creating
+a volume 
+ 
+***2. Lightweight Volume***
+
+Lightweight Volume is a volume which maps to a sub-directory within an existing fileset in spectrum scale.
+
+***3. Fileset With Quota Volume***
+
+Fileset with Quota volume is a volume which maps to a fileset, along with quota limit set on it, in spectrum scale.<br/>
+Quota, especially fileset based quota, must be enabled on the file system
+
+
 Create docker volumes using the volume plugins as the volume driver.
 
 ```bash
@@ -44,15 +62,34 @@ docker volume create -d spectrum-scale --name <DOCKER-VOLUME-NAME>
 
 **_Example_**
 
-Create a volume named demo1 using volume driver for the gold GPFS file system :
+Create a fileset volume named demo1,  using volume driver, on the gold GPFS file system :
 
- ```bash
+```bash
 docker volume create -d spectrum-scale --name demo1 --opt filesystem=gold
 ```
-Similarly, to create a volume named demo2 using volume driver for the silver GPFS file system :
+
+Alternatively, we can create the same volume demo1 by also passing a type option
+
+```bash
+docker volume create -d spectrum-scale --name demo1 --opt type=fileset --opt filesystem=gold
+```
+
+Similarly, to create a fileset volume named demo2, using volume driver, on the silver GPFS file system :
 
 ```bash
  docker volume create -d spectrum-scale --name demo2 --opt filesystem=silver
+```
+
+Create a lightweight volume named demo3, using volume driver, within an existing fileset 'LtWtVolFileset' in the gold GPFS filesystem :
+
+```bash
+docker volume create -d spectrum-scale --name demo3 --opt type=lightweight --opt fileset=LtWtVolFileset --opt filesystem=gold
+```
+
+Create a fileset with quota volume named demo4, using volume driver, with a quota limit of 1GB in the silver file system:
+
+```bash
+docker volume create -d spectrum-scale --name demo4 --opt type=fileset --opt quota=1G --opt filesystem=silver
 ```
 
 #### List Docker Volumes

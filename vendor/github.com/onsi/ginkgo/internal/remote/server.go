@@ -9,14 +9,13 @@ package remote
 
 import (
 	"encoding/json"
+	"github.com/onsi/ginkgo/config"
+	"github.com/onsi/ginkgo/reporters"
+	"github.com/onsi/ginkgo/types"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
-
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/reporters"
-	"github.com/onsi/ginkgo/types"
 )
 
 /*

@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.ibm.com/almaden-containers/ubiquity.git/model"
+	"github.ibm.com/almaden-containers/ubiquity/model"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -3,38 +3,62 @@ Ubiquity volume plugin provides access to persistent storage for Docker containe
 
 ### Installation
 #### Prerequisites
-* Install and start Ubiquity Service
+* [Ubiquity](https://github.ibm.com/almaden-containers/ubiquity) service must be running
 * Install Spectrum-Scale client and connect to Spectrum-Scale cluster
 * Install [docker](https://docs.docker.com/engine/installation/)
 * Install [golang](https://golang.org/)
 
 
-#### Build Ubiquity docker plugin from source
-Assuming you have a working installation of *golang* and the GOPATH is set correctly:
+#### Getting started
+- Configure go - GOPATH environment variable needs to be correctly set before starting the build process. Create a new directory and set it as GOPATH 
+```bash
+mkdir -p $HOME/workspace
+export GOPATH=$HOME/workspace
+```
+- Configure ssh-keys for github.ibm.com - go tools require password less ssh access to github. If you have not already setup ssh keys for your github.ibm profile, please follow steps in 
+(https://help.github.com/enterprise/2.7/user/articles/generating-an-ssh-key/) before proceeding further. 
+- Build Ubiquity docker plugin from source (can take several minutes based on connectivity)
 ```bash
 mkdir -p $GOPATH/src/github.ibm.com/almaden-containers
 cd $GOPATH/src/github.ibm.com/almaden-containers
 git clone git@github.ibm.com:almaden-containers/ubiquity-docker-plugin.git
-cd ubiquity-docker-plugin.git
-./bin/build
-```
+cd ubiquity-docker-plugin
+./scripts/build
 
-This will create an out folder and build ubiquity-docker-plugin in it.
+```
 
 #### Running the plugin
 ```bash
-./out/ubiquity-docker-plugin -listenAddr 127.0.0.1 -listenPort <PORT> -pluginsDirectory /etc/docker/plugins -storageApiURL "http://<ip for ubiquity service>:8999/ubiquity_storage" -logPath <>
+./out/ubiquity-docker-plugin -listenAddr <> -listenPort <> -pluginsDirectory <> -ubiquityServerIP <> -ubiquityServerPort <> -logPath <>
 ```
+where:
+* listenAddr: IP address of plugin (preferably 127.0.0.1) 
+* listenPort: Port to serve docker plugin functions
+* pluginsDirectory: Directory where docker looks for plugins (please create if not already created by docker)
+* logPath: Path to create ubiquity-docker-plugin log file
+* ubiquityServerIP: IP address where ubiquity server is running
+* ubiquityServerPort: Port where ubiquity server is listening
+Examples invocation of binary:
+```bash
+./out/ubiquity-docker-plugin -listenAddr 127.0.0.1 -listenPort 9000 -pluginsDirectory /etc/docker/plugins -ubiquityServerIP 127.0.0.1 -ubiquityServerPort 8999 -logPath /tmp
+```
+
+
+
 Restart the docker engine daemon so that it can discover the plugins in the plugin directory (/etc/docker/plugins)
 ```bash
 service docker restart
 ```
 
-### Usage
+#### Common errors
+If any of docker volume management commands responds with following errors message, it is highly likely that ubiquity-docker-plugin and ubiquity service are not able to communicate 
+with each other. Please check the storageApiURL specified while starting the plugin
+```bash
+Error response from daemon: create fdsfdsf: create fdsfdsf: Error looking up volume plugin spectrum-scale: Plugin does not implement the requested driver
+```
 
-***_Example:_***
 
-#### Create Docker Volumes
+#### Supported Volume Types
 
 The volume driver supports creation of three types of volumes:
 
@@ -49,7 +73,7 @@ Lightweight Volume is a volume which maps to a sub-directory within an existing 
 
 ***3. Fileset With Quota Volume***
 
-Fileset with Quota volume is a volume which maps to a fileset, along with quota limit set on it, in spectrum scale.<br/>
+Fileset with Quota Volume is a volume which maps to a fileset, along with quota limit set on it, in spectrum scale.<br/>
 Quota, especially fileset based quota, must be enabled on the file system
 
 
@@ -60,7 +84,9 @@ docker volume create -d spectrum-scale --name <DOCKER-VOLUME-NAME>
 ```
 **NOTE: The docker volume name must be unique across all the volume drivers**
 
-**_Example_**
+### Usage
+
+***_Example:_***
 
 Create a fileset volume named demo1,  using volume driver, on the gold GPFS file system :
 

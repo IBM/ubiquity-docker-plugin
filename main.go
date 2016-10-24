@@ -8,7 +8,7 @@ import (
 	"os"
 	"path"
 
-	"github.ibm.com/almaden-containers/ubiquity-docker-plugin.git/web_server"
+	"github.ibm.com/almaden-containers/ubiquity-docker-plugin/web_server"
 )
 
 var address = flag.String(
@@ -32,10 +32,15 @@ var logPath = flag.String(
 	"/tmp",
 	"log path",
 )
-var storageApiURL = flag.String(
-	"storageApiURL",
-	"http://127.0.0.1:8999/ubiquity_storage",
-	"Storage api server url",
+var ubiquityServerIP = flag.String(
+	"ubiquityServerIP",
+	"127.0.0.1",
+	"IP address where ubiquity server is running",
+)
+var ubiquityServerPort = flag.Int(
+	"ubiquityServerPort",
+	8999,
+	"Port where ubiquity server is listening",
 )
 var backendName = flag.String(
 	"backend",
@@ -48,7 +53,9 @@ func main() {
 	logger, logFile := setupLogger(*logPath)
 	defer closeLogs(logFile)
 
-	server, err := web_server.NewServer(logger, *storageApiURL, *backendName)
+	storageAPIURL := fmt.Sprintf("http://%s:%d/ubiquity_storage", *ubiquityServerIP, *ubiquityServerPort)
+
+	server, err := web_server.NewServer(logger, storageAPIURL, *backendName)
 	if err != nil {
 		panic("Backend not valid: " + *backendName)
 	}

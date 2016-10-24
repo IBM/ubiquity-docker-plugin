@@ -3,8 +3,8 @@ package core
 import (
 	"log"
 
-	"github.ibm.com/almaden-containers/ubiquity.git/model"
-	"github.ibm.com/almaden-containers/ubiquity.git/remote"
+	"github.ibm.com/almaden-containers/ubiquity/model"
+	"github.ibm.com/almaden-containers/ubiquity/remote"
 )
 
 type Controller struct {

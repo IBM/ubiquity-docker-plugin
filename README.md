@@ -29,7 +29,7 @@ cd ubiquity-docker-plugin
 
 #### Running the plugin
 ```bash
-./out/ubiquity-docker-plugin -listenAddr <> -listenPort <> -pluginsDirectory <> -ubiquityServerIP <> -ubiquityServerPort <> -logPath <>
+./bin/ubiquity-docker-plugin -listenAddr <> -listenPort <> -pluginsDirectory <> -ubiquityServerIP <> -ubiquityServerPort <> -logPath <>
 ```
 where:
 * listenAddr: IP address of plugin (preferably 127.0.0.1) 
@@ -40,7 +40,7 @@ where:
 * ubiquityServerPort: Port where ubiquity server is listening
 Examples invocation of binary:
 ```bash
-./out/ubiquity-docker-plugin -listenAddr 127.0.0.1 -listenPort 9000 -pluginsDirectory /etc/docker/plugins -ubiquityServerIP 127.0.0.1 -ubiquityServerPort 8999 -logPath /tmp
+./bin/ubiquity-docker-plugin -listenAddr 127.0.0.1 -listenPort 9000 -pluginsDirectory /etc/docker/plugins -ubiquityServerIP 127.0.0.1 -ubiquityServerPort 8999 -logPath /tmp
 ```
 
 

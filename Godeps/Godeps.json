@@ -4,6 +4,11 @@
 	"GodepVersion": "v74",
 	"Deps": [
 		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Comment": "v0.2.0-21-g9906417",
+			"Rev": "99064174e013895bbd9b025c31100bd1d9b590ca"
+		},
+		{
 			"ImportPath": "github.com/djherbis/times",
 			"Comment": "v1.0.1",
 			"Rev": "95292e44976d1217cf3611dc7c8d9466877d3ed5"
@@ -170,15 +175,15 @@
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/model",
-			"Rev": "b43bb3a53e267bb8eede5ab6a56dc325a637bfed"
+			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/remote",
-			"Rev": "b43bb3a53e267bb8eede5ab6a56dc325a637bfed"
+			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/utils",
-			"Rev": "b43bb3a53e267bb8eede5ab6a56dc325a637bfed"
+			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
@@ -190,15 +195,15 @@
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/vendor/github.com/djherbis/times",
-			"Rev": "b43bb3a53e267bb8eede5ab6a56dc325a637bfed"
+			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/vendor/github.com/gorilla/mux",
-			"Rev": "b43bb3a53e267bb8eede5ab6a56dc325a637bfed"
+			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/vendor/github.com/mattn/go-sqlite3",
-			"Rev": "b43bb3a53e267bb8eede5ab6a56dc325a637bfed"
+			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
 		}
 	]
 }

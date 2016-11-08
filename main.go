@@ -8,58 +8,37 @@ import (
 	"os"
 	"path"
 
+	"github.com/BurntSushi/toml"
 	"github.ibm.com/almaden-containers/ubiquity-docker-plugin/web_server"
+	"github.ibm.com/almaden-containers/ubiquity/model"
 )
 
-var address = flag.String(
-	"listenAddr",
-	"0.0.0.0",
-	"host ip to serve volume management functions",
-)
-var port = flag.Int(
-	"listenPort",
-	9000,
-	"host port to serve volume management functions",
-)
-var pluginsPath = flag.String(
-	"pluginsDirectory",
-	"/tmp/",
-	"docker plugins directory path",
-)
-
-var logPath = flag.String(
-	"logPath",
-	"/tmp",
-	"log path",
-)
-var ubiquityServerIP = flag.String(
-	"ubiquityServerIP",
-	"127.0.0.1",
-	"IP address where ubiquity server is running",
-)
-var ubiquityServerPort = flag.Int(
-	"ubiquityServerPort",
-	8999,
-	"Port where ubiquity server is listening",
-)
-var backendName = flag.String(
-	"backend",
-	"spectrum-scale",
-	"Storage backend name (spectrum-scale/spectrum-scale-nfs/manilla)",
+var configFile = flag.String(
+	"config",
+	"ubiquity-client.conf",
+	"config file with ubiquity client configuration params",
 )
 
 func main() {
+
 	flag.Parse()
-	logger, logFile := setupLogger(*logPath)
+	var config model.UbiquityPluginConfig
+	fmt.Printf("Starting ubiquity plugin with %s config file\n", *configFile)
+	if _, err := toml.DecodeFile(*configFile, &config); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	logger, logFile := setupLogger(config.LogPath)
 	defer closeLogs(logFile)
 
-	storageAPIURL := fmt.Sprintf("http://%s:%d/ubiquity_storage", *ubiquityServerIP, *ubiquityServerPort)
+	storageAPIURL := fmt.Sprintf("http://%s:%d/ubiquity_storage", config.UbiquityServer.Address, config.UbiquityServer.Port)
 
-	server, err := web_server.NewServer(logger, storageAPIURL, *backendName)
+	server, err := web_server.NewServer(logger, config.Backend, storageAPIURL, config)
 	if err != nil {
-		panic("Backend not valid: " + *backendName)
+		panic("Backend not valid: " + config.Backend)
 	}
-	server.Start(*address, *port, *pluginsPath)
+	server.Start(config.DockerPlugin.Address, config.DockerPlugin.Port, config.DockerPlugin.PluginsDirectory)
 }
 
 func setupLogger(logPath string) (*log.Logger, *os.File) {

@@ -8,7 +8,13 @@ import (
 	"net/http"
 	"path"
 
+	"os/exec"
+	"os/user"
+
+	"strings"
+
 	"github.com/gorilla/mux"
+	"github.ibm.com/almaden-containers/ubiquity/model"
 )
 
 type Server struct {
@@ -22,8 +28,8 @@ type ServerInfo struct {
 	Addr string
 }
 
-func NewServer(logger *log.Logger, storageApiURL string, backendName string) (*Server, error) {
-	handler, err := NewHandler(logger, storageApiURL, backendName)
+func NewServer(logger *log.Logger, backendName, storageApiURL string, config model.UbiquityPluginConfig) (*Server, error) {
+	handler, err := NewHandler(logger, backendName, storageApiURL, config)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +63,38 @@ func (s *Server) writeSpecFile(server *ServerInfo, pluginsPath string) error {
 	if err != nil {
 		return fmt.Errorf("Error marshalling Get response: %s", err.Error())
 	}
-	err = ioutil.WriteFile(path.Join(pluginsPath, fmt.Sprintf("%s.json", s.backendName)), data, 0644)
+
+	pluginFileName := path.Join(pluginsPath, fmt.Sprintf("%s.json", s.backendName))
+
+	currentUser, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("Error determinging current user: %s", err.Error())
+	}
+
+	args := []string{"touch", pluginFileName}
+	cmd := exec.Command("sudo", args...)
+	_, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Error creating plugins config file: %s", pluginFileName)
+	}
+
+	dockerConfigPath := strings.Replace(pluginsPath, "plugins/", "", 1)
+
+	args = []string{"chmod", "-R", "777", dockerConfigPath}
+	cmd = exec.Command("sudo", args...)
+	_, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Error updating permissions for %s docker config directory", dockerConfigPath)
+	}
+
+	args = []string{"chown", fmt.Sprintf("%s:%s", currentUser.Uid, currentUser.Gid), pluginFileName}
+	cmd = exec.Command("sudo", args...)
+	_, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Error upating ownership for plugin config file: %s", pluginFileName)
+	}
+
+	err = ioutil.WriteFile(pluginFileName, data, 0777)
 	if err != nil {
 		return fmt.Errorf("Error writing json spec: %s", err.Error())
 	}

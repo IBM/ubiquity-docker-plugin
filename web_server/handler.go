@@ -17,8 +17,8 @@ type Handler struct {
 	log        *log.Logger
 }
 
-func NewHandler(logger *log.Logger, storageApiURL string, backendName string) (*Handler, error) {
-	controller, err := core.NewController(logger, storageApiURL, backendName)
+func NewHandler(logger *log.Logger, backendName, storageApiURL string, config model.UbiquityPluginConfig) (*Handler, error) {
+	controller, err := core.NewController(logger, backendName, storageApiURL, config)
 	if err != nil {
 		return nil, err
 	}

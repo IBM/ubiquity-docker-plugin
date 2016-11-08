@@ -501,11 +501,17 @@ var _ = Describe("Main", func() {
 						successfulRemoveRequest(filesetWithQuotaVolume)
 					})
 					It("should error when volume is not linked", func() {
+						if spectrumBackend != "spectrum-scale" {
+							Skip("Testcase applies to spectrum-scale native impl only.")
+						}
 						successfulCreateRequest(volumeName)
 						failedUnmountRequest(volumeName)
 						successfulRemoveRequest(volumeName)
 					})
 					It("should error when volume of type fileset is not linked", func() {
+						if spectrumBackend != "spectrum-scale" {
+							Skip("Testcase applies to spectrum-scale native impl only.")
+						}
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["filesystem"] = "silver"
@@ -514,6 +520,9 @@ var _ = Describe("Main", func() {
 						successfulRemoveRequest(filesetVolume)
 					})
 					It("should error when volume of type lightweight is not linked", func() {
+						if spectrumBackend != "spectrum-scale" {
+							Skip("Testcase applies to spectrum-scale native impl only.")
+						}
 						successfulCreateRequest(volumeName)
 						opts = make(map[string]interface{})
 						opts["filesystem"] = "gold"
@@ -526,6 +535,9 @@ var _ = Describe("Main", func() {
 						successfulRemoveRequest(volumeName)
 					})
 					It("should error when volume of type fileset with quota is not linked", func() {
+						if spectrumBackend != "spectrum-scale" {
+							Skip("Testcase applies to spectrum-scale native impl only.")
+						}
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
@@ -598,11 +610,17 @@ var _ = Describe("Main", func() {
 
 					})
 					It("should error when volume is not linked", func() {
+						if spectrumBackend != "spectrum-scale" {
+							Skip("Testcase applies to spectrum-scale native impl only.")
+						}
 						successfulCreateRequest(volumeName)
 						failedPathRequest(volumeName)
 						successfulRemoveRequest(volumeName)
 					})
 					It("should error when volume of type fileset is not linked", func() {
+						if spectrumBackend != "spectrum-scale" {
+							Skip("Testcase applies to spectrum-scale native impl only.")
+						}
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["filesystem"] = "silver"
@@ -611,6 +629,9 @@ var _ = Describe("Main", func() {
 						successfulRemoveRequest(filesetVolume)
 					})
 					It("should error when volume of type lightweight is not linked", func() {
+						if spectrumBackend != "spectrum-scale" {
+							Skip("Testcase applies to spectrum-scale native impl only.")
+						}
 						successfulCreateRequest(volumeName)
 						opts = make(map[string]interface{})
 						opts["filesystem"] = "gold"
@@ -623,6 +644,9 @@ var _ = Describe("Main", func() {
 						successfulRemoveRequest(volumeName)
 					})
 					It("should error when volume of type fileset with quota is not linked", func() {
+						if spectrumBackend != "spectrum-scale" {
+							Skip("Testcase applies to spectrum-scale native impl only.")
+						}
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"

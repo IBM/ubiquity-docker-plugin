@@ -5,14 +5,16 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
 	"testing"
+
+	"io/ioutil"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 )
 
+var spectrumBackend string
 var spectrumPath string
 var spectrumProcess *os.Process
 var spectrumCommand *exec.Cmd
@@ -23,7 +25,11 @@ var logFile *os.File
 
 func TestMain(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Main Suite")
+	spectrumBackend = "spectrum-scale"
+	RunSpecs(t, fmt.Sprintf("Main Suite (%s)", spectrumBackend))
+
+	spectrumBackend = "spectrum-scale-nfs"
+	RunSpecs(t, fmt.Sprintf("Main Suite (%s)", spectrumBackend))
 }
 
 var _ = SynchronizedBeforeSuite(func() []byte {
@@ -47,7 +53,17 @@ var _ = BeforeEach(func() {
 
 	listenAddr = "127.0.0.1"
 	listenPort = 9000 + GinkgoParallelNode()
-	spectrumCommand = exec.Command(spectrumPath, "-listenAddr", listenAddr, "-listenPort", strconv.Itoa(listenPort))
+
+	confFileName := fmt.Sprintf("/tmp/ubiquity-plugin%d.conf", listenPort)
+	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackend = \"%s\" \n[DockerPlugin] \naddress = \"127.0.0.1\" \nport = %d \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"127.0.0.1\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nCIDR = \"192.168.1.0/24\"", spectrumBackend, listenPort)
+
+	err = ioutil.WriteFile(confFileName, []byte(confData), 0644)
+	if err != nil {
+		fmt.Printf("Error writing conf file: %s", err.Error())
+		return
+	}
+
+	spectrumCommand = exec.Command(spectrumPath, "-config", confFileName)
 	err = spectrumCommand.Start()
 	Expect(err).ToNot(HaveOccurred())
 	spectrumProcess = spectrumCommand.Process

@@ -12,8 +12,8 @@ type Controller struct {
 	logger *log.Logger
 }
 
-func NewController(logger *log.Logger, storageApiURL string, backendName string) (*Controller, error) {
-	backendClient, err := remote.NewRemoteClient(logger, storageApiURL, backendName)
+func NewController(logger *log.Logger, backendName, storageApiURL string, config model.UbiquityPluginConfig) (*Controller, error) {
+	backendClient, err := remote.NewRemoteClient(logger, backendName, storageApiURL, config)
 	if err != nil {
 		logger.Fatal("Cannot find backend: " + backendName)
 		return nil, err

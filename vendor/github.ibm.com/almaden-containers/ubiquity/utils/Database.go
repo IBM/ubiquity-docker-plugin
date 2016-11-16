@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.ibm.com/almaden-containers/ubiquity/local"
 )
 
 type DatabaseClient struct {
@@ -157,27 +158,31 @@ func (d *DatabaseClient) DeleteVolume(name string) error {
 	return nil
 }
 
-func (d *DatabaseClient) InsertFilesetVolume(fileset, volumeName string, filesystem string) error {
+func (d *DatabaseClient) InsertFilesetVolume(fileset, volumeName string, filesystem string, opts map[string]interface{}) error {
 	d.log.Println("DatabaseClient: InsertFilesetVolume start")
 	defer d.log.Println("DatabaseClient: InsertFilesetVolume end")
 
 	volume := &volume{Name: volumeName, Type: FILESET, ClusterId: d.ClusterId, FileSystem: filesystem,
 		Fileset: fileset}
 
+	addPermissionsForVolume(volume, opts)
+
 	return d.insertVolume(volume)
 }
 
-func (d *DatabaseClient) InsertLightweightVolume(fileset, directory, volumeName string, filesystem string) error {
+func (d *DatabaseClient) InsertLightweightVolume(fileset, directory, volumeName string, filesystem string, opts map[string]interface{}) error {
 	d.log.Println("DatabaseClient: InsertLightweightVolume start")
 	defer d.log.Println("DatabaseClient: InsertLightweightVolume end")
 
 	volume := &volume{Name: volumeName, Type: LIGHTWEIGHT, ClusterId: d.ClusterId, FileSystem: filesystem,
 		Fileset: fileset, Directory: directory}
 
+	addPermissionsForVolume(volume, opts)
+
 	return d.insertVolume(volume)
 }
 
-func (d *DatabaseClient) InsertFilesetQuotaVolume(fileset, quota, volumeName string, filesystem string) error {
+func (d *DatabaseClient) InsertFilesetQuotaVolume(fileset, quota, volumeName string, filesystem string, opts map[string]interface{}) error {
 	d.log.Println("DatabaseClient: InsertFilesetQuotaVolume start")
 	defer d.log.Println("DatabaseClient: InsertFilesetQuotaVolume end")
 
@@ -186,6 +191,8 @@ func (d *DatabaseClient) InsertFilesetQuotaVolume(fileset, quota, volumeName str
 
 	volume.AdditionalData = make(map[string]string)
 	volume.AdditionalData["quota"] = quota
+
+	addPermissionsForVolume(volume, opts)
 
 	return d.insertVolume(volume)
 }
@@ -375,6 +382,24 @@ func setAdditionalData(addData string, volume *volume) {
 		for _, line := range lines {
 			tokens := strings.Split(line, "=")
 			volume.AdditionalData[tokens[0]] = tokens[1]
+		}
+	}
+}
+
+func addPermissionsForVolume(volume *volume, opts map[string]interface{}) {
+
+	if len(opts) > 0 {
+		uid, uidSpecified := opts[local.USER_SPECIFIED_UID]
+		gid, gidSpecified := opts[local.USER_SPECIFIED_GID]
+
+		if (uidSpecified && gidSpecified) {
+
+			if(volume.AdditionalData == nil) {
+				volume.AdditionalData = make(map[string]string)
+			}
+
+			volume.AdditionalData["uid"] = uid.(string)
+			volume.AdditionalData["gid"] = gid.(string)
 		}
 	}
 }

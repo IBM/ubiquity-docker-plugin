@@ -112,13 +112,35 @@ var _ = Describe("Main", func() {
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
-
+					It("should not error on creating fileset volume with user, group permissions", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["filesystem"] = "gold"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
 					It("should not error on creating lightweight volume using type opt", func() {
 						successfulCreateRequest(volumeName)
 						opts = make(map[string]interface{})
 						opts["fileset"] = volumeName
 						opts["type"] = "lightweight"
 						opts["filesystem"] = "gold"
+						newVolumeName := fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
+						successfulCreateWithOptsRequest(newVolumeName, opts)
+						successfulRemoveRequest(newVolumeName)
+						successfulRemoveRequest(volumeName)
+
+					})
+					It("should not error on creating lightweight volume with user, group permissions", func() {
+						successfulCreateRequest(volumeName)
+						opts = make(map[string]interface{})
+						opts["fileset"] = volumeName
+						opts["type"] = "lightweight"
+						opts["filesystem"] = "gold"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
 						newVolumeName := fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
 						successfulCreateWithOptsRequest(newVolumeName, opts)
 						successfulRemoveRequest(newVolumeName)
@@ -141,12 +163,21 @@ var _ = Describe("Main", func() {
 						Expect(createResponse.Err).To(Equal("'filesystem' and 'fileset' are required opts for using lightweight volumes"))
 
 					})
-
 					It("should not error on creating quota based volume using type and fileset opt", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
 						opts["filesystem"] = "silver"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
+					It("should not error on creating quota based volume with user, group permissions", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
@@ -377,6 +408,17 @@ var _ = Describe("Main", func() {
 						//successfulUnmountRequest(filesetVolume)
 						//successfulRemoveRequest(filesetVolume)
 					})
+					It("should be able to link volume of type fileset with user and group permissions", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
+						successfulCreateWithOptsRequest(filesetVolume, opts)
+						successfulMountRequest(filesetVolume)
+						//successfulUnmountRequest(filesetVolume)
+						//successfulRemoveRequest(filesetVolume)
+					})
 					It("should be able to link volume of type lightweight", func() {
 
 						successfulCreateRequest(volumeName)
@@ -390,11 +432,38 @@ var _ = Describe("Main", func() {
 						//successfulUnmountRequest(ltwtVolume)
 						//successfulRemoveRequest(ltwtVolume)
 					})
+					It("should be able to link volume of type lightweight, with user and group permissions", func() {
+
+						successfulCreateRequest(volumeName)
+						opts = make(map[string]interface{})
+						opts["filesystem"] = "gold"
+						opts["fileset"] = volumeName
+						opts["type"] = "lightweight"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						successfulMountRequest(ltwtVolume)
+
+						//successfulUnmountRequest(ltwtVolume)
+						//successfulRemoveRequest(ltwtVolume)
+					})
 					It("should be able to link volume of type fileset with quota", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
 						opts["filesystem"] = "silver"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						successfulMountRequest(filesetWithQuotaVolume)
+						//successfulUnmountRequest(filesetWithQuotaVolume)
+						//successfulRemoveRequest(filesetWithQuotaVolume)
+					})
+					It("should be able to link volume of type fileset with quota, with user and group permissions", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						//successfulUnmountRequest(filesetWithQuotaVolume)
@@ -477,6 +546,17 @@ var _ = Describe("Main", func() {
 						successfulUnmountRequest(filesetVolume)
 						successfulRemoveRequest(filesetVolume)
 					})
+					It("should be able to unlink volume of type fileset with user and group permissions", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["filesystem"] = "silver"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
+						successfulCreateWithOptsRequest(filesetVolume, opts)
+						successfulMountRequest(filesetVolume)
+						successfulUnmountRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
 					It("should be able to unlink volume of type lightweight", func() {
 						successfulCreateRequest(volumeName)
 						opts = make(map[string]interface{})
@@ -490,11 +570,38 @@ var _ = Describe("Main", func() {
 						successfulRemoveRequest(ltwtVolume)
 						successfulRemoveRequest(volumeName)
 					})
+					It("should be able to unlink volume of type lightweight with user and group permissions", func() {
+						successfulCreateRequest(volumeName)
+						opts = make(map[string]interface{})
+						opts["filesystem"] = "gold"
+						opts["fileset"] = volumeName
+
+						opts["type"] = "lightweight"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
+						successfulCreateWithOptsRequest(ltwtVolume, opts)
+						successfulMountRequest(ltwtVolume)
+						successfulUnmountRequest(ltwtVolume)
+						successfulRemoveRequest(ltwtVolume)
+						successfulRemoveRequest(volumeName)
+					})
 					It("should be able to unlink volume of type fileset with quota", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
 						opts["filesystem"] = "silver"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						successfulMountRequest(filesetWithQuotaVolume)
+						successfulUnmountRequest(filesetWithQuotaVolume)
+						successfulRemoveRequest(filesetWithQuotaVolume)
+					})
+					It("should be able to unlink volume of type fileset with quota with user and group permissions", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						opts["filesystem"] = "silver"
+						opts["uid"] = "ubiquity"
+						opts["gid"] = "ubiquity"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						successfulUnmountRequest(filesetWithQuotaVolume)

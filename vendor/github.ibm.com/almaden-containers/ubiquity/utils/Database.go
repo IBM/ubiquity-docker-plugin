@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.ibm.com/almaden-containers/ubiquity/local"
 )
 
 type DatabaseClient struct {
@@ -26,6 +25,11 @@ const (
 	FILESET VolumeType = iota
 	LIGHTWEIGHT
 	FILESET_WITH_QUOTA
+)
+
+const (
+	USER_SPECIFIED_UID string = "uid"
+	USER_SPECIFIED_GID string = "gid"
 )
 
 type volume struct {
@@ -389,8 +393,8 @@ func setAdditionalData(addData string, volume *volume) {
 func addPermissionsForVolume(volume *volume, opts map[string]interface{}) {
 
 	if len(opts) > 0 {
-		uid, uidSpecified := opts[local.USER_SPECIFIED_UID]
-		gid, gidSpecified := opts[local.USER_SPECIFIED_GID]
+		uid, uidSpecified := opts[USER_SPECIFIED_UID]
+		gid, gidSpecified := opts[USER_SPECIFIED_GID]
 
 		if (uidSpecified && gidSpecified) {
 

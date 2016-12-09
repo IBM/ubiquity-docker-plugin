@@ -175,15 +175,18 @@
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/model",
-			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
+			"Comment": "v0.2-12-g07ee082",
+			"Rev": "07ee0821557dabfbd4ddaa949e3056954fd39138"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/remote",
-			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
+			"Comment": "v0.2-12-g07ee082",
+			"Rev": "07ee0821557dabfbd4ddaa949e3056954fd39138"
 		},
 		{
 			"ImportPath": "github.ibm.com/almaden-containers/ubiquity/utils",
-			"Rev": "c076e47919c008333c6092d2c3706f09dcaf031e"
+			"Comment": "v0.2-12-g07ee082",
+			"Rev": "07ee0821557dabfbd4ddaa949e3056954fd39138"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",

@@ -57,7 +57,7 @@ The following snippet shows a sample configuration file:
 
 ```toml
 logPath = "/tmp"            # The Ubiquity Docker Plugin will write logs to file "ubiquity-docker-plugin.log" in this path.
-backend = "spectrum-scale"  # The storage backend to use. Valid values include "spectrum-scale-nfs" and "spectrum-scale".
+backend = "spectrum-scale"  # The storage backend to use. Valid values include "spectrum-scale-nfs" and "spectrum-scale". 
 
 [DockerPlugin]
 address = "0.0.0.0"                        # IP address of plugin
@@ -66,11 +66,11 @@ pluginsDirectory = "/etc/docker/plugins/"  # Docker plugin directory (create if 
 
 
 [UbiquityServer]
-address = "127.0.0.1"  # IP/host of the Ubiquity Service
+address = "UbiquityServiceHostname"  # IP/hostname of the Ubiquity Service
 port = 9999            # TCP port on which the Ubiquity Service is listening
 
 [SpectrumNfsRemoteConfig]  # Only relevant for use with "spectrum-scale-nfs" backend.
-CIDR = "192.168.1.0/24"    # This Ubiquity client's subnet CIDR. Access to created volumes will be limited to this subnet.
+CIDR = "192.168.1.0/24"    # This is the subnet mask to which the NFS volumes will be exported.  Access to created volumes will be limited to this subnet.
 ```
 
 After the plugin has been started, restart the Docker engine daemon so it can discover the Ubiquity Docker Plugin:

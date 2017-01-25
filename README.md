@@ -73,17 +73,25 @@ port = 9999            # TCP port on which the Ubiquity Service is listening
 CIDR = "192.168.1.0/24"    # This is the subnet mask to which the NFS volumes will be exported.  Access to created volumes will be limited to this subnet.
 ```
 
-After the plugin has been started, restart the Docker engine daemon so it can discover the Ubiquity Docker Plugin:
+The plugin must be started prior to the Docker daemon on the host.  Therefore, if Docker is already running, after the plugin has been started, restart the Docker engine daemon so it can discover the Ubiquity Docker Plugin:
 ```bash
 service docker restart
 ```
 
-#### Common errors
+### Common errors
 If any of docker volume management commands responds with following errors message, it is highly likely that ubiquity-docker-plugin and ubiquity service are not able to communicate
 with each other. Please check the storageApiURL specified while starting the plugin
 ```bash
 Error response from daemon: create fdsfdsf: create fdsfdsf: Error looking up volume plugin spectrum-scale: Plugin does not implement the requested driver
 ```
+
+## Available Storage Systems
+### IBM Spectrum Scale
+With IBM Spectrum Scale, containers can have shared file system access to any number of containers from small clusters of a few hosts up to very large clusters with thousands of hosts.
+
+The current plugin supports the following protocols:
+ * Native POSIX Client
+ * CES NFS (Scalable and Clustered NFS Exports)
 
 ### Supported Volume Types
 

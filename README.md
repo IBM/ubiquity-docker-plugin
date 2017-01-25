@@ -93,23 +93,25 @@ The current plugin supports the following protocols:
  * Native POSIX Client
  * CES NFS (Scalable and Clustered NFS Exports)
 
-### Supported Volume Types
+#### Supported Volume Types
 
 The volume driver supports creation of three types of volumes in Spectrum Scale:
 
 ***1. Fileset Volume***
 
-Fileset Volume is a volume which maps to a fileset in Spectrum Scale. Fileset Volume is the default type of creating
-a volume.
+Fileset Volume is a volume which maps to a fileset in Spectrum Scale. By default, this will create a dependent Spectrum Scale fileset, which supports Quota and other Policies, but does not support snapshots.  If snapshots are required, then a independent volume can also be requested.  Note that there are limits to the number of filesets that can be created, please see Spectrum Scale docs for more info.
 
 ***2. Lightweight Volume***
 
-Lightweight Volume is a volume which maps to a sub-directory within an existing fileset in Spectrum Scale.
+Lightweight Volume is a volume which maps to a sub-directory within an existing fileset in Spectrum Scale.  The fileset could be a previously created 'Fileset Volume'.  Lightweight volumes allow users to create unlimited numbers of volumes, but lack the ability to set quotas, perform individual volume snapshots, etc.
 
-***3. Fileset With Quota Volume***
+To use Lightweight volumes, but take advantage of Spectrum Scale features such a encryption, simply create the Lightweight volume in a Spectrum Scale fileset that has the desired features enabled.
 
-Fileset with Quota Volume is a volume which maps to a fileset, along with quota limit set on it, in Spectrum Scale.<br/>
-Quota, especially fileset based quota, must be enabled on the file system.
+#### Supported Volume Features
+Each docker plugin supports an extendable set of storage specific options.  They are passed to Docker via the 'opt' option on the command line as a set of key-value pairs.
+
+ * Quotas - Fileset Volumes can have a max quota limit set. Quota support for filesets must be already enabled on the file system.
+    * Usage: --opt quota=<numeric value><Unit such as 'M' for megabytes>
 
 ### Usage
 

@@ -1,18 +1,27 @@
-#Ubiquity Docker Volume Plugin
-Ubiquity volume plugin provides access to persistent storage for Docker containers utilizing Ubiquity service integrated with Spectrum Scale 
+# Ubiquity Docker Volume Plugin
+The Ubiquity Docker volume plugin provides access to persistent storage for Docker containers.  This plugin communicates with the Ubiquity Volume Service for the creation and management of volumes in the storage system.  Once created, a volume can be used by either Kubernetes or Docker. 
 
-### Installation
+This plugin is a REST service that must be running on each of your Docker hosts (or Docker Swarm hosts).
 
-#### Prerequisites
+This plugin can support a variety of storage systems.  See 'Available Storage Systems' for more details.
+
+
+## Installation
+
+### General Prerequisites
 * [Ubiquity](https://github.ibm.com/almaden-containers/ubiquity) service must be running
 * Install [docker](https://docs.docker.com/engine/installation/)
 * Install [golang](https://golang.org/)
 
-Optional (only needed with "spectrum-scale" backend; not needed with "spectrum-scale-nfs" backend)
-* Install Spectrum-Scale client and connect to Spectrum-Scale cluster
+### Storage Prerequisites
+The correct storage software must be installed and configured on each of the hosts.
+
+For example:
+* Spectrum-Scale - Ensure the Spectrum Scale client (NSD client) is installed and part of a Spectrum Scale cluster.
+* NFS - Ensure hosts support mounting NFS file systems.
 
 
-#### Getting started
+### Getting started
 - Configure go - GOPATH environment variable needs to be correctly set before starting the build process. Create a new directory and set it as GOPATH 
 ```bash
 mkdir -p $HOME/workspace
@@ -30,7 +39,8 @@ cd ubiquity-docker-plugin
 
 ```
 
-### Running the Plugin
+### Running the Plugin on each Host
+On each host, you need to start the plugin as follow,
 
 ```bash
 ./bin/ubiquity-docker-plugin [-configFile <configFile>]
@@ -47,7 +57,7 @@ The following snippet shows a sample configuration file:
 
 ```toml
 logPath = "/tmp"            # The Ubiquity Docker Plugin will write logs to file "ubiquity-docker-plugin.log" in this path.
-backend = "spectrum-scale"  # The storage backend to use. Valid values include "spectrum-scale-nfs" and "spectrum-scale".
+backend = "spectrum-scale"  # The storage backend to use. Valid values include "spectrum-scale-nfs" and "spectrum-scale". 
 
 [DockerPlugin]
 address = "0.0.0.0"                        # IP address of plugin
@@ -56,11 +66,11 @@ pluginsDirectory = "/etc/docker/plugins/"  # Docker plugin directory (create if 
 
 
 [UbiquityServer]
-address = "127.0.0.1"  # IP/host of the Ubiquity Service
+address = "UbiquityServiceHostname"  # IP/hostname of the Ubiquity Service
 port = 9999            # TCP port on which the Ubiquity Service is listening
 
 [SpectrumNfsRemoteConfig]  # Only relevant for use with "spectrum-scale-nfs" backend.
-CIDR = "192.168.1.0/24"    # This Ubiquity client's subnet CIDR. Access to created volumes will be limited to this subnet.
+CIDR = "192.168.1.0/24"    # This is the subnet mask to which the NFS volumes will be exported.  Access to created volumes will be limited to this subnet.
 ```
 
 After the plugin has been started, restart the Docker engine daemon so it can discover the Ubiquity Docker Plugin:

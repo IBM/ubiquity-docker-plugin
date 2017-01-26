@@ -93,13 +93,17 @@ The current plugin supports the following protocols:
  * Native POSIX Client
  * CES NFS (Scalable and Clustered NFS Exports)
 
+Each docker plugin supports an extendable set of storage specific options.  The following describes these options for Spectrum Scale.  They are passed to Docker via the 'opt' option on the command line as a set of key-value pairs.  
+
 #### Supported Volume Types
 
-The volume driver supports creation of three types of volumes in Spectrum Scale:
+The volume driver supports creation of two types of volumes in Spectrum Scale:
 
-***1. Fileset Volume***
+***1. Fileset Volume (Default)***
 
 Fileset Volume is a volume which maps to a fileset in Spectrum Scale. By default, this will create a dependent Spectrum Scale fileset, which supports Quota and other Policies, but does not support snapshots.  If snapshots are required, then a independent volume can also be requested.  Note that there are limits to the number of filesets that can be created, please see Spectrum Scale docs for more info.
+
+Usage: --opt type=fileset
 
 ***2. Lightweight Volume***
 
@@ -107,11 +111,19 @@ Lightweight Volume is a volume which maps to a sub-directory within an existing 
 
 To use Lightweight volumes, but take advantage of Spectrum Scale features such a encryption, simply create the Lightweight volume in a Spectrum Scale fileset that has the desired features enabled.
 
-#### Supported Volume Features
-Each docker plugin supports an extendable set of storage specific options.  They are passed to Docker via the 'opt' option on the command line as a set of key-value pairs.
+Usage: --opt type=lightweight
 
- * Quotas - Fileset Volumes can have a max quota limit set. Quota support for filesets must be already enabled on the file system.
-    * Usage: --opt quota=<numeric value><Unit such as 'M' for megabytes>
+#### Supported Volume Features
+
+ * Quotas (optional) - Fileset Volumes can have a max quota limit set. Quota support for filesets must be already enabled on the file system.
+    * Usage: --opt quota=(numeric value)(Unit such as 'M' for megabytes)
+    * Usage example: --opt quota=100M
+ * File System (optional) - Select a file system in which the volume will exist.  By default the file system set in  ubiquity-server.conf is used.
+    * Usage: filesystem=(name)
+ * Fileset - This option selects the fileset that will be used for the volume.  This can be used to create a volume from an existing fileset, or choose the fileset in which a lightweight volume will be created.
+    * Usage: --opt fileset=modelingData
+ * Directory (lightweight volumes only): This option sets the name of the directory to be created for a lightweight volume.  This can also be used to create a lighweight volume from an existing directory.
+    * Usage: --opt directory=dir1
 
 ### Usage
 

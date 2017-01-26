@@ -90,8 +90,8 @@ Error response from daemon: create fdsfdsf: create fdsfdsf: Error looking up vol
 With IBM Spectrum Scale, containers can have shared file system access to any number of containers from small clusters of a few hosts up to very large clusters with thousands of hosts.
 
 The current plugin supports the following protocols:
- * Native POSIX Client
- * CES NFS (Scalable and Clustered NFS Exports)
+ * Native POSIX Client (--volume-driver spectrum-scale)
+ * CES NFS (Scalable and Clustered NFS Exports) (--volume-driver spectrum-scale-nfs)
 
 Each docker plugin supports an extendable set of storage specific options.  The following describes these options for Spectrum Scale.  They are passed to Docker via the 'opt' option on the command line as a set of key-value pairs.  
 
@@ -122,12 +122,10 @@ Usage: --opt type=lightweight
     * Usage: filesystem=(name)
  * Fileset - This option selects the fileset that will be used for the volume.  This can be used to create a volume from an existing fileset, or choose the fileset in which a lightweight volume will be created.
     * Usage: --opt fileset=modelingData
- * Directory (lightweight volumes only): This option sets the name of the directory to be created for a lightweight volume.  This can also be used to create a lighweight volume from an existing directory.
+ * Directory (lightweight volumes only): This option sets the name of the directory to be created for a lightweight volume.  This can also be used to create a lighweight volume from an existing directory.  The directory can be a relative path starting at the root of the path at which the fileset is linked in the file system namespace.
     * Usage: --opt directory=dir1
 
-### Usage
-
-***_Example:_***
+#### Sample Usage
 
 ##### Creating Fileset Volumes
 
@@ -225,7 +223,7 @@ spectrum-scale          demo1
 spectrum-scale          demo2
 ```
 
-#### Running Docker Containers
+#### Running Docker Containers and specifying the volume drivers.  Note that local and ubiquity volumes can be passed into a container.
 
 Run a container and mount the volume created above by specifying the name of the volume name and the volume driver used to create that volume.
 

@@ -125,7 +125,10 @@ Usage: --opt type=lightweight
  * Directory (lightweight volumes only): This option sets the name of the directory to be created for a lightweight volume.  This can also be used to create a lighweight volume from an existing directory.  The directory can be a relative path starting at the root of the path at which the fileset is linked in the file system namespace.
     * Usage: --opt directory=dir1
 
-#### Sample Usage
+#### CES NFS Information
+ * TBD
+
+#### Sample Spectrum Scale Usage
 
 ##### Creating Fileset Volumes
 
@@ -211,7 +214,8 @@ Alternatively, we can also create the same volume named demo8 by also passing a 
 docker volume create -d spectrum-scale --name demo8 --opt type=fileset --opt fileset=filesetQuota --opt quota=1G --opt filesystem=silver
 ```
 
-#### List Docker Volumes
+## General Examples
+### List Docker Volumes
 
 We can list the volumes created using the ubiquity docker plugin and the output should be as given below :
 It lists volumes across all the volume plugins running on that system. Each volume created is listed along with the the volume driver used to create it
@@ -223,9 +227,9 @@ spectrum-scale          demo1
 spectrum-scale          demo2
 ```
 
-#### Running Docker Containers and specifying the volume drivers.  Note that local and ubiquity volumes can be passed into a container.
+#### Running Docker Containers and Using Volumes.  
 
-Run a container and mount the volume created above by specifying the name of the volume name and the volume driver used to create that volume.
+Run a container and mount the volume created above by specifying the name of the volume name and the volume driver used to create that volume.  Note that local and ubiquity volumes can be passed into a container.
 
 ```bash
 docker run -t -i --volume-driver spectrum-scale --volume <VOLUME-NAME>:<CONTAINER-MOUNTPOINT> --entrypoint /bin/sh alpine
@@ -246,7 +250,7 @@ docker run -t -i --volume-driver spectrum-scale --volume demo1:/data --entrypoin
 ```
 Here demo1 was created using the volume driver spectrum-scale, a volume plugin for the gold GPFS file system. We specify that volume demo1 must be mounted at /data inside the container
 
-#### Removing volume
+### Remove a Volume
 **_Pre-Conditions :_** Make sure the volume is not being used by any running containers
 
 ```bash
@@ -265,3 +269,17 @@ docker volume rm demo1
 ```bash
 docker rm `docker ps -aq`
 ```
+
+**_NOTE: Removing the voluming WILL NOT remove the data in the underlying storage system at this point in time.  This is to ensure that no data is accidentally deleted.  To actually clean up the data, please use storage system specific commands.
+
+### Update a Volume
+
+Currently there is no way to update the options set on a volume through the Docker CLI.  In order to change its name or features, the native storage system APIs must be used.  For example, if the name of a Spectrum Scale fileset or directory (that maps to a lightweight volume) is change, Ubiquity will no longer recognize it.  If a name must be changed, it can always be deleted from Ubiquity and then re-added with the new name.
+
+## Support
+
+(TBD)
+
+## Suggestions and Questions
+
+For any questions, suggestions, or issues, please ...(TBD)

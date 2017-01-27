@@ -60,9 +60,8 @@ logPath = "/tmp"            # The Ubiquity Docker Plugin will write logs to file
 backend = "spectrum-scale"  # The storage backend to use. Valid values include "spectrum-scale-nfs" and "spectrum-scale". 
 
 [DockerPlugin]
-address = "0.0.0.0"                        # IP address of plugin
 port = 9000                                # Port to serve docker plugin functions
-pluginsDirectory = "/etc/docker/plugins/"  # Docker plugin directory (create if not already created by Docker)
+pluginsDirectory = "/etc/docker/plugins/"  # Point to the location of the configured Docker plugin directory (create if not already created by Docker)
 
 
 [UbiquityServer]
@@ -70,7 +69,7 @@ address = "UbiquityServiceHostname"  # IP/hostname of the Ubiquity Service
 port = 9999            # TCP port on which the Ubiquity Service is listening
 
 [SpectrumNfsRemoteConfig]  # Only relevant for use with "spectrum-scale-nfs" backend.
-CIDR = "192.168.1.0/24"    # This is the subnet mask to which the NFS volumes will be exported.  Access to created volumes will be limited to this subnet.
+CIDR = "192.168.1.0/24"    # This is the subnet mask to which the NFS volumes will be exported.  Access to created volumes will be limited to this subnet.  This is mandatory. 
 ```
 
 The plugin must be started prior to the Docker daemon on the host.  Therefore, if Docker is already running, after the plugin has been started, restart the Docker engine daemon so it can discover the Ubiquity Docker Plugin:
@@ -93,7 +92,7 @@ The current plugin supports the following protocols:
  * Native POSIX Client (--volume-driver spectrum-scale)
  * CES NFS (Scalable and Clustered NFS Exports) (--volume-driver spectrum-scale-nfs)
 
-Each docker plugin supports an extendable set of storage specific options.  The following describes these options for Spectrum Scale.  They are passed to Docker via the 'opt' option on the command line as a set of key-value pairs.  
+Whe  Each docker plugin supports an extendable set of storage specific options.  The following describes these options for Spectrum Scale.  ther the native or NFS driver is used, the set of options is exactly the same.  They are passed to Docker via the 'opt' option on the command line as a set of key-value pairs.  
 
 #### Supported Volume Types
 
@@ -126,7 +125,7 @@ Usage: --opt type=lightweight
     * Usage: --opt directory=dir1
 
 #### CES NFS Information
- * TBD
+ * Note that currently only a export subnet can be set for export options, this will be expanded to include any export option in the future.
 
 #### Sample Spectrum Scale Usage
 
@@ -144,10 +143,10 @@ Alternatively, we can create the same volume demo1 by also passing a type option
 docker volume create -d spectrum-scale --name demo1 --opt type=fileset --opt filesystem=gold
 ```
 
-Similarly, to create a fileset volume named demo2, using volume driver, on the silver GPFS file system :
+Similarly, to create a fileset volume named demo2, using nfs volume driver, on the silver GPFS file system :
 
 ```bash
-docker volume create -d spectrum-scale --name demo2 --opt filesystem=silver
+docker volume create -d spectrum-scale-nfs --name demo2 --opt filesystem=silver
 ```
 
 Create a fileset volume named demo3, using volume driver, on the default existing GPFS filesystem :

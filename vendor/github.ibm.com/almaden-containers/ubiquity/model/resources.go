@@ -39,7 +39,6 @@ type UbiquityPluginConfig struct {
 	SpectrumNfsRemoteConfig SpectrumNfsRemoteConfig
 }
 type UbiquityDockerPluginConfig struct {
-	Address          string
 	Port             int
 	PluginsDirectory string
 }

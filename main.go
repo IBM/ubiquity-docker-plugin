@@ -19,6 +19,10 @@ var configFile = flag.String(
 	"config file with ubiquity client configuration params",
 )
 
+const (
+	PLUGIN_ADDRESS = "127.0.0.1"
+)
+
 func main() {
 
 	flag.Parse()
@@ -38,7 +42,7 @@ func main() {
 	if err != nil {
 		panic("Backend not valid: " + config.Backend)
 	}
-	server.Start(config.DockerPlugin.Address, config.DockerPlugin.Port, config.DockerPlugin.PluginsDirectory)
+	server.Start(PLUGIN_ADDRESS, config.DockerPlugin.Port, config.DockerPlugin.PluginsDirectory)
 }
 
 func setupLogger(logPath string) (*log.Logger, *os.File) {

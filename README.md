@@ -9,7 +9,9 @@ This plugin can support a variety of storage systems.  See 'Available Storage Sy
 ## Installation
 
 ### Build Prerequisites
-* Install [golang](https://golang.org/)
+* Install [golang](https://golang.org/) (>=1.6)
+* Install git
+
 
 ### Deployment Prerequisites
 * [Ubiquity](https://github.ibm.com/almaden-containers/ubiquity) service must be running

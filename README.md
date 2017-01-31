@@ -8,17 +8,15 @@ This plugin can support a variety of storage systems.  See 'Available Storage Sy
 
 ## Installation
 
-### General Prerequisites
-* [Ubiquity](https://github.ibm.com/almaden-containers/ubiquity) service must be running
-* Install [docker](https://docs.docker.com/engine/installation/)
+### Build Prerequisites
 * Install [golang](https://golang.org/)
 
-### Storage Prerequisites
-The correct storage software must be installed and configured on each of the hosts.
-
-For example:
-* Spectrum-Scale - Ensure the Spectrum Scale client (NSD client) is installed and part of a Spectrum Scale cluster.
-* NFS - Ensure hosts support mounting NFS file systems.
+### Deployment Prerequisites
+* [Ubiquity](https://github.ibm.com/almaden-containers/ubiquity) service must be running
+* Install [docker](https://docs.docker.com/engine/installation/)
+* The correct storage software must be installed and configured on each of the hosts. For example:
+  * Spectrum-Scale - Ensure the Spectrum Scale client (NSD client) is installed and part of a Spectrum Scale cluster.
+  * NFS - Ensure hosts support mounting NFS file systems.
 
 
 ### Getting started

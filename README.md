@@ -118,8 +118,9 @@ Usage: --opt type=lightweight
  * Quotas (optional) - Fileset Volumes can have a max quota limit set. Quota support for filesets must be already enabled on the file system.
     * Usage: --opt quota=(numeric value)
     * Usage example: --opt quota=100M
- * Ownership (optional) - Specify the userid and group that should be the owner of the volume.  Note that this only controls Linux permissions at this time, ACLs are not currently set (but could be set manually by the admin).
-    * Usage --opt ?????
+ * Ownership (optional) - Specify the userid and groupid that should be the owner of the volume.  Note that this only controls Linux permissions at this time, ACLs are not currently set (but could be set manually by the admin).
+    * Usage --opt uid=(userid) --opt gid=(groupid)
+    * Usage example: --opt uid=1002 --opt gid=1002
  
 **Type and Location** 
  * File System (optional) - Select a file system in which the volume will exist.  By default the file system set in  ubiquity-server.conf is used.

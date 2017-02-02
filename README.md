@@ -112,17 +112,23 @@ To use Lightweight volumes, but take advantage of Spectrum Scale features such a
 
 Usage: --opt type=lightweight
 
-#### Supported Volume Features
+#### Supported Volume Creation Options
 
+**Features**
  * Quotas (optional) - Fileset Volumes can have a max quota limit set. Quota support for filesets must be already enabled on the file system.
-    * Usage: --opt quota=(numeric value)(Unit such as 'M' for megabytes)
+    * Usage: --opt quota=(numeric value)
     * Usage example: --opt quota=100M
+ * Ownership (optional) - Specify the userid and group that should be the owner of the volume.  Note that this only controls Linux permissions at this time, ACLs are not currently set (but could be set manually by the admin).
+    * Usage --opt ?????
+ 
+**Type and Location** 
  * File System (optional) - Select a file system in which the volume will exist.  By default the file system set in  ubiquity-server.conf is used.
     * Usage: filesystem=(name)
  * Fileset - This option selects the fileset that will be used for the volume.  This can be used to create a volume from an existing fileset, or choose the fileset in which a lightweight volume will be created.
     * Usage: --opt fileset=modelingData
  * Directory (lightweight volumes only): This option sets the name of the directory to be created for a lightweight volume.  This can also be used to create a lighweight volume from an existing directory.  The directory can be a relative path starting at the root of the path at which the fileset is linked in the file system namespace.
     * Usage: --opt directory=dir1
+  
 
 #### CES NFS Information
  * Note that currently only a export subnet can be set for export options, this will be expanded to include any export option in the future.

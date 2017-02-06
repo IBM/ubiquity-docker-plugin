@@ -7,7 +7,7 @@ import (
 )
 
 //go:generate counterfeiter -o ../fakes/fake_executor.go . Executor
-type Executor interface {
+type Executor interface { // basic host dependent functions
 	Execute(command string, args []string) ([]byte, error)
 	Stat(string) (os.FileInfo, error)
 	Mkdir(string, os.FileMode) error

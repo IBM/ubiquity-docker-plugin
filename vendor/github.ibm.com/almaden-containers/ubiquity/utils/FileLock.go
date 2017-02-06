@@ -11,7 +11,7 @@ import (
 )
 
 //go:generate counterfeiter -o ../fakes/fake_file_lock.go . FileLock
-type FileLock interface {
+type FileLock interface { // used to prevent concurrent access to Database file
 	Lock() error
 	Unlock() error
 }

@@ -69,7 +69,7 @@ address = "UbiquityServiceHostname"  # IP/hostname of the Ubiquity Service
 port = 9999            # TCP port on which the Ubiquity Service is listening
 
 [SpectrumNfsRemoteConfig]  # Only relevant for use with "spectrum-scale-nfs" backend.
-CIDR = "192.168.1.0/24"    # This is the subnet mask to which the NFS volumes will be exported.  Access to created volumes will be limited to this subnet.  This is mandatory. 
+ClientConfig = "192.0.2.0/20(Access_Type=RW,Protocols=3:4);198.51.100.0/20(Access_Type=RO,Protocols=3:4,Transports=TCP:UDP)"    # Mandatory. Declares the client specific settings for NFS volume exports. Access will be limited to the specified client subnet(s) and protocols.
 ```
 
 The plugin must be started prior to the Docker daemon on the host.  Therefore, if Docker is already running, after the plugin has been started, restart the Docker engine daemon so it can discover the Ubiquity Docker Plugin:

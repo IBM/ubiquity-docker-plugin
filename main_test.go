@@ -230,7 +230,6 @@ var _ = Describe("Main", func() {
 						Expect(err).ToNot(HaveOccurred())
 						Expect(createResponse.Err).To(Equal("Unknown 'type' = invalid-type specified"))
 					})
-
 				})
 				Context(".Remove", func() {
 					BeforeEach(func() {

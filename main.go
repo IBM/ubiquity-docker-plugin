@@ -10,7 +10,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.ibm.com/almaden-containers/ubiquity-docker-plugin/web_server"
-	"github.ibm.com/almaden-containers/ubiquity/model"
+	"github.ibm.com/almaden-containers/ubiquity/resources"
 )
 
 var configFile = flag.String(
@@ -26,7 +26,7 @@ const (
 func main() {
 
 	flag.Parse()
-	var config model.UbiquityPluginConfig
+	var config resources.UbiquityPluginConfig
 	fmt.Printf("Starting ubiquity plugin with %s config file\n", *configFile)
 	if _, err := toml.DecodeFile(*configFile, &config); err != nil {
 		fmt.Println(err)

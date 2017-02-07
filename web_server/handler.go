@@ -9,7 +9,7 @@ import (
 
 	"github.ibm.com/almaden-containers/ubiquity-docker-plugin/core"
 
-	"github.ibm.com/almaden-containers/ubiquity/model"
+	"github.ibm.com/almaden-containers/ubiquity/resources"
 )
 
 type Handler struct {
@@ -17,7 +17,7 @@ type Handler struct {
 	log        *log.Logger
 }
 
-func NewHandler(logger *log.Logger, backendName, storageApiURL string, config model.UbiquityPluginConfig) (*Handler, error) {
+func NewHandler(logger *log.Logger, backendName, storageApiURL string, config resources.UbiquityPluginConfig) (*Handler, error) {
 	controller, err := core.NewController(logger, backendName, storageApiURL, config)
 	if err != nil {
 		return nil, err
@@ -34,10 +34,10 @@ func (c *Handler) Activate(w http.ResponseWriter, r *http.Request) {
 func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: create start")
 	defer c.log.Println("Handler: create end")
-	var createRequest model.CreateRequest
+	var createRequest resources.CreateRequest
 	err := extractRequestObject(r, &createRequest)
 	if err != nil {
-		genericResponse := &model.GenericResponse{Err: err.Error()}
+		genericResponse := &resources.GenericResponse{Err: err.Error()}
 		genericResponse.WriteResponse(w)
 		return
 	}
@@ -49,10 +49,10 @@ func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: remove start")
 	defer c.log.Println("Handler: remove end")
-	var removeRequest model.RemoveRequest
+	var removeRequest resources.RemoveRequest
 	err := extractRequestObject(r, &removeRequest)
 	if err != nil {
-		genericResponse := &model.GenericResponse{Err: err.Error()}
+		genericResponse := &resources.GenericResponse{Err: err.Error()}
 		genericResponse.WriteResponse(w)
 		return
 	}
@@ -63,10 +63,10 @@ func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: mount start")
 	defer c.log.Println("Handler: mount end")
-	var mountRequest model.GenericRequest
+	var mountRequest resources.GenericRequest
 	err := extractRequestObject(r, &mountRequest)
 	if err != nil {
-		mountResponse := &model.MountResponse{Err: err.Error()}
+		mountResponse := &resources.MountResponse{Err: err.Error()}
 		mountResponse.WriteResponse(w)
 		return
 	}
@@ -77,10 +77,10 @@ func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: unmount start")
 	defer c.log.Println("Handler: unmount end")
-	var unmountRequest model.GenericRequest
+	var unmountRequest resources.GenericRequest
 	err := extractRequestObject(r, &unmountRequest)
 	if err != nil {
-		genericResponse := &model.GenericResponse{Err: err.Error()}
+		genericResponse := &resources.GenericResponse{Err: err.Error()}
 		genericResponse.WriteResponse(w)
 		return
 	}
@@ -91,10 +91,10 @@ func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: path start")
 	defer c.log.Println("Handler: path end")
-	var pathRequest model.GenericRequest
+	var pathRequest resources.GenericRequest
 	err := extractRequestObject(r, &pathRequest)
 	if err != nil {
-		mountResponse := &model.MountResponse{Err: err.Error()}
+		mountResponse := &resources.MountResponse{Err: err.Error()}
 		mountResponse.WriteResponse(w)
 		return
 	}
@@ -105,10 +105,10 @@ func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: get start")
 	defer c.log.Println("Handler: get end")
-	var getRequest model.GenericRequest
+	var getRequest resources.GenericRequest
 	err := extractRequestObject(r, &getRequest)
 	if err != nil {
-		errorResponse := &model.GetResponse{Err: err.Error()}
+		errorResponse := &resources.GetResponse{Err: err.Error()}
 		errorResponse.WriteResponse(w)
 		return
 	}

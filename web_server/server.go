@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.ibm.com/almaden-containers/ubiquity/model"
+	"github.ibm.com/almaden-containers/ubiquity/resources"
 )
 
 type Server struct {
@@ -28,7 +28,7 @@ type ServerInfo struct {
 	Addr string
 }
 
-func NewServer(logger *log.Logger, backendName, storageApiURL string, config model.UbiquityPluginConfig) (*Server, error) {
+func NewServer(logger *log.Logger, backendName, storageApiURL string, config resources.UbiquityPluginConfig) (*Server, error) {
 	handler, err := NewHandler(logger, backendName, storageApiURL, config)
 	if err != nil {
 		return nil, err

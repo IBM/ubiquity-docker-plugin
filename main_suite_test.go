@@ -55,7 +55,7 @@ var _ = BeforeEach(func() {
 	listenPort = 9000 + GinkgoParallelNode()
 
 	confFileName := fmt.Sprintf("/tmp/ubiquity-plugin%d.conf", listenPort)
-	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackend = \"%s\" \n[DockerPlugin] \naddress = \"127.0.0.1\" \nport = %d \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"127.0.0.1\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nCIDR = \"192.168.1.0/24\"", spectrumBackend, listenPort)
+	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackend = \"%s\" \n[DockerPlugin] \naddress = \"127.0.0.1\" \nport = %d \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"127.0.0.1\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nClientConfig = \"192.168.1.0/24(Access_Type=RW,Protocols=3:4)\"", spectrumBackend, listenPort)
 
 	err = ioutil.WriteFile(confFileName, []byte(confData), 0644)
 	if err != nil {

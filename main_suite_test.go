@@ -23,6 +23,13 @@ var listenPort int
 var testLogger *log.Logger
 var logFile *os.File
 
+const (
+	filesystem1       string = "gold"
+	filesystem2       string = "bronze"
+	spectrumNfsConfig string = "192.168.1.0/24(Access_Type=RW,Protocols=3:4)"
+	ubiquityServerIP  string = "192.168.1.147"
+)
+
 func TestMain(t *testing.T) {
 	RegisterFailHandler(Fail)
 	spectrumBackend = "spectrum-scale"
@@ -55,7 +62,7 @@ var _ = BeforeEach(func() {
 	listenPort = 9000 + GinkgoParallelNode()
 
 	confFileName := fmt.Sprintf("/tmp/ubiquity-plugin%d.conf", listenPort)
-	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackend = \"%s\" \n[DockerPlugin] \naddress = \"127.0.0.1\" \nport = %d \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"127.0.0.1\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nClientConfig = \"192.168.1.0/24(Access_Type=RW,Protocols=3:4)\"", spectrumBackend, listenPort)
+	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackend = \"%s\" \n[DockerPlugin] \naddress = \"127.0.0.1\" \nport = %d \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"%s\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nClientConfig = \"%s\"\n", spectrumBackend, listenPort, ubiquityServerIP, spectrumNfsConfig)
 
 	err = ioutil.WriteFile(confFileName, []byte(confData), 0644)
 	if err != nil {

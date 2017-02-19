@@ -34,37 +34,40 @@ type FakeSpectrumDataModel struct {
 	deleteVolumeReturns struct {
 		result1 error
 	}
-	InsertFilesetVolumeStub        func(fileset, volumeName string, filesystem string, opts map[string]interface{}) error
+	InsertFilesetVolumeStub        func(fileset, volumeName string, filesystem string, isPreexisting bool, opts map[string]interface{}) error
 	insertFilesetVolumeMutex       sync.RWMutex
 	insertFilesetVolumeArgsForCall []struct {
-		fileset    string
-		volumeName string
-		filesystem string
-		opts       map[string]interface{}
+		fileset       string
+		volumeName    string
+		filesystem    string
+		isPreexisting bool
+		opts          map[string]interface{}
 	}
 	insertFilesetVolumeReturns struct {
 		result1 error
 	}
-	InsertLightweightVolumeStub        func(fileset, directory, volumeName string, filesystem string, opts map[string]interface{}) error
+	InsertLightweightVolumeStub        func(fileset, directory, volumeName string, filesystem string, isPreexisting bool, opts map[string]interface{}) error
 	insertLightweightVolumeMutex       sync.RWMutex
 	insertLightweightVolumeArgsForCall []struct {
-		fileset    string
-		directory  string
-		volumeName string
-		filesystem string
-		opts       map[string]interface{}
+		fileset       string
+		directory     string
+		volumeName    string
+		filesystem    string
+		isPreexisting bool
+		opts          map[string]interface{}
 	}
 	insertLightweightVolumeReturns struct {
 		result1 error
 	}
-	InsertFilesetQuotaVolumeStub        func(fileset, quota, volumeName string, filesystem string, opts map[string]interface{}) error
+	InsertFilesetQuotaVolumeStub        func(fileset, quota, volumeName string, filesystem string, isPreexisting bool, opts map[string]interface{}) error
 	insertFilesetQuotaVolumeMutex       sync.RWMutex
 	insertFilesetQuotaVolumeArgsForCall []struct {
-		fileset    string
-		quota      string
-		volumeName string
-		filesystem string
-		opts       map[string]interface{}
+		fileset       string
+		quota         string
+		volumeName    string
+		filesystem    string
+		isPreexisting bool
+		opts          map[string]interface{}
 	}
 	insertFilesetQuotaVolumeReturns struct {
 		result1 error
@@ -194,18 +197,19 @@ func (fake *FakeSpectrumDataModel) DeleteVolumeReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeSpectrumDataModel) InsertFilesetVolume(fileset string, volumeName string, filesystem string, opts map[string]interface{}) error {
+func (fake *FakeSpectrumDataModel) InsertFilesetVolume(fileset string, volumeName string, filesystem string, isPreexisting bool, opts map[string]interface{}) error {
 	fake.insertFilesetVolumeMutex.Lock()
 	fake.insertFilesetVolumeArgsForCall = append(fake.insertFilesetVolumeArgsForCall, struct {
-		fileset    string
-		volumeName string
-		filesystem string
-		opts       map[string]interface{}
-	}{fileset, volumeName, filesystem, opts})
-	fake.recordInvocation("InsertFilesetVolume", []interface{}{fileset, volumeName, filesystem, opts})
+		fileset       string
+		volumeName    string
+		filesystem    string
+		isPreexisting bool
+		opts          map[string]interface{}
+	}{fileset, volumeName, filesystem, isPreexisting, opts})
+	fake.recordInvocation("InsertFilesetVolume", []interface{}{fileset, volumeName, filesystem, isPreexisting, opts})
 	fake.insertFilesetVolumeMutex.Unlock()
 	if fake.InsertFilesetVolumeStub != nil {
-		return fake.InsertFilesetVolumeStub(fileset, volumeName, filesystem, opts)
+		return fake.InsertFilesetVolumeStub(fileset, volumeName, filesystem, isPreexisting, opts)
 	}
 	return fake.insertFilesetVolumeReturns.result1
 }
@@ -216,10 +220,10 @@ func (fake *FakeSpectrumDataModel) InsertFilesetVolumeCallCount() int {
 	return len(fake.insertFilesetVolumeArgsForCall)
 }
 
-func (fake *FakeSpectrumDataModel) InsertFilesetVolumeArgsForCall(i int) (string, string, string, map[string]interface{}) {
+func (fake *FakeSpectrumDataModel) InsertFilesetVolumeArgsForCall(i int) (string, string, string, bool, map[string]interface{}) {
 	fake.insertFilesetVolumeMutex.RLock()
 	defer fake.insertFilesetVolumeMutex.RUnlock()
-	return fake.insertFilesetVolumeArgsForCall[i].fileset, fake.insertFilesetVolumeArgsForCall[i].volumeName, fake.insertFilesetVolumeArgsForCall[i].filesystem, fake.insertFilesetVolumeArgsForCall[i].opts
+	return fake.insertFilesetVolumeArgsForCall[i].fileset, fake.insertFilesetVolumeArgsForCall[i].volumeName, fake.insertFilesetVolumeArgsForCall[i].filesystem, fake.insertFilesetVolumeArgsForCall[i].isPreexisting, fake.insertFilesetVolumeArgsForCall[i].opts
 }
 
 func (fake *FakeSpectrumDataModel) InsertFilesetVolumeReturns(result1 error) {
@@ -229,19 +233,20 @@ func (fake *FakeSpectrumDataModel) InsertFilesetVolumeReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeSpectrumDataModel) InsertLightweightVolume(fileset string, directory string, volumeName string, filesystem string, opts map[string]interface{}) error {
+func (fake *FakeSpectrumDataModel) InsertLightweightVolume(fileset string, directory string, volumeName string, filesystem string, isPreexisting bool, opts map[string]interface{}) error {
 	fake.insertLightweightVolumeMutex.Lock()
 	fake.insertLightweightVolumeArgsForCall = append(fake.insertLightweightVolumeArgsForCall, struct {
-		fileset    string
-		directory  string
-		volumeName string
-		filesystem string
-		opts       map[string]interface{}
-	}{fileset, directory, volumeName, filesystem, opts})
-	fake.recordInvocation("InsertLightweightVolume", []interface{}{fileset, directory, volumeName, filesystem, opts})
+		fileset       string
+		directory     string
+		volumeName    string
+		filesystem    string
+		isPreexisting bool
+		opts          map[string]interface{}
+	}{fileset, directory, volumeName, filesystem, isPreexisting, opts})
+	fake.recordInvocation("InsertLightweightVolume", []interface{}{fileset, directory, volumeName, filesystem, isPreexisting, opts})
 	fake.insertLightweightVolumeMutex.Unlock()
 	if fake.InsertLightweightVolumeStub != nil {
-		return fake.InsertLightweightVolumeStub(fileset, directory, volumeName, filesystem, opts)
+		return fake.InsertLightweightVolumeStub(fileset, directory, volumeName, filesystem, isPreexisting, opts)
 	}
 	return fake.insertLightweightVolumeReturns.result1
 }
@@ -252,10 +257,10 @@ func (fake *FakeSpectrumDataModel) InsertLightweightVolumeCallCount() int {
 	return len(fake.insertLightweightVolumeArgsForCall)
 }
 
-func (fake *FakeSpectrumDataModel) InsertLightweightVolumeArgsForCall(i int) (string, string, string, string, map[string]interface{}) {
+func (fake *FakeSpectrumDataModel) InsertLightweightVolumeArgsForCall(i int) (string, string, string, string, bool, map[string]interface{}) {
 	fake.insertLightweightVolumeMutex.RLock()
 	defer fake.insertLightweightVolumeMutex.RUnlock()
-	return fake.insertLightweightVolumeArgsForCall[i].fileset, fake.insertLightweightVolumeArgsForCall[i].directory, fake.insertLightweightVolumeArgsForCall[i].volumeName, fake.insertLightweightVolumeArgsForCall[i].filesystem, fake.insertLightweightVolumeArgsForCall[i].opts
+	return fake.insertLightweightVolumeArgsForCall[i].fileset, fake.insertLightweightVolumeArgsForCall[i].directory, fake.insertLightweightVolumeArgsForCall[i].volumeName, fake.insertLightweightVolumeArgsForCall[i].filesystem, fake.insertLightweightVolumeArgsForCall[i].isPreexisting, fake.insertLightweightVolumeArgsForCall[i].opts
 }
 
 func (fake *FakeSpectrumDataModel) InsertLightweightVolumeReturns(result1 error) {
@@ -265,19 +270,20 @@ func (fake *FakeSpectrumDataModel) InsertLightweightVolumeReturns(result1 error)
 	}{result1}
 }
 
-func (fake *FakeSpectrumDataModel) InsertFilesetQuotaVolume(fileset string, quota string, volumeName string, filesystem string, opts map[string]interface{}) error {
+func (fake *FakeSpectrumDataModel) InsertFilesetQuotaVolume(fileset string, quota string, volumeName string, filesystem string, isPreexisting bool, opts map[string]interface{}) error {
 	fake.insertFilesetQuotaVolumeMutex.Lock()
 	fake.insertFilesetQuotaVolumeArgsForCall = append(fake.insertFilesetQuotaVolumeArgsForCall, struct {
-		fileset    string
-		quota      string
-		volumeName string
-		filesystem string
-		opts       map[string]interface{}
-	}{fileset, quota, volumeName, filesystem, opts})
-	fake.recordInvocation("InsertFilesetQuotaVolume", []interface{}{fileset, quota, volumeName, filesystem, opts})
+		fileset       string
+		quota         string
+		volumeName    string
+		filesystem    string
+		isPreexisting bool
+		opts          map[string]interface{}
+	}{fileset, quota, volumeName, filesystem, isPreexisting, opts})
+	fake.recordInvocation("InsertFilesetQuotaVolume", []interface{}{fileset, quota, volumeName, filesystem, isPreexisting, opts})
 	fake.insertFilesetQuotaVolumeMutex.Unlock()
 	if fake.InsertFilesetQuotaVolumeStub != nil {
-		return fake.InsertFilesetQuotaVolumeStub(fileset, quota, volumeName, filesystem, opts)
+		return fake.InsertFilesetQuotaVolumeStub(fileset, quota, volumeName, filesystem, isPreexisting, opts)
 	}
 	return fake.insertFilesetQuotaVolumeReturns.result1
 }
@@ -288,10 +294,10 @@ func (fake *FakeSpectrumDataModel) InsertFilesetQuotaVolumeCallCount() int {
 	return len(fake.insertFilesetQuotaVolumeArgsForCall)
 }
 
-func (fake *FakeSpectrumDataModel) InsertFilesetQuotaVolumeArgsForCall(i int) (string, string, string, string, map[string]interface{}) {
+func (fake *FakeSpectrumDataModel) InsertFilesetQuotaVolumeArgsForCall(i int) (string, string, string, string, bool, map[string]interface{}) {
 	fake.insertFilesetQuotaVolumeMutex.RLock()
 	defer fake.insertFilesetQuotaVolumeMutex.RUnlock()
-	return fake.insertFilesetQuotaVolumeArgsForCall[i].fileset, fake.insertFilesetQuotaVolumeArgsForCall[i].quota, fake.insertFilesetQuotaVolumeArgsForCall[i].volumeName, fake.insertFilesetQuotaVolumeArgsForCall[i].filesystem, fake.insertFilesetQuotaVolumeArgsForCall[i].opts
+	return fake.insertFilesetQuotaVolumeArgsForCall[i].fileset, fake.insertFilesetQuotaVolumeArgsForCall[i].quota, fake.insertFilesetQuotaVolumeArgsForCall[i].volumeName, fake.insertFilesetQuotaVolumeArgsForCall[i].filesystem, fake.insertFilesetQuotaVolumeArgsForCall[i].isPreexisting, fake.insertFilesetQuotaVolumeArgsForCall[i].opts
 }
 
 func (fake *FakeSpectrumDataModel) InsertFilesetQuotaVolumeReturns(result1 error) {

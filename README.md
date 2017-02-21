@@ -48,6 +48,9 @@ On each host, you need to start the plugin as follow,
 where:
 * configFile: Configuration file to use (defaults to `./ubiquity-client.conf`)
 
+**Note**:
+* please ensure that pluginsDirectory specified in ubiquity-client.conf file exists on the host before starting the plugin. Default is /etc/docker/plugins/
+
 ### Configuring the Plugin
 
 Unless otherwise specified by the `configFile` command line parameter, the Ubiquity Docker Plugin will

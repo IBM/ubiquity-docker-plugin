@@ -113,6 +113,8 @@ Lightweight Volume is a volume which maps to a sub-directory within an existing 
 
 To use Lightweight volumes, but take advantage of Spectrum Scale features such a encryption, simply create the Lightweight volume in a Spectrum Scale fileset that has the desired features enabled.
 
+[**Note**: Support for Lightweight volume with NFS is experimental]
+
 Usage: --opt type=lightweight
 
 #### Supported Volume Creation Options
@@ -135,8 +137,7 @@ Usage: --opt type=lightweight
   
 
 #### CES NFS Information
- * Note that currently only a export subnet can be set for export options, this will be expanded to include any export option in the future.
-
+ * Support for Lightweight volume with NFS is experimental. Fileset based volumes are preferred.  
 #### Sample Spectrum Scale Usage
 
 ##### Creating Fileset Volumes

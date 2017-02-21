@@ -1,5 +1,0 @@
----
-name: spectrum_pid_utils
-
-files:
-  - pid_utils.sh

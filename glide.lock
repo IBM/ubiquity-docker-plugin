@@ -1,5 +1,5 @@
-hash: ea15b55728770ed7a9f2f4c5533f36f134e478bbf689c4a4b0ab77a2c038f6f4
-updated: 2017-02-21T13:34:11.801757808-08:00
+hash: 2b64446ee689354e9ebf072835cff462d312f4a548e12115949c9b527c334c49
+updated: 2017-02-22T13:16:42.384945321-08:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -25,7 +25,7 @@ imports:
   - interfaces
   - services
 - name: github.ibm.com/almaden-containers/ubiquity
-  version: 6ab6ea0190eb53d7523501864fdf2b65ce66e444
+  version: c00aba4ce4d922e0826424e93a8a7f0067a3fc2d
   subpackages:
   - fakes
   - local/softlayer
@@ -41,7 +41,7 @@ imports:
   subpackages:
   - context
 - name: k8s.io/kubernetes
-  version: 5802799e56c7fcd1638e5848a13c5f3b0b1479ab
+  version: 98d693e9d24f585cb4e6615efdb3d07ec3a1616b
   subpackages:
   - staging/src/k8s.io/client-go/_vendor/github.com/golang/glog
 testImports:

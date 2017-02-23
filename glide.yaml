@@ -5,7 +5,7 @@ import:
 - package: github.com/gorilla/mux
   version: ^1.3.0
 - package: github.ibm.com/almaden-containers/ubiquity
-  version: 01d8c9ed9c65811bdf716ecf3838ee659c7629a6
+  version: 4ce2e39c5963b6d1436803f94a4904b159243377
   subpackages:
   - remote
   - resources

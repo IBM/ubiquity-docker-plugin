@@ -120,6 +120,14 @@ var _ = Describe("Main", func() {
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
+					It("should not error on creating independent fileset volume using filesettype opt", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["filesystem"] = filesystem1
+						opts["filesettype"] = "independent"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
 					It("should not error on creating lightweight volume using type opt", func() {
 						successfulCreateRequest(volumeName)
 						opts = make(map[string]interface{})
@@ -177,6 +185,15 @@ var _ = Describe("Main", func() {
 						opts["filesystem"] = filesystem2
 						opts["uid"] = "ubiquity"
 						opts["gid"] = "ubiquity"
+						successfulCreateWithOptsRequest(volumeName, opts)
+						successfulRemoveRequest(volumeName)
+					})
+					It("should not error on creating quota and independent fileset based volume", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						opts["filesystem"] = filesystem2
+						opts["filesettype"] = "independent"
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
@@ -417,6 +434,16 @@ var _ = Describe("Main", func() {
 						//successfulUnmountRequest(filesetVolume)
 						//successfulRemoveRequest(filesetVolume)
 					})
+					It("should be able to link volume of type independent fileset", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["filesystem"] = filesystem2
+						opts["filesettype"] = "independent"
+						successfulCreateWithOptsRequest(filesetVolume, opts)
+						successfulMountRequest(filesetVolume)
+						//successfulUnmountRequest(filesetVolume)
+						//successfulRemoveRequest(filesetVolume)
+					})
 					It("should be able to link volume of type lightweight", func() {
 
 						successfulCreateRequest(volumeName)
@@ -462,6 +489,17 @@ var _ = Describe("Main", func() {
 						opts["filesystem"] = filesystem2
 						opts["uid"] = "ubiquity"
 						opts["gid"] = "ubiquity"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						successfulMountRequest(filesetWithQuotaVolume)
+						//successfulUnmountRequest(filesetWithQuotaVolume)
+						//successfulRemoveRequest(filesetWithQuotaVolume)
+					})
+					It("should be able to link volume of type independent fileset with quota", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						opts["filesystem"] = filesystem2
+						opts["filesettype"] = "independent"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						//successfulUnmountRequest(filesetWithQuotaVolume)
@@ -555,6 +593,16 @@ var _ = Describe("Main", func() {
 						successfulUnmountRequest(filesetVolume)
 						successfulRemoveRequest(filesetVolume)
 					})
+					It("should be able to unlink volume of type independent fileset", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["filesystem"] = filesystem2
+						opts["filesettype"] = "independent"
+						successfulCreateWithOptsRequest(filesetVolume, opts)
+						successfulMountRequest(filesetVolume)
+						successfulUnmountRequest(filesetVolume)
+						successfulRemoveRequest(filesetVolume)
+					})
 					It("should be able to unlink volume of type lightweight", func() {
 						successfulCreateRequest(volumeName)
 						opts = make(map[string]interface{})
@@ -600,6 +648,17 @@ var _ = Describe("Main", func() {
 						opts["filesystem"] = filesystem2
 						opts["uid"] = "ubiquity"
 						opts["gid"] = "ubiquity"
+						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
+						successfulMountRequest(filesetWithQuotaVolume)
+						successfulUnmountRequest(filesetWithQuotaVolume)
+						successfulRemoveRequest(filesetWithQuotaVolume)
+					})
+					It("should be able to unlink volume of type independent fileset with quota", func() {
+						opts = make(map[string]interface{})
+						opts["type"] = "fileset"
+						opts["quota"] = "1G"
+						opts["filesystem"] = filesystem2
+						opts["filesettype"] = "independent"
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						successfulUnmountRequest(filesetWithQuotaVolume)

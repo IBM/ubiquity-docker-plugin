@@ -26,6 +26,7 @@ var logFile *os.File
 const (
 	filesystem1       string = "gold"
 	filesystem2       string = "bronze"
+	inodeLimit        string = "1024"
 	spectrumNfsConfig string = "192.168.1.0/24(Access_Type=RW,Protocols=3:4)"
 	ubiquityServerIP  string = "192.168.1.147"
 )

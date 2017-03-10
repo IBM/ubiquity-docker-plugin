@@ -120,11 +120,12 @@ var _ = Describe("Main", func() {
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
-					It("should not error on creating independent fileset volume using filesettype opt", func() {
+					It("should not error on creating independent fileset volume using fileset-type opt", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["filesystem"] = filesystem1
-						opts["filesettype"] = "independent"
+						opts["fileset-type"] = "independent"
+						opts["inode-limit"] = inodeLimit
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
@@ -193,7 +194,8 @@ var _ = Describe("Main", func() {
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
 						opts["filesystem"] = filesystem2
-						opts["filesettype"] = "independent"
+						opts["fileset-type"] = "independent"
+						opts["inode-limit"] = inodeLimit
 						successfulCreateWithOptsRequest(volumeName, opts)
 						successfulRemoveRequest(volumeName)
 					})
@@ -438,7 +440,8 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["filesystem"] = filesystem2
-						opts["filesettype"] = "independent"
+						opts["fileset-type"] = "independent"
+						opts["inode-limit"] = inodeLimit
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						successfulMountRequest(filesetVolume)
 						//successfulUnmountRequest(filesetVolume)
@@ -499,7 +502,8 @@ var _ = Describe("Main", func() {
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
 						opts["filesystem"] = filesystem2
-						opts["filesettype"] = "independent"
+						opts["fileset-type"] = "independent"
+						opts["inode-limit"] = inodeLimit
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						//successfulUnmountRequest(filesetWithQuotaVolume)
@@ -597,7 +601,8 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["filesystem"] = filesystem2
-						opts["filesettype"] = "independent"
+						opts["fileset-type"] = "independent"
+						opts["inode-limit"] = inodeLimit
 						successfulCreateWithOptsRequest(filesetVolume, opts)
 						successfulMountRequest(filesetVolume)
 						successfulUnmountRequest(filesetVolume)
@@ -658,7 +663,8 @@ var _ = Describe("Main", func() {
 						opts["type"] = "fileset"
 						opts["quota"] = "1G"
 						opts["filesystem"] = filesystem2
-						opts["filesettype"] = "independent"
+						opts["fileset-type"] = "independent"
+						opts["inode-limit"] = inodeLimit
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
 						successfulMountRequest(filesetWithQuotaVolume)
 						successfulUnmountRequest(filesetWithQuotaVolume)

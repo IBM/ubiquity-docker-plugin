@@ -60,7 +60,6 @@ The following snippet shows a sample configuration file:
 
 ```toml
 logPath = "/tmp"            # The Ubiquity Docker Plugin will write logs to file "ubiquity-docker-plugin.log" in this path.
-backend = "spectrum-scale"  # The storage backend to use. Valid values include "spectrum-scale-nfs" and "spectrum-scale". 
 
 [DockerPlugin]
 port = 9000                                # Port to serve docker plugin functions
@@ -92,8 +91,9 @@ Error response from daemon: create fdsfdsf: create fdsfdsf: Error looking up vol
 With IBM Spectrum Scale, containers can have shared file system access to any number of containers from small clusters of a few hosts up to very large clusters with thousands of hosts.
 
 The current plugin supports the following protocols:
- * Native POSIX Client (--volume-driver spectrum-scale)
- * CES NFS (Scalable and Clustered NFS Exports) (--volume-driver spectrum-scale-nfs)
+ * Native POSIX Client (--opt backend=spectrum-scale)
+ * CES NFS (Scalable and Clustered NFS Exports) (--opt backend=spectrum-scale-nfs)
+ * If option backend is not specified, defaults to server side default specification
 
 Whe  Each docker plugin supports an extendable set of storage specific options.  The following describes these options for Spectrum Scale.  ther the native or NFS driver is used, the set of options is exactly the same.  They are passed to Docker via the 'opt' option on the command line as a set of key-value pairs.  
 
@@ -129,7 +129,7 @@ Usage: --opt type=lightweight
  
 **Type and Location** 
  * File System (optional) - Select a file system in which the volume will exist.  By default the file system set in  ubiquity-server.conf is used.
-    * Usage: filesystem=(name)
+    * Usage: --opt filesystem=(name)
  * Fileset - This option selects the fileset that will be used for the volume.  This can be used to create a volume from an existing fileset, or choose the fileset in which a lightweight volume will be created.
     * Usage: --opt fileset=modelingData
  * Directory (lightweight volumes only): This option sets the name of the directory to be created for a lightweight volume.  This can also be used to create a lighweight volume from an existing directory.  The directory can be a relative path starting at the root of the path at which the fileset is linked in the file system namespace.
@@ -145,37 +145,37 @@ Usage: --opt type=lightweight
 Create a fileset volume named demo1,  using volume driver, on the gold GPFS file system :
 
 ```bash
-docker volume create -d spectrum-scale --name demo1 --opt filesystem=gold
+docker volume create -d ubiquity --name demo1 --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
 Alternatively, we can create the same volume demo1 by also passing a type option :
 
 ```bash
-docker volume create -d spectrum-scale --name demo1 --opt type=fileset --opt filesystem=gold
+docker volume create -d ubiquity --name demo1 --opt type=fileset --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
 Similarly, to create a fileset volume named demo2, using nfs volume driver, on the silver GPFS file system :
 
 ```bash
-docker volume create -d spectrum-scale-nfs --name demo2 --opt filesystem=silver
+docker volume create -d ubiquity --opt backend=spectrum-scale-nfs --name demo2 --opt filesystem=silver
 ```
 
 Create a fileset volume named demo3, using volume driver, on the default existing GPFS filesystem :
 
 ```bash
-docker volume create -d spectrum-scale --name demo3
+docker volume create -d ubiquity --name demo3 --opt backend=spectrum-scale
 ```
 
 Create a fileset volume named demo4, using volume driver and an existing fileset modelingData, on the gold GPFS file system :
 
 ```bash
-docker volume create -d spectrum-scale --name demo4 --opt fileset=modelingData --opt filesystem=gold
+docker volume create -d ubiquity --name demo4 --opt fileset=modelingData --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
 Alternatively, we can create the same volume named demo4 by also passing a type option :
 
 ```bash
-docker volume create -d spectrum-scale --name demo4 --opt type=fileset --opt fileset=modelingData --opt filesystem=gold
+docker volume create -d ubiquity --name demo4 --opt type=fileset --opt fileset=modelingData --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
 ##### Creating Lightweight Volumes
@@ -183,19 +183,19 @@ docker volume create -d spectrum-scale --name demo4 --opt type=fileset --opt fil
 Create a lightweight volume named demo5, using volume driver, within an existing fileset 'LtWtVolFileset' in the gold GPFS filesystem :
 
 ```bash
-docker volume create -d spectrum-scale --name demo5 --opt type=lightweight --opt fileset=LtWtVolFileset --opt filesystem=gold
+docker volume create -d ubiquity --name demo5 --opt type=lightweight --opt fileset=LtWtVolFileset --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
 Create a lightweight volume named demo6, using volume driver, within an existing fileset 'LtWtVolFileset' having a sub-directory 'dir1' in the gold GPFS file system :
 
 ```bash
-docker volume create -d spectrum-scale --name demo6 --opt fileset=LtWtVolFileset --opt directory=dir1 --opt filesystem=gold
+docker volume create -d ubiquity --name demo6 --opt fileset=LtWtVolFileset --opt directory=dir1 --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
 Alternatively, we can create the same volume named demo6 by also passing a type option :
 
 ```bash
-docker volume create -d spectrum-scale --name demo6 --opt type=lightweight --opt fileset=LtWtVolFileset --opt directory=dir1 --opt filesystem=gold
+docker volume create -d ubiquity --name demo6 --opt type=lightweight --opt fileset=LtWtVolFileset --opt directory=dir1 --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
 ##### Creating Fileset With Quota Volumes
@@ -203,25 +203,25 @@ docker volume create -d spectrum-scale --name demo6 --opt type=lightweight --opt
 Create a fileset with quota volume named demo7, using volume driver, with a quota limit of 1GB in the silver GPFS file system :
 
 ```bash
-docker volume create -d spectrum-scale --name demo7 --opt quota=1G --opt filesystem=silver
+docker volume create -d ubiquity --name demo7 --opt quota=1G --opt filesystem=silver --opt backend=spectrum-scale
 ```
 
 Alternatively, we can create the same volume named demo7 by also passing a type option :
 
 ```bash
-docker volume create -d spectrum-scale --name demo7 --opt type=fileset --opt quota=1G --opt filesystem=silver
+docker volume create -d ubiquity --name demo7 --opt type=fileset --opt quota=1G --opt filesystem=silver --opt backend=spectrum-scale
 ```
 
 Create a fileset with quota volume named demo8, using volume driver and an existing fileset 'filesetQuota' having a quota limit of 1G, in the silver GPFS file system :
 
 ```bash
-docker volume create -d spectrum-scale --name demo8 --opt fileset=filesetQuota --opt quota=1G --opt filesystem=silver
+docker volume create -d ubiquity --name demo8 --opt fileset=filesetQuota --opt quota=1G --opt filesystem=silver --opt backend=spectrum-scale
 ```
 
 Alternatively, we can also create the same volume named demo8 by also passing a type option :
 
 ```bash
-docker volume create -d spectrum-scale --name demo8 --opt type=fileset --opt fileset=filesetQuota --opt quota=1G --opt filesystem=silver
+docker volume create -d ubiquity --name demo8 --opt type=fileset --opt fileset=filesetQuota --opt quota=1G --opt filesystem=silver --opt backend=spectrum-scale
 ```
 
 ## General Examples
@@ -233,8 +233,8 @@ It lists volumes across all the volume plugins running on that system. Each volu
 ```bash
  $ docker volume ls
 DRIVER                  VOLUME NAME
-spectrum-scale          demo1
-spectrum-scale          demo2
+ubiquity                    demo1
+ubiquity                    demo2
 ```
 
 #### Running Docker Containers and Using Volumes.  
@@ -242,13 +242,13 @@ spectrum-scale          demo2
 Run a container and mount the volume created above by specifying the name of the volume name and the volume driver used to create that volume.  Note that local and ubiquity volumes can be passed into a container.
 
 ```bash
-docker run -t -i --volume-driver spectrum-scale --volume <VOLUME-NAME>:<CONTAINER-MOUNTPOINT> --entrypoint /bin/sh alpine
+docker run -t -i --volume-driver ubiquity --volume <VOLUME-NAME>:<CONTAINER-MOUNTPOINT> --entrypoint /bin/sh alpine
 ```
 
 Similarly, if the volume was created using the spectrum-scale-nfs backend, the same command should read
 
 ```bash
-docker run -t -i --volume-driver spectrum-scale-nfs --volume <VOLUME-NAME>:<CONTAINER-MOUNTPOINT> --entrypoint /bin/sh alpine
+docker run -t -i --volume-driver ubiquity --volume <VOLUME-NAME>:<CONTAINER-MOUNTPOINT> --entrypoint /bin/sh alpine
 ```
 
 **_Example_**
@@ -256,9 +256,9 @@ docker run -t -i --volume-driver spectrum-scale-nfs --volume <VOLUME-NAME>:<CONT
 let's run a docker image of Alpine Linux, a lightweight Linux Distribution, inside a container and mounting demo1 volume inside the container.
 
 ```bash
-docker run -t -i --volume-driver spectrum-scale --volume demo1:/data --entrypoint /bin/sh alpine
+docker run -t -i --volume-driver ubiquity --volume demo1:/data --entrypoint /bin/sh alpine
 ```
-Here demo1 was created using the volume driver spectrum-scale, a volume plugin for the gold GPFS file system. We specify that volume demo1 must be mounted at /data inside the container
+Here demo1 was created using the volume driver ubiquity, a volume plugin for the gold GPFS file system. We specify that volume demo1 must be mounted at /data inside the container
 
 ### Remove a Volume
 **_Pre-Conditions :_** Make sure the volume is not being used by any running containers

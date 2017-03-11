@@ -38,9 +38,9 @@ func main() {
 
 	storageAPIURL := fmt.Sprintf("http://%s:%d/ubiquity_storage", config.UbiquityServer.Address, config.UbiquityServer.Port)
 
-	server, err := web_server.NewServer(logger, config.Backend, storageAPIURL, config)
+	server, err := web_server.NewServer(logger, storageAPIURL, config)
 	if err != nil {
-		panic("Backend not valid: " + config.Backend)
+		panic("Error initializing webserver " + err.Error())
 	}
 	server.Start(PLUGIN_ADDRESS, config.DockerPlugin.Port, config.DockerPlugin.PluginsDirectory)
 }

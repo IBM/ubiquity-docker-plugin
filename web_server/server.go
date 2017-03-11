@@ -18,9 +18,8 @@ import (
 )
 
 type Server struct {
-	handler     *Handler
-	log         *log.Logger
-	backendName string
+	handler *Handler
+	log     *log.Logger
 }
 
 type ServerInfo struct {
@@ -28,12 +27,12 @@ type ServerInfo struct {
 	Addr string
 }
 
-func NewServer(logger *log.Logger, backendName, storageApiURL string, config resources.UbiquityPluginConfig) (*Server, error) {
-	handler, err := NewHandler(logger, backendName, storageApiURL, config)
+func NewServer(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Server, error) {
+	handler, err := NewHandler(logger, storageApiURL, config)
 	if err != nil {
 		return nil, err
 	}
-	return &Server{log: logger, handler: handler, backendName: backendName}, nil
+	return &Server{log: logger, handler: handler}, nil
 }
 
 func (s *Server) Start(address string, port int, pluginsPath string) {
@@ -48,7 +47,7 @@ func (s *Server) Start(address string, port int, pluginsPath string) {
 	router.HandleFunc("/VolumeDriver.Path", s.handler.Path).Methods("POST")
 	router.HandleFunc("/VolumeDriver.List", s.handler.List).Methods("POST")
 	http.Handle("/", router)
-	serverInfo := &ServerInfo{Name: s.backendName, Addr: fmt.Sprintf("http://%s:%d", address, port)}
+	serverInfo := &ServerInfo{Name: "ubiquity", Addr: fmt.Sprintf("http://%s:%d", address, port)}
 	err := s.writeSpecFile(serverInfo, pluginsPath)
 	if err != nil {
 		s.log.Fatal("Error writing plugin config, aborting...(: %s)\n", err.Error())
@@ -64,7 +63,7 @@ func (s *Server) writeSpecFile(server *ServerInfo, pluginsPath string) error {
 		return fmt.Errorf("Error marshalling Get response: %s", err.Error())
 	}
 
-	pluginFileName := path.Join(pluginsPath, fmt.Sprintf("%s.json", s.backendName))
+	pluginFileName := path.Join(pluginsPath, fmt.Sprintf("%s.json", "ubiquity"))
 
 	currentUser, err := user.Current()
 	if err != nil {

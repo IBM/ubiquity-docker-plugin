@@ -28,7 +28,7 @@ const (
 	filesystem2       string = "bronze"
 	inodeLimit        string = "1024"
 	spectrumNfsConfig string = "192.168.1.0/24(Access_Type=RW,Protocols=3:4)"
-	ubiquityServerIP  string = "192.168.1.147"
+	ubiquityServerIP  string = "127.0.0.1"
 )
 
 func TestMain(t *testing.T) {
@@ -36,8 +36,8 @@ func TestMain(t *testing.T) {
 	spectrumBackend = "spectrum-scale"
 	RunSpecs(t, fmt.Sprintf("Main Suite (%s)", spectrumBackend))
 
-	spectrumBackend = "spectrum-scale-nfs"
-	RunSpecs(t, fmt.Sprintf("Main Suite (%s)", spectrumBackend))
+	//spectrumBackend = "spectrum-scale-nfs"
+	//RunSpecs(t, fmt.Sprintf("Main Suite (%s)", spectrumBackend))
 }
 
 var _ = SynchronizedBeforeSuite(func() []byte {
@@ -63,7 +63,7 @@ var _ = BeforeEach(func() {
 	listenPort = 9000 + GinkgoParallelNode()
 
 	confFileName := fmt.Sprintf("/tmp/ubiquity-plugin%d.conf", listenPort)
-	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackend = \"%s\" \n[DockerPlugin] \naddress = \"127.0.0.1\" \nport = %d \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"%s\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nClientConfig = \"%s\"\n", spectrumBackend, listenPort, ubiquityServerIP, spectrumNfsConfig)
+	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackend = \"ubiquity\" \n[DockerPlugin] \naddress = \"127.0.0.1\" \nport = %d \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"%s\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nClientConfig = \"%s\"\n", listenPort, ubiquityServerIP, spectrumNfsConfig)
 
 	err = ioutil.WriteFile(confFileName, []byte(confData), 0644)
 	if err != nil {

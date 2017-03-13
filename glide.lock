@@ -1,5 +1,5 @@
-hash: 636b700b797a07b65fdf21dfcd9bc1d0663c8ebe8a4f83cfe432a03439957fc5
-updated: 2017-03-10T23:00:44.132076004-08:00
+hash: 9fb38d73a0fecde1e7d6776fb4789565090de85fa0c2d20f1cf839b2ed2ecb88
+updated: 2017-03-13T15:47:56.925562206-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -25,7 +25,7 @@ imports:
   - interfaces
   - services
 - name: github.ibm.com/almaden-containers/ubiquity
-  version: 95ccc7b1091d79ab01245a452521b7f27827798c
+  version: 744bc9a2f864f7fca7d8c0a531a3b937f5c3fe0b
   subpackages:
   - fakes
   - local/softlayer

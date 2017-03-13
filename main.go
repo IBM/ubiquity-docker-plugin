@@ -3,14 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
-	"log"
-	"os"
-	"path"
 
 	"github.com/BurntSushi/toml"
 	"github.ibm.com/almaden-containers/ubiquity-docker-plugin/web_server"
 	"github.ibm.com/almaden-containers/ubiquity/resources"
+	"github.ibm.com/almaden-containers/ubiquity/utils"
 )
 
 var configFile = flag.String(
@@ -33,8 +30,8 @@ func main() {
 		return
 	}
 
-	logger, logFile := setupLogger(config.LogPath)
-	defer closeLogs(logFile)
+	logger, logFile := utils.SetupLogger(config.LogPath, "ubiquity-docker-plugin")
+	defer utils.CloseLogs(logFile)
 
 	storageAPIURL := fmt.Sprintf("http://%s:%d/ubiquity_storage", config.UbiquityServer.Address, config.UbiquityServer.Port)
 
@@ -43,20 +40,4 @@ func main() {
 		panic("Error initializing webserver " + err.Error())
 	}
 	server.Start(PLUGIN_ADDRESS, config.DockerPlugin.Port, config.DockerPlugin.PluginsDirectory)
-}
-
-func setupLogger(logPath string) (*log.Logger, *os.File) {
-	logFile, err := os.OpenFile(path.Join(logPath, "ubiquity-docker-plugin.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
-	if err != nil {
-		fmt.Printf("Failed to setup logger: %s\n", err.Error())
-		return nil, nil
-	}
-	log.SetOutput(logFile)
-	logger := log.New(io.MultiWriter(logFile, os.Stdout), "ubiquity-docker-plugin: ", log.Lshortfile|log.LstdFlags)
-	return logger, logFile
-}
-
-func closeLogs(logFile *os.File) {
-	logFile.Sync()
-	logFile.Close()
 }

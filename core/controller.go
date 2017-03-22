@@ -12,13 +12,13 @@ type Controller struct {
 	logger *log.Logger
 }
 
-func NewController(logger *log.Logger, backendName, storageApiURL string, config resources.UbiquityPluginConfig) (*Controller, error) {
-	backendClient, err := remote.NewRemoteClient(logger, backendName, storageApiURL, config)
+func NewController(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Controller, error) {
+	remoteClient, err := remote.NewRemoteClient(logger, storageApiURL, config)
 	if err != nil {
-		logger.Fatal("Cannot find backend: " + backendName)
+		logger.Fatal("Cannot initialize remote client")
 		return nil, err
 	}
-	return &Controller{logger: logger, client: backendClient}, nil
+	return &Controller{logger: logger, client: remoteClient}, nil
 }
 
 func NewControllerWithClient(logger *log.Logger, client resources.StorageClient) *Controller {
@@ -92,27 +92,32 @@ func (c *Controller) Unmount(unmountRequest *resources.GenericRequest) *resource
 func (c *Controller) Path(pathRequest *resources.GenericRequest) *resources.MountResponse {
 	c.logger.Println("Controller: path start")
 	defer c.logger.Println("Controller: path end")
-	volume, _, err := c.client.GetVolume(pathRequest.Name)
+	volume, err := c.client.GetVolumeConfig(pathRequest.Name)
 	if err != nil {
 		return &resources.MountResponse{Err: err.Error()}
 	}
+	mountpoint, exists := volume["mountpoint"]
+	if exists == false || mountpoint == "" {
 
-	if volume.Mountpoint == "" {
 		return &resources.MountResponse{Err: "volume not mounted"}
 	}
-	pathResponse := &resources.MountResponse{Mountpoint: volume.Mountpoint}
+	pathResponse := &resources.MountResponse{Mountpoint: mountpoint.(string)}
 	return pathResponse
 }
 
-func (c *Controller) Get(getRequest *resources.GenericRequest) *resources.GetResponse {
+func (c *Controller) Get(getRequest *resources.GenericRequest) *resources.DockerGetResponse {
 	c.logger.Println("Controller: get start")
 	defer c.logger.Println("Controller: get end")
-	volume, _, err := c.client.GetVolume(getRequest.Name)
+	volume, err := c.client.GetVolumeConfig(getRequest.Name)
 	if err != nil {
-		return &resources.GetResponse{Err: err.Error()}
+		return &resources.DockerGetResponse{Err: err.Error()}
+	}
+	mountpoint, exists := volume["mountpoint"]
+	if exists == false || mountpoint == "" {
+		mountpoint = ""
 	}
 
-	getResponse := &resources.GetResponse{Volume: volume}
+	getResponse := &resources.DockerGetResponse{Volume: resources.VolumeMetadata{Name: getRequest.Name, Mountpoint: mountpoint.(string)}}
 	return getResponse
 }
 

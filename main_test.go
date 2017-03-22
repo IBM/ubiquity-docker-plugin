@@ -91,7 +91,7 @@ var _ = Describe("Main", func() {
 					})
 					It("should not error if volume already exists", func() {
 						successfulCreateRequest(volumeName)
-						createRequest := resources.CreateRequest{Name: volumeName, Opts: map[string]interface{}{}}
+						createRequest := resources.CreateRequest{Name: volumeName, Opts: map[string]interface{}{"backend": spectrumBackend}}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
 						body, status, err := submitRequestWithBody("POST", "/VolumeDriver.Create", createRequestBody)
@@ -100,7 +100,7 @@ var _ = Describe("Main", func() {
 						var createResponse resources.GenericResponse
 						err = json.Unmarshal([]byte(body), &createResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(createResponse.Err).To(Equal("Volume already exists"))
+						Expect(createResponse.Err).To(Equal(fmt.Sprintf("Volume `%s` already exists", volumeName)))
 						successfulRemoveRequest(volumeName)
 
 					})
@@ -159,6 +159,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "lightweight"
 						opts["filesystem"] = filesystem1
+						opts["backend"] = spectrumBackend
 						createRequest := resources.CreateRequest{Name: volumeName, Opts: opts}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
@@ -207,6 +208,7 @@ var _ = Describe("Main", func() {
 						opts["filesystem"] = filesystem1
 						newVolumeName := fmt.Sprintf("some-testvolume-%d", time.Now().Nanosecond())
 						opts["quota"] = "1G"
+						opts["backend"] = spectrumBackend
 						createRequest := resources.CreateRequest{Name: newVolumeName, Opts: opts}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
@@ -223,6 +225,7 @@ var _ = Describe("Main", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "fileset"
 						opts["quota"] = "invalid-quota"
+						opts["backend"] = spectrumBackend
 						createRequest := resources.CreateRequest{Name: volumeName, Opts: opts}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
@@ -237,6 +240,7 @@ var _ = Describe("Main", func() {
 					It("should error on create with invalid type in opt", func() {
 						opts = make(map[string]interface{})
 						opts["type"] = "invalid-type"
+						opts["backend"] = spectrumBackend
 						createRequest := resources.CreateRequest{Name: volumeName, Opts: opts}
 						createRequestBody, err := json.Marshal(createRequest)
 						Expect(err).ToNot(HaveOccurred())
@@ -836,11 +840,12 @@ func submitRequestWithBody(reqType string, path string, requestBody []byte) (bod
 
 func successfulCreateRequest(volumeName string) {
 	opts := make(map[string]interface{})
+	opts["backend"] = spectrumBackend
 	successfulCreateWithOptsRequest(volumeName, opts)
 }
 
 func successfulCreateWithOptsRequest(volumeName string, opts map[string]interface{}) {
-
+	opts["backend"] = spectrumBackend
 	createRequest := resources.CreateRequest{Name: volumeName, Opts: opts}
 	createRequestBody, err := json.Marshal(createRequest)
 	Expect(err).ToNot(HaveOccurred())

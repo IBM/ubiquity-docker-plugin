@@ -1,5 +1,5 @@
-hash: e32a757f33ad8eccb88f51d7c94902ec15ef3f697d6e54a5e94ed8aaecc22bb0
-updated: 2017-03-22T08:27:39.781257826-07:00
+hash: 516bbd7babb81d4e4602405128c5f1d89dab7c8ce019bcc5ab68c89c547557af
+updated: 2017-03-27T10:06:00.028881246-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -17,34 +17,21 @@ imports:
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/mattn/go-sqlite3
   version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
-- name: github.ibm.com/alchemy-containers/armada-slclient-lib
-  version: 683a1654bf32f888fbf24efb0dfec12647b665e2
-  subpackages:
-  - client
-  - datatypes
-  - interfaces
-  - services
 - name: github.ibm.com/almaden-containers/ubiquity
-  version: e507bed23ec67b2caa4ed3ebd6619782f9568a18
+  version: 5aa646be17908032fdc4479c322cd27e79b6755b
   subpackages:
   - fakes
-  - local/softlayer
   - local/spectrumscale
   - local/spectrumscale/connectors
   - model
   - remote
   - remote/mounter
   - resources
-  - service_broker
   - utils
 - name: golang.org/x/net
   version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
   subpackages:
   - context
-- name: k8s.io/kubernetes
-  version: 98d693e9d24f585cb4e6615efdb3d07ec3a1616b
-  subpackages:
-  - staging/src/k8s.io/client-go/_vendor/github.com/golang/glog
 testImports:
 - name: github.com/onsi/ginkgo
   version: bb93381d543b0e5725244abe752214a110791d01

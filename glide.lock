@@ -1,8 +1,8 @@
-hash: 516bbd7babb81d4e4602405128c5f1d89dab7c8ce019bcc5ab68c89c547557af
-updated: 2017-03-27T10:06:00.028881246-07:00
+hash: 374b6baa4e8ca38b6bc1a1ec5c00a9fcb39052f2da0f47b76868f79ff3a9a1bd
+updated: 2017-03-29T14:04:51.769939216-07:00
 imports:
 - name: github.com/BurntSushi/toml
-  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
+  version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/djherbis/times
   version: 95292e44976d1217cf3611dc7c8d9466877d3ed5
 - name: github.com/gorilla/context
@@ -18,7 +18,7 @@ imports:
 - name: github.com/mattn/go-sqlite3
   version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
 - name: github.ibm.com/almaden-containers/ubiquity
-  version: 5aa646be17908032fdc4479c322cd27e79b6755b
+  version: 0a204f347e345e214f47070ca3eda34a8c5bbada
   subpackages:
   - fakes
   - local/spectrumscale

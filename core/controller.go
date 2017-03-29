@@ -57,7 +57,7 @@ func (c *Controller) Remove(removeRequest *resources.RemoveRequest) *resources.G
 	c.logger.Println("Controller: remove start")
 	defer c.logger.Println("Controller: remove end")
 	// forceDelete is set to false to enable deleting just the volume metadata
-	err := c.client.RemoveVolume(removeRequest.Name, false)
+	err := c.client.RemoveVolume(removeRequest.Name)
 	if err != nil {
 		return &resources.GenericResponse{Err: err.Error()}
 	}

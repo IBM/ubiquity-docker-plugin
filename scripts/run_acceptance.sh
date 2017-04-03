@@ -2,7 +2,7 @@
 
 if [ -z "$1" ]
     then
-        DRIVER="spectrum-scale"
+        DRIVER="ubiquity"
 else
     DRIVER=$1
 fi

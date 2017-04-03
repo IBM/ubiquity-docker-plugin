@@ -14,7 +14,7 @@ This plugin can support a variety of storage systems.  See 'Available Storage Sy
 
 
 ### Deployment Prerequisites
-* [Ubiquity](https://github.ibm.com/almaden-containers/ubiquity) service must be running
+* [Ubiquity](https://github.com/ibm/ubiquity) service must be running
 * Install [docker](https://docs.docker.com/engine/installation/)
 * The correct storage software must be installed and configured on each of the hosts. For example:
   * Spectrum-Scale - Ensure the Spectrum Scale client (NSD client) is installed and part of a Spectrum Scale cluster.
@@ -31,9 +31,9 @@ export GOPATH=$HOME/workspace
 (https://help.github.com/enterprise/2.7/user/articles/generating-an-ssh-key/) before proceeding further. 
 - Build Ubiquity docker plugin from source (can take several minutes based on connectivity)
 ```bash
-mkdir -p $GOPATH/src/github.ibm.com/almaden-containers
-cd $GOPATH/src/github.ibm.com/almaden-containers
-git clone git@github.ibm.com:almaden-containers/ubiquity-docker-plugin.git
+mkdir -p $GOPATH/src/github.com/ibm
+cd $GOPATH/src/github.com/ibm
+git clone git@github.com:ibm/ubiquity-docker-plugin.git
 cd ubiquity-docker-plugin
 ./scripts/build
 

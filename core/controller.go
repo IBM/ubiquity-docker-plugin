@@ -3,8 +3,8 @@ package core
 import (
 	"log"
 
-	"github.ibm.com/almaden-containers/ubiquity/remote"
-	"github.ibm.com/almaden-containers/ubiquity/resources"
+	"github.com/ibm/ubiquity/remote"
+	"github.com/ibm/ubiquity/resources"
 )
 
 type Controller struct {
@@ -57,7 +57,7 @@ func (c *Controller) Remove(removeRequest *resources.RemoveRequest) *resources.G
 	c.logger.Println("Controller: remove start")
 	defer c.logger.Println("Controller: remove end")
 	// forceDelete is set to false to enable deleting just the volume metadata
-	err := c.client.RemoveVolume(removeRequest.Name, false)
+	err := c.client.RemoveVolume(removeRequest.Name)
 	if err != nil {
 		return &resources.GenericResponse{Err: err.Error()}
 	}

@@ -1,24 +1,16 @@
-hash: 516bbd7babb81d4e4602405128c5f1d89dab7c8ce019bcc5ab68c89c547557af
-updated: 2017-03-27T10:06:00.028881246-07:00
+hash: 46c18d5370c769462e6bf7f8c517ec2d73df6e3a4d1098ca0d0bed8ef87abe2a
+updated: 2017-04-03T13:37:38.936937898-07:00
 imports:
 - name: github.com/BurntSushi/toml
-  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
+  version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/djherbis/times
   version: 95292e44976d1217cf3611dc7c8d9466877d3ed5
 - name: github.com/gorilla/context
   version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
 - name: github.com/gorilla/mux
   version: 392c28fe23e1c45ddba891b0320b3b5df220beea
-- name: github.com/jinzhu/gorm
-  version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
-  subpackages:
-  - dialects/sqlite
-- name: github.com/jinzhu/inflection
-  version: 1c35d901db3da928c72a72d8458480cc9ade058f
-- name: github.com/mattn/go-sqlite3
-  version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
-- name: github.ibm.com/almaden-containers/ubiquity
-  version: 5aa646be17908032fdc4479c322cd27e79b6755b
+- name: github.com/ibm/ubiquity
+  version: a3f2df01de97f350d2f958857e8fa520475c83cb
   subpackages:
   - fakes
   - local/spectrumscale
@@ -28,6 +20,14 @@ imports:
   - remote/mounter
   - resources
   - utils
+- name: github.com/jinzhu/gorm
+  version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
+  subpackages:
+  - dialects/sqlite
+- name: github.com/jinzhu/inflection
+  version: 1c35d901db3da928c72a72d8458480cc9ade058f
+- name: github.com/mattn/go-sqlite3
+  version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
 - name: golang.org/x/net
   version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
   subpackages:

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/BurntSushi/toml"
-	"github.ibm.com/almaden-containers/ubiquity-docker-plugin/web_server"
-	"github.ibm.com/almaden-containers/ubiquity/resources"
-	"github.ibm.com/almaden-containers/ubiquity/utils"
+	"github.com/ibm/ubiquity-docker-plugin/web_server"
+	"github.com/ibm/ubiquity/resources"
+	"github.com/ibm/ubiquity/utils"
 )
 
 var configFile = flag.String(

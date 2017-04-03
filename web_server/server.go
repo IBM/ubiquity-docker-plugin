@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.ibm.com/almaden-containers/ubiquity/resources"
+	"github.com/ibm/ubiquity/resources"
 )
 
 type Server struct {

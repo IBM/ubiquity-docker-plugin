@@ -7,9 +7,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.ibm.com/almaden-containers/ubiquity-docker-plugin/core"
+	"github.com/ibm/ubiquity-docker-plugin/core"
 
-	"github.ibm.com/almaden-containers/ubiquity/resources"
+	"github.com/ibm/ubiquity/resources"
 )
 
 type Handler struct {

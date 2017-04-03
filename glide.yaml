@@ -1,11 +1,11 @@
-package: github.ibm.com/almaden-containers/ubiquity-docker-plugin
+package: github.com/ibm/ubiquity-docker-plugin
 import:
 - package: github.com/BurntSushi/toml
   version: ^0.2.0
 - package: github.com/gorilla/mux
   version: ^1.3.0
-- package: github.ibm.com/almaden-containers/ubiquity
-  version: 0a204f347e345e214f47070ca3eda34a8c5bbada
+- package: github.com/ibm/ubiquity
+  version: dev
   subpackages:
   - remote
   - resources

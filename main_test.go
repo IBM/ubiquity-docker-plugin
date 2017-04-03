@@ -11,7 +11,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/ibm/ubiquity/resources"
+	"github.com/IBM/ubiquity/resources"
 )
 
 var _ = Describe("Main", func() {

@@ -6,10 +6,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/ibm/ubiquity-docker-plugin/core"
-	"github.com/ibm/ubiquity/fakes"
+	"github.com/IBM/ubiquity-docker-plugin/core"
+	"github.com/IBM/ubiquity/fakes"
 
-	"github.com/ibm/ubiquity/resources"
+	"github.com/IBM/ubiquity/resources"
 )
 
 var _ = Describe("Controller", func() {

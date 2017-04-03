@@ -42,7 +42,7 @@ func TestMain(t *testing.T) {
 
 var _ = SynchronizedBeforeSuite(func() []byte {
 	var err error
-	spectrumPath, err := gexec.Build("github.com/ibm/ubiquity-docker-plugin", "-race")
+	spectrumPath, err := gexec.Build("github.com/IBM/ubiquity-docker-plugin", "-race")
 	Expect(err).NotTo(HaveOccurred())
 
 	return []byte(spectrumPath)

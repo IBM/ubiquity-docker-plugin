@@ -3,8 +3,8 @@ package core
 import (
 	"log"
 
-	"github.com/ibm/ubiquity/remote"
-	"github.com/ibm/ubiquity/resources"
+	"github.com/IBM/ubiquity/remote"
+	"github.com/IBM/ubiquity/resources"
 )
 
 type Controller struct {

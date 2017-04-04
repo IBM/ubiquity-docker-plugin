@@ -1,6 +1,6 @@
 [Unit]
 Description=ubiquity docker plugin Service
-Documentation=https://github.ibm.com/almaden-containers/ubiquity-docker-plugin
+Documentation=https://github.com/IBM/ubiquity-docker-plugin
 After=network.target
 After=docker.service
 Requires=docker.service

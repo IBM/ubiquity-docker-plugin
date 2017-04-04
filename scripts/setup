@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e 
+scripts=$(dirname $0)
+
+mkdir -p /etc/ubiquity
+
+cp $scripts/../bin/ubiquity-docker-plugin /usr/bin/ubiquity-docker-plugin
+
+cp $scripts/../ubiquity-client.conf \
+/etc/ubiquity/ubiquity-client-docker.conf 
+
+cp $scripts/ubiquity-docker-plugin.env /etc/ubiquity/ubiquity-docker-plugin.env
+
+dist=`lsb_release -a 2>/dev/null |grep "Distributor ID" |cut -d: -f2 |xargs`
+if [ "$dist" == "Ubuntu" ]; then
+	cp $scripts/ubiquity-docker-plugin.service /lib/systemd/system/
+else
+	cp $scripts/ubiquity-docker-plugin.service /usr/lib/systemd/system/
+fi
+systemctl enable ubiquity-docker-plugin.service

@@ -33,7 +33,7 @@ export GOPATH=$HOME/workspace
 ```bash
 mkdir -p $GOPATH/src/github.com/IBM
 cd $GOPATH/src/github.com/IBM
-git clone git@github.com:ibm/ubiquity-docker-plugin.git
+git clone git@github.com:IBM/ubiquity-docker-plugin.git
 cd ubiquity-docker-plugin
 ./scripts/build
 

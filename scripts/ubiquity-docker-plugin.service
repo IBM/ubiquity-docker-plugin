@@ -1,0 +1,18 @@
+[Unit]
+Description=ubiquity docker plugin Service
+Documentation=https://github.com/IBM/ubiquity-docker-plugin
+After=network.target
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=ubiquity
+EnvironmentFile=/etc/ubiquity/ubiquity-docker-plugin.env
+ExecStart=/usr/bin/ubiquity-docker-plugin \
+          $UBIQUITY_CLIENT_CONFIG \
+	  $UBIQUITY_DOCKER_PLUGIN_ARGS           
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

@@ -72,7 +72,7 @@ service docker restart
 
 #### Option 1: systemd
 
-This option assumes that the system that you are using has support for systemd (e.g., ubuntu 14.04 does not have native support to systems, ubuntu 16.04 does.)
+This option assumes that the system that you are using has support for systemd (e.g., ubuntu 14.04 does not have native support to systemd, ubuntu 16.04 does.)
 Please note that the script will try to start the service as user `ubiquity`. So before proceeding, please create the user ubiquity as described in [Ubiquity documentation](https://github.com/IBM/ubiquity).
 
 

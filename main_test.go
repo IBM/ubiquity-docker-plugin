@@ -235,7 +235,7 @@ var _ = Describe("Main", func() {
 						var createResponse resources.GenericResponse
 						err = json.Unmarshal([]byte(body), &createResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(createResponse.Err).To(Equal(fmt.Sprintf("Failed to set quota 'invalid-quota' for fileset '%s'", volumeName)))
+						Expect(createResponse.Err).To(Equal(fmt.Sprintf("Failed to set quota 'invalid-quota' for fileset '%s': exit status 1", volumeName)))
 					})
 					It("should error on create with invalid type in opt", func() {
 						opts = make(map[string]interface{})

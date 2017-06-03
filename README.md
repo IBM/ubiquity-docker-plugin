@@ -21,6 +21,54 @@ This code is provided "AS IS" and without warranty of any kind.  Any issues will
 * The correct storage software must be installed and configured on each of the hosts. For example:
   * Spectrum-Scale - Ensure the Spectrum Scale client (NSD client) is installed and part of a Spectrum Scale cluster.
   * NFS - Ensure hosts support mounting NFS file systems.
+  * IBM Block Storage - Configuring storage connectivity and multipathing as mentioned below
+
+     The plugin supports FC or iSCSI connectivity to the storage systems.
+      - Install OpeniSCSI and SCSI utilities.
+        * Ubuntu
+        ```bash
+         sudo apt-get update
+         sudo apt-get -y install scsitools
+         sudo apt-get install -y open-iscsi  # only if you need iSCSI
+         ```
+         * Redhat
+         ```bash
+         sudo yum -y install sg3_utils
+         sudo yum -y install iscsi-initiator-utils  # only if you need iSCSI
+         ```
+
+     - Install and configure multipathing.
+         * Ubuntu
+        ```bash
+         sudo apt-get multipath-tools
+         cp multipath.conf /etc/multipath.conf
+         multipath -l  # Check no errors appear.
+        ```
+
+         * Redhat
+        ```bash
+         yum install device-mapper-multipath
+         sudo modprobe dm-multipath
+
+         cp multipath.conf /etc/multipath.conf  # Default file can be copied from  /usr/share/doc/device-mapper-multipath-*/multipath.conf to /etc
+         systemctl start multipathd
+         systemctl status multipathd  # Make sure its active
+         multipath -ll  # Make sure no error appear.
+        ```
+
+     - Verify that the hostname of the docker node is defined on the relevant storage systems with the valid WWPNs or IQN of the node.
+
+     - For iSCSI - Discover and login to the iSCSI targets of the relevant storage systems:
+         * Discover iSCSI targets of the storage systems portal on the host
+
+            ```bash
+               iscsiadm -m discoverydb -t st -p ${Storage System iSCSI Portal IP}:3260 --discover
+            ```
+         * Log in to iSCSI ports. You must have at least two communication paths from your host to the storage system to achieve multipathing.
+
+            ```bash
+               iscsiadm -m node  -p ${storage system iSCSI portal IP/hostname} --login
+            ```
 
 
 ### Download and build the code
@@ -215,6 +263,17 @@ Alternatively, we can also create the same volume named demo10 by also passing a
 
 ```bash
 docker volume create -d ubiquity --name demo10 --opt type=fileset --opt fileset=filesetQuota --opt quota=1G --opt filesystem=silver --opt backend=spectrum-scale
+```
+
+#### Sample IBM Block Storage Usage
+[Ubiquity service](https://github.com/IBM/ubiquity) communicates with the IBM block storage systems through IBM Spectrum Control Base Edition([SCBE](http://www.ibm.com/support/knowledgecenter/STWMS9/landing/IBM_Spectrum_Control_Base_Edition_welcome_page.html)).
+The plugin can provision a volume from a delegated SCBE storage service by using the --opt=<SCBE storage service name> flag.
+
+##### Creating volume on gold SCBE storage service
+Create a volume named demo11 with 10gb size from the gold SCBE storage service (the gold service could be, for example, a pool from IBM FlashSystem A9000\R and with high QoS capability) :
+
+```bash
+docker volume create -d ubiquity --name demo11 --opt size=10 --opt profile=gold
 ```
 
 ## General Examples

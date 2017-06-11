@@ -14,6 +14,8 @@ import (
 var testLogger *log.Logger
 var logFile *os.File
 
+const Backend = "spectrum-scale"
+
 func TestController(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Controller Suite")

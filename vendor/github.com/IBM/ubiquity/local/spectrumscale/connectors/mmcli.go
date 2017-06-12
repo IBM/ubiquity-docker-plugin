@@ -17,7 +17,7 @@ type spectrum_mmcli struct {
 }
 
 func NewSpectrumMMCLI(logger *log.Logger) (SpectrumScaleConnector, error) {
-	return &spectrum_mmcli{logger: logger, executor: utils.NewExecutor(logger)}, nil
+	return &spectrum_mmcli{logger: logger, executor: utils.NewExecutor()}, nil
 }
 
 func NewSpectrumMMCLIWithExecutor(logger *log.Logger, executor utils.Executor) (SpectrumScaleConnector, error) {
@@ -402,8 +402,8 @@ func SetFilesetQuotaInternal(logger *log.Logger, executor utils.Executor, filesy
 	output, err := executor.Execute(command, args)
 
 	if err != nil {
-		logger.Printf("Failed to set quota '%s' for fileset '%s': %s", quota, filesetName, err.Error())
-		return fmt.Errorf("Failed to set quota '%s' for fileset '%s': %s", quota, filesetName, err.Error())
+		logger.Printf("Failed to set quota '%s' for fileset '%s'", quota, filesetName)
+		return fmt.Errorf("Failed to set quota '%s' for fileset '%s'", quota, filesetName)
 	}
 
 	logger.Printf("setFilesetQuota output: %s\n", string(output))

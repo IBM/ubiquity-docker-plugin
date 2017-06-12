@@ -9,11 +9,10 @@ import (
 
 type spectrumScaleMounter struct {
 	logger *log.Logger
-	executor  utils.Executor
 }
 
 func NewSpectrumScaleMounter(logger *log.Logger) Mounter {
-	return &spectrumScaleMounter{logger: logger, executor: utils.NewExecutor(logger)}
+	return &spectrumScaleMounter{logger: logger}
 }
 
 func (s *spectrumScaleMounter) Mount(mountpoint string, volumeConfig map[string]interface{}) (string, error) {
@@ -24,17 +23,17 @@ func (s *spectrumScaleMounter) Mount(mountpoint string, volumeConfig map[string]
 	if isPreexistingSpecified && isPreexisting.(bool) == false {
 		uid, uidSpecified := volumeConfig["uid"]
 		gid, gidSpecified := volumeConfig["gid"]
-
+		executor := utils.NewExecutor()
 		if uidSpecified || gidSpecified {
 			args := []string{"chown", fmt.Sprintf("%s:%s", uid, gid), mountpoint}
-			_, err := s.executor.Execute("sudo", args)
+			_, err := executor.Execute("sudo", args)
 			if err != nil {
 				s.logger.Printf("Failed to change permissions of mountpoint %s: %s", mountpoint, err.Error())
 				return "", err
 			}
 			//set permissions to specific user
 			args = []string{"chmod", "og-rw", mountpoint}
-			_, err = s.executor.Execute("sudo", args)
+			_, err = executor.Execute("sudo", args)
 			if err != nil {
 				s.logger.Printf("Failed to set user permissions of mountpoint %s: %s", mountpoint, err.Error())
 				return "", err
@@ -42,7 +41,7 @@ func (s *spectrumScaleMounter) Mount(mountpoint string, volumeConfig map[string]
 		} else {
 			//chmod 777 mountpoint
 			args := []string{"chmod", "777", mountpoint}
-			_, err := s.executor.Execute("sudo", args)
+			_, err := executor.Execute("sudo", args)
 			if err != nil {
 				s.logger.Printf("Failed to change permissions of mountpoint %s: %s", mountpoint, err.Error())
 				return "", err
@@ -57,7 +56,7 @@ func (s *spectrumScaleMounter) Unmount(volumeConfig map[string]interface{}) erro
 	s.logger.Println("spectrumScaleMounter: Unmount start")
 	defer s.logger.Println("spectrumScaleMounter: Unmount end")
 
-	// for spectrum-scale native: No Op for now
+	// for spcetrum-scale native: Noop for now
 	return nil
 
 }

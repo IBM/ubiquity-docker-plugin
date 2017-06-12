@@ -10,6 +10,7 @@ const (
 	SPECTRUM_SCALE     Backend = "spectrum-scale"
 	SPECTRUM_SCALE_NFS Backend = "spectrum-scale-nfs"
 	SOFTLAYER_NFS      Backend = "softlayer-nfs"
+	SCBE               Backend = "scbe"
 )
 
 type Backend string
@@ -18,17 +19,41 @@ type UbiquityServerConfig struct {
 	Port                int
 	LogPath             string
 	SpectrumScaleConfig SpectrumScaleConfig
+	ScbeConfig          ScbeConfig
 	BrokerConfig        BrokerConfig
 	DefaultBackend      string
 }
 
+// TODO we should consider to move dedicated backend structs to the backend resource file instead of this one.
 type SpectrumScaleConfig struct {
-	DefaultFilesystemName string
-	ConfigPath            string
-	NfsServerAddr         string
-	SshConfig             SshConfig
-	RestConfig            RestConfig
-	ForceDelete           bool
+	DefaultFilesystem string
+	ConfigPath        string
+	NfsServerAddr     string
+	SshConfig         SshConfig
+	RestConfig        RestConfig
+	ForceDelete       bool
+}
+
+type CredentialInfo struct {
+	UserName string `json:"username"`
+	Password string `json:"password"`
+	Group    string `json:"group"`
+}
+
+type ConnectionInfo struct {
+	CredentialInfo CredentialInfo
+	Port           int
+	ManagementIP   string
+	SkipVerifySSL  bool
+}
+
+type ScbeConfig struct {
+	ConfigPath        string // TODO consider to remove later
+	ConnectionInfo    ConnectionInfo
+	DefaultService    string // SCBE storage service to be used by default if not mentioned by plugin
+	DefaultVolumeSize string // The default volume size in case not specified by user
+	DefaultFilesystem string // The default filesystem to create on new volumes
+	HostnameTmp	  string // TODO this is a temp config param that workaround issue #23 (remove it when #23 will be fixed)
 }
 
 type SshConfig struct {

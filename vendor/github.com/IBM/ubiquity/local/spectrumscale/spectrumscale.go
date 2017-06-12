@@ -49,7 +49,7 @@ func NewSpectrumLocalClient(logger *log.Logger, config resources.SpectrumScaleCo
 	if config.ConfigPath == "" {
 		return nil, fmt.Errorf("spectrumLocalClient: init: missing required parameter 'spectrumConfigPath'")
 	}
-	if config.DefaultFilesystemName == "" {
+	if config.DefaultFilesystem == "" {
 		return nil, fmt.Errorf("spectrumLocalClient: init: missing required parameter 'spectrumDefaultFileSystem'")
 	}
 	return newSpectrumLocalClient(logger, config, database, resources.SPECTRUM_SCALE)
@@ -76,7 +76,7 @@ func newSpectrumLocalClient(logger *log.Logger, config resources.SpectrumScaleCo
 	if err != nil {
 		return &spectrumLocalClient{}, err
 	}
-	return &spectrumLocalClient{logger: logger, connector: client, dataModel: datamodel, config: config, executor: utils.NewExecutor(logger), activationLock: &sync.RWMutex{}}, nil
+	return &spectrumLocalClient{logger: logger, connector: client, dataModel: datamodel, config: config, executor: utils.NewExecutor(), activationLock: &sync.RWMutex{}}, nil
 }
 
 func (s *spectrumLocalClient) Activate() (err error) {
@@ -94,7 +94,7 @@ func (s *spectrumLocalClient) Activate() (err error) {
 	defer s.activationLock.Unlock()
 
 	//check if filesystem is mounted
-	mounted, err := s.connector.IsFilesystemMounted(s.config.DefaultFilesystemName)
+	mounted, err := s.connector.IsFilesystemMounted(s.config.DefaultFilesystem)
 
 	if err != nil {
 		s.logger.Println(err.Error())
@@ -102,7 +102,7 @@ func (s *spectrumLocalClient) Activate() (err error) {
 	}
 
 	if mounted == false {
-		err = s.connector.MountFileSystem(s.config.DefaultFilesystemName)
+		err = s.connector.MountFileSystem(s.config.DefaultFilesystem)
 
 		if err != nil {
 			s.logger.Println(err.Error())
@@ -148,7 +148,7 @@ func (s *spectrumLocalClient) CreateVolume(name string, opts map[string]interfac
 
 	if len(opts) == 0 {
 		//fileset
-		return s.createFilesetVolume(s.config.DefaultFilesystemName, name, opts)
+		return s.createFilesetVolume(s.config.DefaultFilesystem, name, opts)
 	}
 	s.logger.Printf("Trying to determine type for request\n")
 	userSpecifiedType, err := determineTypeFromRequest(s.logger, opts)
@@ -735,7 +735,7 @@ func (s *spectrumLocalClient) validateAndParseParams(logger *log.Logger, opts ma
 		}
 		return false, "", "", "", fmt.Errorf("'filesystem' and 'fileset' are required opts for using lightweight volumes")
 	} else if filesystemSpecified == false {
-		return false, s.config.DefaultFilesystemName, "", "", nil
+		return false, s.config.DefaultFilesystem, "", "", nil
 
 	} else {
 		return false, filesystem.(string), "", "", nil
@@ -789,11 +789,11 @@ func (s *spectrumLocalClient) updatePermissions(name string) error {
 	if exists == false {
 		return fmt.Errorf("Cannot determine filesetId for volume: %s", name)
 	}
-
+	executor := utils.NewExecutor()
 	filesetPath := path.Join(fsMountpoint, fileset.(string))
 	//chmod 777 mountpoint
 	args := []string{"chmod", "777", filesetPath}
-	_, err = s.executor.Execute("sudo", args)
+	_, err = executor.Execute("sudo", args)
 	if err != nil {
 		s.logger.Printf("Failed to change permissions of filesetpath %s: %s", filesetPath, err.Error())
 		return err
@@ -805,7 +805,7 @@ func (s *spectrumLocalClient) updatePermissions(name string) error {
 		}
 		directoryPath := path.Join(filesetPath, directory.(string))
 		args := []string{"chmod", "777", directoryPath}
-		_, err = s.executor.Execute("sudo", args)
+		_, err = executor.Execute("sudo", args)
 		if err != nil {
 			s.logger.Printf("Failed to change permissions of directorypath %s: %s", directoryPath, err.Error())
 			return err

@@ -52,9 +52,6 @@ func (c *Controller) Create(createVolumeRequest *resources.CreateVolumeRequest) 
 			return &resources.GenericResponse{Err:fmt.Sprintf("invalid backend %s", userSpecifiedBackend.(string))}
 		}
 		createVolumeRequest.Backend = userSpecifiedBackend.(string)
-	} else {
-		// TODO: configure DefaultBackend
-		createVolumeRequest.Backend = c.config.Backends[0]
 	}
 
 	err := c.client.CreateVolume(*createVolumeRequest)

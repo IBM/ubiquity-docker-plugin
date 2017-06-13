@@ -46,11 +46,11 @@ func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	err := extractRequestObject(r, &createVolumeRequest)
 	if err != nil {
 		genericResponse := &resources.GenericResponse{Err: err.Error()}
-		utils.WriteResponse(w, http.StatusOK, genericResponse)
+		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
 		return
 	}
 	createResponse := c.Controller.Create(&createVolumeRequest)
-	utils.WriteResponse(w, http.StatusOK, createResponse)
+	handleResponse(w, createResponse, createResponse.Err)
 }
 
 func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
@@ -60,11 +60,11 @@ func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 	err := extractRequestObject(r, &removeVolumeRequest)
 	if err != nil {
 		genericResponse := &resources.GenericResponse{Err: err.Error()}
-		utils.WriteResponse(w, http.StatusOK, genericResponse)
+		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
 		return
 	}
 	removeResponse := c.Controller.Remove(&removeVolumeRequest)
-	utils.WriteResponse(w, http.StatusOK, removeResponse)
+	handleResponse(w, removeResponse, removeResponse.Err)
 }
 
 func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
@@ -74,12 +74,12 @@ func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 	err := extractRequestObject(r, &attachRequest)
 	if err != nil {
 		attachResponse := &resources.AttachResponse{Err: err.Error()}
-		utils.WriteResponse(w, http.StatusOK, attachResponse)
+		utils.WriteResponse(w, http.StatusBadRequest, attachResponse)
 		return
 	}
 	attachRequest.Host = c.hostname
 	attachResponse := c.Controller.Mount(&attachRequest)
-	utils.WriteResponse(w, http.StatusOK, attachResponse)
+	handleResponse(w, attachResponse, attachResponse.Err)
 }
 
 func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
@@ -89,12 +89,12 @@ func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 	err := extractRequestObject(r, &detachRequest)
 	if err != nil {
 		detachResponse := &resources.GenericResponse{Err: err.Error()}
-		utils.WriteResponse(w, http.StatusOK, detachResponse)
+		utils.WriteResponse(w, http.StatusBadRequest, detachResponse)
 		return
 	}
 	detachRequest.Host = c.hostname
 	detachResponse := c.Controller.Unmount(&detachRequest)
-	utils.WriteResponse(w, http.StatusOK, detachResponse)
+	handleResponse(w, detachResponse, detachResponse.Err)
 }
 
 func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
@@ -104,11 +104,11 @@ func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 	err := extractRequestObject(r, &pathRequest)
 	if err != nil {
 		pathResponse := &resources.AttachResponse{Err: err.Error()}
-		utils.WriteResponse(w, http.StatusOK, pathResponse)
+		utils.WriteResponse(w, http.StatusBadRequest, pathResponse)
 		return
 	}
 	pathResponse := c.Controller.Path(&pathRequest)
-	utils.WriteResponse(w, http.StatusOK, pathResponse)
+	handleResponse(w, pathResponse, pathResponse.Err)
 }
 
 func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
@@ -118,18 +118,18 @@ func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	err := extractRequestObject(r, &getRequest)
 	if err != nil {
 		errorResponse := &resources.DockerGetResponse{Err: err.Error()}
-		utils.WriteResponse(w, http.StatusOK, errorResponse)
+		utils.WriteResponse(w, http.StatusBadRequest, errorResponse)
 		return
 	}
 	getResponse := c.Controller.Get(&getRequest)
-	utils.WriteResponse(w, http.StatusOK, getResponse)
+	handleResponse(w, getResponse, getResponse.Err)
 }
 
 func (c *Handler) List(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: list start")
 	defer c.log.Println("Handler: list end")
 	listResponse := c.Controller.List()
-	utils.WriteResponse(w, http.StatusOK, listResponse)
+	handleResponse(w, listResponse, listResponse.Err)
 }
 
 func extractRequestObject(r *http.Request, request interface{}) error {
@@ -142,4 +142,14 @@ func extractRequestObject(r *http.Request, request interface{}) error {
 		return fmt.Errorf("Error unmarshalling request: %s", err.Error())
 	}
 	return nil
+}
+
+func handleResponse(w http.ResponseWriter, response interface{}, error string) {
+	var httpStatusCode int
+	if error != "" {
+		httpStatusCode = http.StatusBadRequest
+	} else {
+		httpStatusCode = http.StatusOK
+	}
+	utils.WriteResponse(w, httpStatusCode, response)
 }

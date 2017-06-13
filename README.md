@@ -1,7 +1,7 @@
 # Ubiquity Docker Volume Plugin
 The Ubiquity Docker volume plugin provides access to persistent storage for Docker containers.  This plugin communicates with the Ubiquity Volume Service for the creation and management of volumes in the storage system.  Once created, a volume can be used by either Kubernetes or Docker. 
 
-This plugin is a REST service that must be running on each of your Docker hosts (or Docker Swarm hosts).
+This plugin is a REST service that must be running on each of your Docker hosts (or Docker Swarm hosts).  The plugin must be configured to access the single deployed instance of the Ubiquity service.
 
 This code is provided "AS IS" and without warranty of any kind.  Any issues will be handled on a best effort basis.
 
@@ -220,8 +220,8 @@ docker volume create -d ubiquity --name demo10 --opt type=fileset --opt fileset=
 ## General Examples
 ### List Docker Volumes
 
-We can list the volumes created using the ubiquity docker plugin and the output should be as given below :
-It lists volumes across all the volume plugins running on that system. Each volume created is listed along with the the volume driver used to create it
+We can list the volumes created using the ubiquity docker plugin:
+
 
 ```bash
  $ docker volume ls
@@ -229,6 +229,8 @@ DRIVER                  VOLUME NAME
 ubiquity                    demo1
 ubiquity                    demo2
 ```
+
+Please note that the 'volume ls' command will list all volumes across all the volume plugins (including plugins other than Ubiquity) running on the host on which the command was executed.
 
 #### Running Docker Containers and Using Volumes.  
 

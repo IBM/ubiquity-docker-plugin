@@ -83,7 +83,7 @@ func (h *StorageApiHandler) CreateVolume() http.HandlerFunc {
 			return
 		}
 		if len(createVolumeRequest.Backend) == 0 {
-			createVolumeRequest.Backend = h.config.DefaultBackend
+			      createVolumeRequest.Backend = h.config.DefaultBackend
 		}
 		backend, ok := h.backends[createVolumeRequest.Backend]
 		if !ok {

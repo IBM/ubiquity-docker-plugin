@@ -10,11 +10,14 @@ import (
 	"github.com/IBM/ubiquity-docker-plugin/core"
 
 	"github.com/IBM/ubiquity/resources"
+	"github.com/IBM/ubiquity/utils"
+	"os"
 )
 
 type Handler struct {
 	Controller *core.Controller
 	log        *log.Logger
+	hostname   string
 }
 
 func NewHandler(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Handler, error) {
@@ -22,105 +25,111 @@ func NewHandler(logger *log.Logger, storageApiURL string, config resources.Ubiqu
 	if err != nil {
 		return nil, err
 	}
-	return &Handler{log: logger, Controller: controller}, err
+	hostname,err := os.Hostname()
+	if err != nil {
+		return nil,err
+	}
+	return &Handler{log: logger, Controller: controller, hostname:hostname}, err
 }
 
 func (c *Handler) Activate(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: activate start")
 	defer c.log.Println("Handler: activate end")
 	activateResponse := c.Controller.Activate()
-	activateResponse.WriteResponse(w)
+	utils.WriteResponse(w, http.StatusOK, activateResponse)
 }
+
 func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: create start")
 	defer c.log.Println("Handler: create end")
-	var createRequest resources.CreateRequest
-	err := extractRequestObject(r, &createRequest)
+	var createVolumeRequest resources.CreateVolumeRequest
+	err := extractRequestObject(r, &createVolumeRequest)
 	if err != nil {
 		genericResponse := &resources.GenericResponse{Err: err.Error()}
-		genericResponse.WriteResponse(w)
+		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
 		return
 	}
-	createResponse := c.Controller.Create(&createRequest)
-	createResponse.WriteResponse(w)
-
+	createResponse := c.Controller.Create(&createVolumeRequest)
+	handleResponse(w, createResponse, createResponse.Err)
 }
 
 func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: remove start")
 	defer c.log.Println("Handler: remove end")
-	var removeRequest resources.RemoveRequest
-	err := extractRequestObject(r, &removeRequest)
+	var removeVolumeRequest resources.RemoveVolumeRequest
+	err := extractRequestObject(r, &removeVolumeRequest)
 	if err != nil {
 		genericResponse := &resources.GenericResponse{Err: err.Error()}
-		genericResponse.WriteResponse(w)
+		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
 		return
 	}
-	removeResponse := c.Controller.Remove(&removeRequest)
-	removeResponse.WriteResponse(w)
+	removeResponse := c.Controller.Remove(&removeVolumeRequest)
+	handleResponse(w, removeResponse, removeResponse.Err)
 }
 
 func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: mount start")
 	defer c.log.Println("Handler: mount end")
-	var mountRequest resources.GenericRequest
-	err := extractRequestObject(r, &mountRequest)
+	var attachRequest resources.AttachRequest
+	err := extractRequestObject(r, &attachRequest)
 	if err != nil {
-		mountResponse := &resources.MountResponse{Err: err.Error()}
-		mountResponse.WriteResponse(w)
+		attachResponse := &resources.AttachResponse{Err: err.Error()}
+		utils.WriteResponse(w, http.StatusBadRequest, attachResponse)
 		return
 	}
-	mountResponse := c.Controller.Mount(&mountRequest)
-	mountResponse.WriteResponse(w)
+	attachRequest.Host = c.hostname
+	attachResponse := c.Controller.Mount(&attachRequest)
+	handleResponse(w, attachResponse, attachResponse.Err)
 }
 
 func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: unmount start")
 	defer c.log.Println("Handler: unmount end")
-	var unmountRequest resources.GenericRequest
-	err := extractRequestObject(r, &unmountRequest)
+	var detachRequest resources.DetachRequest
+	err := extractRequestObject(r, &detachRequest)
 	if err != nil {
-		genericResponse := &resources.GenericResponse{Err: err.Error()}
-		genericResponse.WriteResponse(w)
+		detachResponse := &resources.GenericResponse{Err: err.Error()}
+		utils.WriteResponse(w, http.StatusBadRequest, detachResponse)
 		return
 	}
-	unmountResponse := c.Controller.Unmount(&unmountRequest)
-	unmountResponse.WriteResponse(w)
+	detachRequest.Host = c.hostname
+	detachResponse := c.Controller.Unmount(&detachRequest)
+	handleResponse(w, detachResponse, detachResponse.Err)
 }
 
 func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: path start")
 	defer c.log.Println("Handler: path end")
-	var pathRequest resources.GenericRequest
+	var pathRequest resources.GetVolumeConfigRequest
 	err := extractRequestObject(r, &pathRequest)
 	if err != nil {
-		mountResponse := &resources.MountResponse{Err: err.Error()}
-		mountResponse.WriteResponse(w)
+		pathResponse := &resources.AttachResponse{Err: err.Error()}
+		utils.WriteResponse(w, http.StatusBadRequest, pathResponse)
 		return
 	}
 	pathResponse := c.Controller.Path(&pathRequest)
-	pathResponse.WriteResponse(w)
+	handleResponse(w, pathResponse, pathResponse.Err)
 }
 
 func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: get start")
 	defer c.log.Println("Handler: get end")
-	var getRequest resources.GenericRequest
+	var getRequest resources.GetVolumeConfigRequest
 	err := extractRequestObject(r, &getRequest)
 	if err != nil {
-		errorResponse := &resources.GetResponse{Err: err.Error()}
-		errorResponse.WriteResponse(w)
+		errorResponse := &resources.DockerGetResponse{Err: err.Error()}
+		utils.WriteResponse(w, http.StatusBadRequest, errorResponse)
 		return
 	}
 	getResponse := c.Controller.Get(&getRequest)
-	getResponse.WriteResponse(w)
+	handleResponse(w, getResponse, getResponse.Err)
 }
 
 func (c *Handler) List(w http.ResponseWriter, r *http.Request) {
 	c.log.Println("Handler: list start")
 	defer c.log.Println("Handler: list end")
 	listResponse := c.Controller.List()
-	listResponse.WriteResponse(w)
+	handleResponse(w, listResponse, listResponse.Err)
 }
 
 func extractRequestObject(r *http.Request, request interface{}) error {
@@ -133,4 +142,14 @@ func extractRequestObject(r *http.Request, request interface{}) error {
 		return fmt.Errorf("Error unmarshalling request: %s", err.Error())
 	}
 	return nil
+}
+
+func handleResponse(w http.ResponseWriter, response interface{}, error string) {
+	var httpStatusCode int
+	if error != "" {
+		httpStatusCode = http.StatusBadRequest
+	} else {
+		httpStatusCode = http.StatusOK
+	}
+	utils.WriteResponse(w, httpStatusCode, response)
 }

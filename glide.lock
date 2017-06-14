@@ -1,5 +1,5 @@
-hash: e80eee7e635a53134340e201bf6083a27cd97c3f361c7db69464e357ec9715f3
-updated: 2017-06-12T10:27:35.069921983-07:00
+hash: f1284b0d929993868b62bac49d4eee88f6bf29155cf6ae61193009866040d7d3
+updated: 2017-06-14T13:12:54.142371394-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
@@ -10,7 +10,7 @@ imports:
 - name: github.com/gorilla/mux
   version: bcd8bc72b08df0f70df986b97f95590779502d31
 - name: github.com/IBM/ubiquity
-  version: 890ee73f568796f4f6060cb42c06e8609cf5f4e5
+  version: 668d73d85a6ee506de6c642b8702a85578d60076
   subpackages:
   - fakes
   - local/spectrumscale

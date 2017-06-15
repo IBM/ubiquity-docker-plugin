@@ -49,7 +49,7 @@ var _ = Describe("Controller", func() {
 			Context(".Create", func() {
 				It("does not error on create with valid opts", func() {
 					fakeClient.CreateVolumeReturns(nil)
-					createRequest := &resources.CreateVolumeRequest{Name: "dockerVolume1", Backend:Backend, Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
+					createRequest := resources.CreateVolumeRequest{Name: "dockerVolume1", Backend:Backend, Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
 					Expect(createResponse.Err).To(Equal(""))
 					Expect(fakeClient.CreateVolumeCallCount()).To(Equal(1))
@@ -58,7 +58,7 @@ var _ = Describe("Controller", func() {
 				})
 				It("does error on create when plugin fails to create dockerVolume", func() {
 					fakeClient.CreateVolumeReturns(fmt.Errorf("Spectrum plugin internal error"))
-					createRequest := &resources.CreateVolumeRequest{Name: "dockerVolume1",Backend:Backend, Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
+					createRequest := resources.CreateVolumeRequest{Name: "dockerVolume1",Backend:Backend, Opts: map[string]interface{}{"Filesystem": "gpfs1"}}
 					createResponse := controller.Create(createRequest)
 					Expect(createResponse.Err).To(Equal("Spectrum plugin internal error"))
 				})
@@ -67,7 +67,7 @@ var _ = Describe("Controller", func() {
 				It("does not error when existing dockerVolume name is given", func() {
 					dockerVolume := resources.Volume{Name: "dockerVolume1"}
 					fakeClient.GetVolumeReturns(dockerVolume, nil)
-					removeRequest := &resources.RemoveVolumeRequest{Name: "dockerVolume1"}
+					removeRequest := resources.RemoveVolumeRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
 					Expect(removeResponse.Err).To(Equal(""))
 				})
@@ -75,7 +75,7 @@ var _ = Describe("Controller", func() {
 					dockerVolume := resources.Volume{Name: "dockerVolume1"}
 					fakeClient.GetVolumeReturns(dockerVolume, nil)
 					fakeClient.RemoveVolumeReturns(fmt.Errorf("error removing volume"))
-					removeRequest := &resources.RemoveVolumeRequest{Name: "dockerVolume1"}
+					removeRequest := resources.RemoveVolumeRequest{Name: "dockerVolume1"}
 					removeResponse := controller.Remove(removeRequest)
 					Expect(removeResponse.Err).To(Equal("error removing volume"))
 					Expect(fakeClient.RemoveVolumeCallCount()).To(Equal(1))
@@ -111,7 +111,7 @@ var _ = Describe("Controller", func() {
 					config := make(map[string]interface{})
 					config["mountpoint"] = "some-mountpoint"
 					fakeClient.GetVolumeConfigReturns(config, nil)
-					getRequest := &resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
+					getRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal(""))
 					Expect(getResponse.Volume).ToNot(Equal(nil))
@@ -119,7 +119,7 @@ var _ = Describe("Controller", func() {
 				})
 				It("errors when list dockerVolume returns an error", func() {
 					fakeClient.GetVolumeConfigReturns(nil, fmt.Errorf("failed listing volume"))
-					getRequest := &resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
+					getRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal("failed listing volume"))
 				})
@@ -129,7 +129,7 @@ var _ = Describe("Controller", func() {
 					config := make(map[string]interface{})
 					config["mountpoint"] = "some-mountpoint"
 					fakeClient.GetVolumeConfigReturns(config, nil)
-					pathRequest := &resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
+					pathRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal(""))
 					Expect(pathResponse.Mountpoint).To(Equal("some-mountpoint"))
@@ -137,20 +137,20 @@ var _ = Describe("Controller", func() {
 				It("errors when volume exists but is not mounted", func() {
 					config := make(map[string]interface{})
 					fakeClient.GetVolumeConfigReturns(config, nil)
-					pathRequest := &resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
+					pathRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal("volume not mounted"))
 				})
 				It("errors when list dockerVolume returns an error", func() {
 
 					fakeClient.GetVolumeConfigReturns(nil, fmt.Errorf("failed listing volume"))
-					pathRequest := &resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
+					pathRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal("failed listing volume"))
 				})
 				It("errors when volume does not exist", func() {
 					fakeClient.GetVolumeConfigReturns(nil, fmt.Errorf("volume does not exist"))
-					pathRequest := &resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
+					pathRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
 					pathResponse := controller.Path(pathRequest)
 					Expect(pathResponse.Err).To(Equal("volume does not exist"))
 				})
@@ -160,7 +160,7 @@ var _ = Describe("Controller", func() {
 					dockerVolume := resources.Volume{Name: "dockerVolume1"}
 					fakeClient.GetVolumeReturns(dockerVolume, nil)
 					fakeClient.AttachReturns("some-mountpath", nil)
-					mountRequest := &resources.AttachRequest{Name: "dockerVolume1"}
+					mountRequest := resources.AttachRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
 					Expect(mountResponse.Err).To(Equal(""))
 					Expect(mountResponse.Mountpoint).To(Equal("some-mountpath"))
@@ -171,7 +171,7 @@ var _ = Describe("Controller", func() {
 					dockerVolume := resources.Volume{Name: "dockerVolume1"}
 					fakeClient.GetVolumeReturns(dockerVolume, nil)
 					fakeClient.AttachReturns("", fmt.Errorf("failed to link volume"))
-					mountRequest := &resources.AttachRequest{Name: "dockerVolume1"}
+					mountRequest := resources.AttachRequest{Name: "dockerVolume1"}
 					mountResponse := controller.Mount(mountRequest)
 					Expect(mountResponse.Err).To(Equal("failed to link volume"))
 				})
@@ -181,7 +181,7 @@ var _ = Describe("Controller", func() {
 
 					dockerVolume := resources.Volume{Name: "dockerVolume1"} //, Mountpoint: "some-mountpoint"}
 					fakeClient.GetVolumeReturns(dockerVolume, nil)
-					unmountRequest := &resources.DetachRequest{Name: "dockerVolume1"}
+					unmountRequest := resources.DetachRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
 					Expect(unmountResponse.Err).To(Equal(""))
 				})
@@ -190,7 +190,7 @@ var _ = Describe("Controller", func() {
 					dockerVolume := resources.Volume{Name: "dockerVolume1"} //, Mountpoint: "some-mountpoint"}
 					fakeClient.GetVolumeReturns(dockerVolume, nil)
 					fakeClient.DetachReturns(fmt.Errorf("failed to unlink volume"))
-					unmountRequest := &resources.DetachRequest{Name: "dockerVolume1"}
+					unmountRequest := resources.DetachRequest{Name: "dockerVolume1"}
 					unmountResponse := controller.Unmount(unmountRequest)
 					Expect(unmountResponse.Err).To(Equal("failed to unlink volume"))
 				})

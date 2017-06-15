@@ -5,11 +5,13 @@ import (
 
 	"github.com/IBM/ubiquity/remote"
 	"github.com/IBM/ubiquity/resources"
+	"fmt"
 )
 
 type Controller struct {
 	client resources.StorageClient
 	logger *log.Logger
+	config resources.UbiquityPluginConfig
 }
 
 func NewController(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Controller, error) {
@@ -18,116 +20,135 @@ func NewController(logger *log.Logger, storageApiURL string, config resources.Ub
 		logger.Fatal("Cannot initialize remote client")
 		return nil, err
 	}
-	return &Controller{logger: logger, client: remoteClient}, nil
+	return &Controller{logger: logger, client: remoteClient, config:config}, nil
 }
 
-func NewControllerWithClient(logger *log.Logger, client resources.StorageClient) *Controller {
-	return &Controller{logger: logger, client: client}
+func NewControllerWithClient(logger *log.Logger, client resources.StorageClient, backends []string) *Controller {
+	return &Controller{logger: logger, client: client, config:resources.UbiquityPluginConfig{Backends:backends}}
 }
 
-func (c *Controller) Activate() *resources.ActivateResponse {
+func (c *Controller) Activate() resources.ActivateResponse {
 	c.logger.Println("Controller: activate start")
 	defer c.logger.Println("Controller: activate end")
 
-	err := c.client.Activate()
+	activateRequest := resources.ActivateRequest{Backends:c.config.Backends}
+	err := c.client.Activate(activateRequest)
 
 	if err != nil {
-		return &resources.ActivateResponse{}
+		return resources.ActivateResponse{}
 	}
 
-	return &resources.ActivateResponse{Implements: []string{"VolumeDriver"}}
+	return resources.ActivateResponse{Implements: []string{"VolumeDriver"}}
 }
 
-func (c *Controller) Create(createRequest *resources.CreateRequest) *resources.GenericResponse {
+func (c *Controller) Create(createVolumeRequest resources.CreateVolumeRequest) resources.GenericResponse {
 	c.logger.Println("Controller: create start")
 	defer c.logger.Println("Controller: create end")
-	c.logger.Printf("Create details %s, %#v\n", createRequest.Name, createRequest.Opts)
+	c.logger.Printf("Create details %+v\n", createVolumeRequest)
 
-	err := c.client.CreateVolume(createRequest.Name, createRequest.Opts)
-	var createResponse *resources.GenericResponse
+	userSpecifiedBackend, backendSpecified := createVolumeRequest.Opts["backend"]
+	if backendSpecified {
+		if !validBackend(c.config, userSpecifiedBackend.(string)) {
+			return resources.GenericResponse{Err:fmt.Sprintf("invalid backend %s", userSpecifiedBackend.(string))}
+		}
+		createVolumeRequest.Backend = userSpecifiedBackend.(string)
+	}
+
+	err := c.client.CreateVolume(createVolumeRequest)
+	var createResponse resources.GenericResponse
 	if err != nil {
-		createResponse = &resources.GenericResponse{Err: err.Error()}
+		createResponse = resources.GenericResponse{Err: err.Error()}
 	} else {
-		createResponse = &resources.GenericResponse{}
+		createResponse = resources.GenericResponse{}
 	}
 	return createResponse
 }
 
-func (c *Controller) Remove(removeRequest *resources.RemoveRequest) *resources.GenericResponse {
+func (c *Controller) Remove(removeVolumeRequest resources.RemoveVolumeRequest) resources.GenericResponse {
 	c.logger.Println("Controller: remove start")
 	defer c.logger.Println("Controller: remove end")
 	// forceDelete is set to false to enable deleting just the volume metadata
-	err := c.client.RemoveVolume(removeRequest.Name)
+	err := c.client.RemoveVolume(removeVolumeRequest)
 	if err != nil {
-		return &resources.GenericResponse{Err: err.Error()}
+		return resources.GenericResponse{Err: err.Error()}
 	}
-	return &resources.GenericResponse{}
+	return resources.GenericResponse{}
 }
 
-func (c *Controller) Mount(mountRequest *resources.GenericRequest) *resources.MountResponse {
+func (c *Controller) Mount(attachRequest resources.AttachRequest) resources.AttachResponse {
 	c.logger.Println("Controller: mount start")
 	defer c.logger.Println("Controller: mount end")
 
-	mountedPath, err := c.client.Attach(mountRequest.Name)
+	mountedPath, err := c.client.Attach(attachRequest)
 	if err != nil {
-		return &resources.MountResponse{Err: err.Error()}
+		return resources.AttachResponse{Err: err.Error()}
 	}
 
-	mountResponse := &resources.MountResponse{Mountpoint: mountedPath}
-	return mountResponse
+	attachResponse := resources.AttachResponse{Mountpoint: mountedPath}
+	return attachResponse
 }
 
-func (c *Controller) Unmount(unmountRequest *resources.GenericRequest) *resources.GenericResponse {
+func (c *Controller) Unmount(detachRequest resources.DetachRequest) resources.GenericResponse {
 	c.logger.Println("Controller: unmount start")
 	defer c.logger.Println("Controller: unmount end")
 
-	err := c.client.Detach(unmountRequest.Name)
+	err := c.client.Detach(detachRequest)
 	if err != nil {
-		return &resources.GenericResponse{Err: err.Error()}
+		return resources.GenericResponse{Err: err.Error()}
 	}
-	unmountResponse := &resources.GenericResponse{}
-	return unmountResponse
+	detachResponse := resources.GenericResponse{}
+	return detachResponse
 }
 
-func (c *Controller) Path(pathRequest *resources.GenericRequest) *resources.MountResponse {
+func (c *Controller) Path(pathRequest resources.GetVolumeConfigRequest) resources.AttachResponse {
 	c.logger.Println("Controller: path start")
 	defer c.logger.Println("Controller: path end")
-	volume, err := c.client.GetVolumeConfig(pathRequest.Name)
+	volume, err := c.client.GetVolumeConfig(pathRequest)
 	if err != nil {
-		return &resources.MountResponse{Err: err.Error()}
+		return resources.AttachResponse{Err: err.Error()}
 	}
 	mountpoint, exists := volume["mountpoint"]
 	if exists == false || mountpoint == "" {
 
-		return &resources.MountResponse{Err: "volume not mounted"}
+		return resources.AttachResponse{Err: "volume not mounted"}
 	}
-	pathResponse := &resources.MountResponse{Mountpoint: mountpoint.(string)}
+	pathResponse := resources.AttachResponse{Mountpoint: mountpoint.(string)}
 	return pathResponse
 }
 
-func (c *Controller) Get(getRequest *resources.GenericRequest) *resources.DockerGetResponse {
+func (c *Controller) Get(getRequest resources.GetVolumeConfigRequest) resources.DockerGetResponse {
 	c.logger.Println("Controller: get start")
 	defer c.logger.Println("Controller: get end")
-	volume, err := c.client.GetVolumeConfig(getRequest.Name)
+	volume, err := c.client.GetVolumeConfig(getRequest)
 	if err != nil {
-		return &resources.DockerGetResponse{Err: err.Error()}
+		return resources.DockerGetResponse{Err: err.Error()}
 	}
 	mountpoint, exists := volume["mountpoint"]
 	if exists == false || mountpoint == "" {
 		mountpoint = ""
 	}
 
-	getResponse := &resources.DockerGetResponse{Volume: resources.VolumeMetadata{Name: getRequest.Name, Mountpoint: mountpoint.(string)}}
+	getResponse := resources.DockerGetResponse{Volume: resources.Volume{Name: getRequest.Name, Mountpoint: mountpoint.(string)}}
 	return getResponse
 }
 
-func (c *Controller) List() *resources.ListResponse {
+func (c *Controller) List() resources.ListResponse {
 	c.logger.Println("Controller: list start")
 	defer c.logger.Println("Controller: list end")
-	volumes, err := c.client.ListVolumes()
+	listVolumesRequest := resources.ListVolumesRequest{Backends:c.config.Backends}
+	volumes, err := c.client.ListVolumes(listVolumesRequest)
 	if err != nil {
-		return &resources.ListResponse{Err: err.Error()}
+		return resources.ListResponse{Err: err.Error()}
 	}
-	listResponse := &resources.ListResponse{Volumes: volumes}
+	listResponse := resources.ListResponse{Volumes: volumes}
 	return listResponse
+}
+
+func validBackend(config resources.UbiquityPluginConfig, userSpecifiedBackend string) bool {
+	for _,backend := range config.Backends {
+		if backend == userSpecifiedBackend {
+			return true
+		}
+	}
+	return false
 }

@@ -101,9 +101,6 @@ func (fake *FakeMounter) Unmount(unmountRequest resources.UnmountRequest) error 
 	if specificReturn {
 		return ret.result1
 	}
-	if specificReturn {
-		return ret.result1
-	}
 	return fake.unmountReturns.result1
 }
 

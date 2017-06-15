@@ -22,7 +22,7 @@ type SpectrumDataModel interface {
 	InsertFilesetQuotaVolume(fileset, quota, volumeName string, filesystem string, isPreexisting bool, opts map[string]interface{}) error
 	GetVolume(name string) (SpectrumScaleVolume, bool, error)
 	ListVolumes() ([]resources.Volume, error)
-  UpdateVolumeMountpoint(name string, mountpoint string) error
+	UpdateVolumeMountpoint(name string, mountpoint string) error
 }
 
 type spectrumDataModel struct {

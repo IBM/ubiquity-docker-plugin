@@ -366,13 +366,13 @@ func (s *spectrumLocalClient) Attach(attachRequest resources.AttachRequest) (vol
 
 	existingVolume.Volume.Mountpoint = volumeMountpoint
 
-  err = s.dataModel.UpdateVolumeMountpoint(attachRequest.Name, volumeMountpoint)
+	err = s.dataModel.UpdateVolumeMountpoint(attachRequest.Name, volumeMountpoint)
 
 	if err != nil {
-		      s.logger.Println(err.Error())
-		      return "", err
+		s.logger.Println(err.Error())
+		return "", err
 	}
-  
+
 	return volumeMountpoint, nil
 }
 

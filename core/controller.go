@@ -27,7 +27,7 @@ func NewControllerWithClient(logger *log.Logger, client resources.StorageClient,
 	return &Controller{logger: logger, client: client, config:resources.UbiquityPluginConfig{Backends:backends}}
 }
 
-func (c *Controller) Activate() *resources.ActivateResponse {
+func (c *Controller) Activate() resources.ActivateResponse {
 	c.logger.Println("Controller: activate start")
 	defer c.logger.Println("Controller: activate end")
 
@@ -35,13 +35,13 @@ func (c *Controller) Activate() *resources.ActivateResponse {
 	err := c.client.Activate(activateRequest)
 
 	if err != nil {
-		return &resources.ActivateResponse{}
+		return resources.ActivateResponse{}
 	}
 
-	return &resources.ActivateResponse{Implements: []string{"VolumeDriver"}}
+	return resources.ActivateResponse{Implements: []string{"VolumeDriver"}}
 }
 
-func (c *Controller) Create(createVolumeRequest *resources.CreateVolumeRequest) *resources.GenericResponse {
+func (c *Controller) Create(createVolumeRequest resources.CreateVolumeRequest) resources.GenericResponse {
 	c.logger.Println("Controller: create start")
 	defer c.logger.Println("Controller: create end")
 	c.logger.Printf("Create details %+v\n", createVolumeRequest)
@@ -49,98 +49,98 @@ func (c *Controller) Create(createVolumeRequest *resources.CreateVolumeRequest) 
 	userSpecifiedBackend, backendSpecified := createVolumeRequest.Opts["backend"]
 	if backendSpecified {
 		if !validBackend(c.config, userSpecifiedBackend.(string)) {
-			return &resources.GenericResponse{Err:fmt.Sprintf("invalid backend %s", userSpecifiedBackend.(string))}
+			return resources.GenericResponse{Err:fmt.Sprintf("invalid backend %s", userSpecifiedBackend.(string))}
 		}
 		createVolumeRequest.Backend = userSpecifiedBackend.(string)
 	}
 
-	err := c.client.CreateVolume(*createVolumeRequest)
-	var createResponse *resources.GenericResponse
+	err := c.client.CreateVolume(createVolumeRequest)
+	var createResponse resources.GenericResponse
 	if err != nil {
-		createResponse = &resources.GenericResponse{Err: err.Error()}
+		createResponse = resources.GenericResponse{Err: err.Error()}
 	} else {
-		createResponse = &resources.GenericResponse{}
+		createResponse = resources.GenericResponse{}
 	}
 	return createResponse
 }
 
-func (c *Controller) Remove(removeVolumeRequest *resources.RemoveVolumeRequest) *resources.GenericResponse {
+func (c *Controller) Remove(removeVolumeRequest resources.RemoveVolumeRequest) resources.GenericResponse {
 	c.logger.Println("Controller: remove start")
 	defer c.logger.Println("Controller: remove end")
 	// forceDelete is set to false to enable deleting just the volume metadata
-	err := c.client.RemoveVolume(*removeVolumeRequest)
+	err := c.client.RemoveVolume(removeVolumeRequest)
 	if err != nil {
-		return &resources.GenericResponse{Err: err.Error()}
+		return resources.GenericResponse{Err: err.Error()}
 	}
-	return &resources.GenericResponse{}
+	return resources.GenericResponse{}
 }
 
-func (c *Controller) Mount(attachRequest *resources.AttachRequest) *resources.AttachResponse {
+func (c *Controller) Mount(attachRequest resources.AttachRequest) resources.AttachResponse {
 	c.logger.Println("Controller: mount start")
 	defer c.logger.Println("Controller: mount end")
 
-	mountedPath, err := c.client.Attach(*attachRequest)
+	mountedPath, err := c.client.Attach(attachRequest)
 	if err != nil {
-		return &resources.AttachResponse{Err: err.Error()}
+		return resources.AttachResponse{Err: err.Error()}
 	}
 
-	attachResponse := &resources.AttachResponse{Mountpoint: mountedPath}
+	attachResponse := resources.AttachResponse{Mountpoint: mountedPath}
 	return attachResponse
 }
 
-func (c *Controller) Unmount(detachRequest *resources.DetachRequest) *resources.GenericResponse {
+func (c *Controller) Unmount(detachRequest resources.DetachRequest) resources.GenericResponse {
 	c.logger.Println("Controller: unmount start")
 	defer c.logger.Println("Controller: unmount end")
 
-	err := c.client.Detach(*detachRequest)
+	err := c.client.Detach(detachRequest)
 	if err != nil {
-		return &resources.GenericResponse{Err: err.Error()}
+		return resources.GenericResponse{Err: err.Error()}
 	}
-	detachResponse := &resources.GenericResponse{}
+	detachResponse := resources.GenericResponse{}
 	return detachResponse
 }
 
-func (c *Controller) Path(pathRequest *resources.GetVolumeConfigRequest) *resources.AttachResponse {
+func (c *Controller) Path(pathRequest resources.GetVolumeConfigRequest) resources.AttachResponse {
 	c.logger.Println("Controller: path start")
 	defer c.logger.Println("Controller: path end")
-	volume, err := c.client.GetVolumeConfig(*pathRequest)
+	volume, err := c.client.GetVolumeConfig(pathRequest)
 	if err != nil {
-		return &resources.AttachResponse{Err: err.Error()}
+		return resources.AttachResponse{Err: err.Error()}
 	}
 	mountpoint, exists := volume["mountpoint"]
 	if exists == false || mountpoint == "" {
 
-		return &resources.AttachResponse{Err: "volume not mounted"}
+		return resources.AttachResponse{Err: "volume not mounted"}
 	}
-	pathResponse := &resources.AttachResponse{Mountpoint: mountpoint.(string)}
+	pathResponse := resources.AttachResponse{Mountpoint: mountpoint.(string)}
 	return pathResponse
 }
 
-func (c *Controller) Get(getRequest *resources.GetVolumeConfigRequest) *resources.DockerGetResponse {
+func (c *Controller) Get(getRequest resources.GetVolumeConfigRequest) resources.DockerGetResponse {
 	c.logger.Println("Controller: get start")
 	defer c.logger.Println("Controller: get end")
-	volume, err := c.client.GetVolumeConfig(*getRequest)
+	volume, err := c.client.GetVolumeConfig(getRequest)
 	if err != nil {
-		return &resources.DockerGetResponse{Err: err.Error()}
+		return resources.DockerGetResponse{Err: err.Error()}
 	}
 	mountpoint, exists := volume["mountpoint"]
 	if exists == false || mountpoint == "" {
 		mountpoint = ""
 	}
 
-	getResponse := &resources.DockerGetResponse{Volume: resources.Volume{Name: getRequest.Name, Mountpoint: mountpoint.(string)}}
+	getResponse := resources.DockerGetResponse{Volume: resources.Volume{Name: getRequest.Name, Mountpoint: mountpoint.(string)}}
 	return getResponse
 }
 
-func (c *Controller) List() *resources.ListResponse {
+func (c *Controller) List() resources.ListResponse {
 	c.logger.Println("Controller: list start")
 	defer c.logger.Println("Controller: list end")
 	listVolumesRequest := resources.ListVolumesRequest{Backends:c.config.Backends}
 	volumes, err := c.client.ListVolumes(listVolumesRequest)
 	if err != nil {
-		return &resources.ListResponse{Err: err.Error()}
+		return resources.ListResponse{Err: err.Error()}
 	}
-	listResponse := &resources.ListResponse{Volumes: volumes}
+	listResponse := resources.ListResponse{Volumes: volumes}
 	return listResponse
 }
 

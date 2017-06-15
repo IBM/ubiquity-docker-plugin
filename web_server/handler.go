@@ -49,7 +49,7 @@ func (c *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
 		return
 	}
-	createResponse := c.Controller.Create(&createVolumeRequest)
+	createResponse := c.Controller.Create(createVolumeRequest)
 	handleResponse(w, createResponse, createResponse.Err)
 }
 
@@ -63,7 +63,7 @@ func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
 		return
 	}
-	removeResponse := c.Controller.Remove(&removeVolumeRequest)
+	removeResponse := c.Controller.Remove(removeVolumeRequest)
 	handleResponse(w, removeResponse, removeResponse.Err)
 }
 
@@ -78,7 +78,7 @@ func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	attachRequest.Host = c.hostname
-	attachResponse := c.Controller.Mount(&attachRequest)
+	attachResponse := c.Controller.Mount(attachRequest)
 	handleResponse(w, attachResponse, attachResponse.Err)
 }
 
@@ -93,7 +93,7 @@ func (c *Handler) Unmount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	detachRequest.Host = c.hostname
-	detachResponse := c.Controller.Unmount(&detachRequest)
+	detachResponse := c.Controller.Unmount(detachRequest)
 	handleResponse(w, detachResponse, detachResponse.Err)
 }
 
@@ -107,7 +107,7 @@ func (c *Handler) Path(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, http.StatusBadRequest, pathResponse)
 		return
 	}
-	pathResponse := c.Controller.Path(&pathRequest)
+	pathResponse := c.Controller.Path(pathRequest)
 	handleResponse(w, pathResponse, pathResponse.Err)
 }
 
@@ -121,7 +121,7 @@ func (c *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, http.StatusBadRequest, errorResponse)
 		return
 	}
-	getResponse := c.Controller.Get(&getRequest)
+	getResponse := c.Controller.Get(getRequest)
 	handleResponse(w, getResponse, getResponse.Err)
 }
 

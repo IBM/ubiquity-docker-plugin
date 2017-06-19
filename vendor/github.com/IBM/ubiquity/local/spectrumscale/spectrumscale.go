@@ -372,7 +372,6 @@ func (s *spectrumLocalClient) Attach(attachRequest resources.AttachRequest) (vol
 		s.logger.Println(err.Error())
 		return "", err
 	}
-
 	return volumeMountpoint, nil
 }
 

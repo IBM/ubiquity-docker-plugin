@@ -1,5 +1,5 @@
-hash: d08acf9936846c2b8f8039712db817012f04f552f799b67bd7ce07d8955a6c29
-updated: 2017-06-14T17:24:25.008833661-07:00
+hash: f4ac300d5726d6842e8d8ddf3cb4559e19d9f2d0074d7dc3481df77ce684f74e
+updated: 2017-06-22T21:47:42.500602444+03:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
@@ -10,14 +10,18 @@ imports:
 - name: github.com/gorilla/mux
   version: bcd8bc72b08df0f70df986b97f95590779502d31
 - name: github.com/IBM/ubiquity
-  version: da09196b4a2395330063a18b0ed729c993150c3a
+  version: 63314bf217f1dee3c2c359f4165dff6fa48b29ef
   subpackages:
   - fakes
+  - local/scbe
   - local/spectrumscale
   - local/spectrumscale/connectors
+  - logutil
   - model
   - remote
   - remote/mounter
+  - remote/mounter/block_device_mounter_utils
+  - remote/mounter/block_device_utils
   - resources
   - utils
 - name: github.com/jinzhu/gorm
@@ -28,8 +32,10 @@ imports:
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/mattn/go-sqlite3
   version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
+- name: github.com/op/go-logging
+  version: 970db520ece77730c7e4724c61121037378659d9
 - name: golang.org/x/net
-  version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
+  version: 057a25b06247e0c51ba15d8ae475feb2fcb72164
   subpackages:
   - context
 testImports:
@@ -69,8 +75,8 @@ testImports:
   - matchers/support/goraph/util
   - types
 - name: golang.org/x/sys
-  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
+  version: fb4cac33e3196ff7f507ab9b2d2a44b0142f5b5a
   subpackages:
   - unix
 - name: gopkg.in/yaml.v2
-  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b

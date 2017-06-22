@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/BurntSushi/toml"
+        "github.com/IBM/ubiquity/logutil"
 	"github.com/IBM/ubiquity-docker-plugin/web_server"
 	"github.com/IBM/ubiquity/resources"
 	"github.com/IBM/ubiquity/utils"

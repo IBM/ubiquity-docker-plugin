@@ -1,5 +1,5 @@
 hash: f4ac300d5726d6842e8d8ddf3cb4559e19d9f2d0074d7dc3481df77ce684f74e
-updated: 2017-06-23T11:43:10.577119399+03:00
+updated: 2017-06-24T23:16:08.055766151+03:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
@@ -10,7 +10,7 @@ imports:
 - name: github.com/gorilla/mux
   version: bcd8bc72b08df0f70df986b97f95590779502d31
 - name: github.com/IBM/ubiquity
-  version: 639d9907886bd44d2aaa03cd112e6550509bf52b
+  version: 03ffe13836b7cdc54d1c958ca6b7334acabc023b
   subpackages:
   - fakes
   - local/scbe
@@ -35,7 +35,7 @@ imports:
 - name: github.com/op/go-logging
   version: 970db520ece77730c7e4724c61121037378659d9
 - name: golang.org/x/net
-  version: 057a25b06247e0c51ba15d8ae475feb2fcb72164
+  version: 5f8847ae0d0e90b6a9dc8148e7ad616874625171
   subpackages:
   - context
 testImports:
@@ -75,7 +75,7 @@ testImports:
   - matchers/support/goraph/util
   - types
 - name: golang.org/x/sys
-  version: fb4cac33e3196ff7f507ab9b2d2a44b0142f5b5a
+  version: c23410a886927bab8ca5e80b08af6a56faeb330d
   subpackages:
   - unix
 - name: gopkg.in/yaml.v2

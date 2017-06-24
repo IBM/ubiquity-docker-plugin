@@ -13,8 +13,8 @@ import (
 
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/IBM/ubiquity/resources"
+	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -74,7 +74,7 @@ func (s *Server) writeSpecFile(server *ServerInfo, pluginsPath string) error {
 	cmd := exec.Command("sudo", args...)
 	_, err = cmd.Output()
 	if err != nil {
-		return fmt.Errorf("Error creating plugins config file: %s", pluginFileName)
+		return fmt.Errorf("Error creating plugins config file: %s, error %s", pluginFileName, err.Error())
 	}
 
 	dockerConfigPath := strings.Replace(pluginsPath, "plugins/", "", 1)

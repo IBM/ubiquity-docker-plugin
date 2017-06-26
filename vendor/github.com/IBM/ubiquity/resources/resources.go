@@ -190,6 +190,7 @@ type GetResponse struct {
 }
 type DockerGetResponse struct {
 	Volume Volume
+	Status map[string]interface{}
 	Err    string
 }
 
@@ -198,7 +199,6 @@ type Volume struct {
 	Name       string
 	Backend    string
 	Mountpoint string
-	Status     map[string]interface{}
 }
 
 type GetConfigResponse struct {

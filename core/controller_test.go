@@ -143,7 +143,7 @@ var _ = Describe("Controller", func() {
 					Expect(getResponse.Volume.Name).To(Equal("dockerVolume1"))
 					for index := 0; index < num; index++ {
 						indexStr := strconv.Itoa(index)
-						Expect(getResponse.Status[keyStr+indexStr]).To(Equal(config[keyStr+indexStr]))
+						Expect(getResponse.Volume.Status[keyStr+indexStr]).To(Equal(config[keyStr+indexStr]))
 					}
 				})
 			})

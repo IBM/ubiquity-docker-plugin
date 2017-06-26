@@ -128,7 +128,7 @@ func (c *Controller) Get(getRequest resources.GetVolumeConfigRequest) resources.
 		mountpoint = ""
 	}
 
-	getResponse := resources.DockerGetResponse{Volume: resources.Volume{Name: getRequest.Name, Mountpoint: mountpoint.(string)}}
+	getResponse := resources.DockerGetResponse{Volume: resources.Volume{Name: getRequest.Name, Mountpoint: mountpoint.(string), Status:volume}}
 	return getResponse
 }
 

@@ -24,8 +24,8 @@ function basic_tests_on_one_node()
 
 
 	stepinc
-	echo "####### ---> ${S}. Create volume on SCBE gold service (which is on IBM FlashSystem A9000R)"
-	docker volume create --driver ubiquity --name $vol --opt size=5 --opt profile=gold
+	echo "####### ---> ${S}. Create volume on SCBE ${profile} service (which is on IBM FlashSystem A9000R)"
+	docker volume create --driver ubiquity --name $vol --opt size=5 --opt profile=${profile}
 
 	echo "####### ---> ${S}.1. Verify volume info"
 	docker volume ls
@@ -128,13 +128,13 @@ function one_node_negative_tests()
 	echo "####### ---> ${S}. some negative"
 	echo "## ---> ${S}.1. Should fail to create volume with long name"
 	long_vol_name=""; for i in `seq 1 63`; do long_vol_name="$long_vol_name${i}"; done
-	docker volume create --driver ubiquity --name $long_vol_name --opt size=5 --opt profile=gold && exit 81 || :   
+	docker volume create --driver ubiquity --name $long_vol_name --opt size=5 --opt profile=${profile} && exit 81 || :
 
 	echo "## ---> ${S}.2. Should fail to create volume with wrong size"
-	docker volume create --driver ubiquity --name $vol --opt size=10XX --opt profile=gold && exit 82 || :   
+	docker volume create --driver ubiquity --name $vol --opt size=10XX --opt profile=${profile} && exit 82 || :
 
 	echo "## ---> ${S}.3. Should fail to create volume on wrong service"
-	docker volume create --driver ubiquity --name $vol --opt size=10 --opt profile=goldXX && exit 83 || : 
+	docker volume create --driver ubiquity --name $vol --opt size=10 --opt profile=${profile}XX && exit 83 || :
 }
 
 

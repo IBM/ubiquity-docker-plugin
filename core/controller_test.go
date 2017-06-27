@@ -12,6 +12,8 @@ import (
 
 	"github.com/IBM/ubiquity/resources"
 	"time"
+	"strconv"
+	"reflect"
 )
 
 var _ = Describe("Controller", func() {
@@ -119,7 +121,7 @@ var _ = Describe("Controller", func() {
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal(""))
 					Expect(getResponse.Volume).ToNot(Equal(nil))
-					Expect(getResponse.Volume.Name).To(Equal("dockerVolume1"))
+					Expect(getResponse.Volume["Name"]).To(Equal("dockerVolume1"))
 				})
 				It("errors when list dockerVolume returns an error", func() {
 					fakeClient.GetVolumeConfigReturns(nil, fmt.Errorf("failed listing volume"))
@@ -127,7 +129,6 @@ var _ = Describe("Controller", func() {
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal("failed listing volume"))
 				})
-				/*
 				It("get Status from backend", func() {
 					keyStr, valStr := "key", "val"
 					num := 1 + random.Intn(10)
@@ -140,13 +141,10 @@ var _ = Describe("Controller", func() {
 					getRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal(""))
-					Expect(getResponse.Volume.Name).To(Equal("dockerVolume1"))
-					for index := 0; index < num; index++ {
-						indexStr := strconv.Itoa(index)
-						Expect(getResponse.Volume.Status[keyStr+indexStr]).To(Equal(config[keyStr+indexStr]))
-					}
+					Expect(getResponse.Volume["Name"]).To(Equal("dockerVolume1"))
+					eq := reflect.DeepEqual(getResponse.Volume["Status"], config)
+					Expect(eq).To(Equal(true))
 				})
-				*/
 			})
 			Context(".Path", func() {
 				It("does not error when volume exists and is mounted", func() {

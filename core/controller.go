@@ -119,16 +119,14 @@ func (c *Controller) Path(pathRequest resources.GetVolumeConfigRequest) resource
 func (c *Controller) Get(getRequest resources.GetVolumeConfigRequest) resources.DockerGetResponse {
 	c.logger.Println("Controller: get start")
 	defer c.logger.Println("Controller: get end")
-	volume, err := c.client.GetVolumeConfig(getRequest)
+	volStatus, err := c.client.GetVolumeConfig(getRequest)
 	if err != nil {
 		return resources.DockerGetResponse{Err: err.Error()}
 	}
-	mountpoint, exists := volume["mountpoint"]
-	if exists == false || mountpoint == "" {
-		mountpoint = ""
-	}
-
-	getResponse := resources.DockerGetResponse{Volume: resources.Volume{Name: getRequest.Name, Mountpoint: mountpoint.(string)}}
+	volume := make(map[string]interface{})
+	volume["Name"] = getRequest.Name
+	volume["Status"] = volStatus
+	getResponse := resources.DockerGetResponse{Volume: volume}
 	return getResponse
 }
 

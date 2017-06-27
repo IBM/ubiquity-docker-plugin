@@ -11,7 +11,6 @@ import (
 	"github.com/IBM/ubiquity/fakes"
 
 	"github.com/IBM/ubiquity/resources"
-	"strconv"
 	"time"
 )
 
@@ -128,6 +127,7 @@ var _ = Describe("Controller", func() {
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal("failed listing volume"))
 				})
+				/*
 				It("get Status from backend", func() {
 					keyStr, valStr := "key", "val"
 					num := 1 + random.Intn(10)
@@ -146,6 +146,7 @@ var _ = Describe("Controller", func() {
 						Expect(getResponse.Volume.Status[keyStr+indexStr]).To(Equal(config[keyStr+indexStr]))
 					}
 				})
+				*/
 			})
 			Context(".Path", func() {
 				It("does not error when volume exists and is mounted", func() {

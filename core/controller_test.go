@@ -2,6 +2,7 @@ package core_test
 
 import (
 	"fmt"
+	"math/rand"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,6 +11,9 @@ import (
 	"github.com/IBM/ubiquity/fakes"
 
 	"github.com/IBM/ubiquity/resources"
+	"time"
+	"strconv"
+	"reflect"
 )
 
 var _ = Describe("Controller", func() {
@@ -17,11 +21,13 @@ var _ = Describe("Controller", func() {
 		var (
 			fakeClient *fakes.FakeStorageClient
 			controller *core.Controller
+			random     *rand.Rand
 		)
 		BeforeEach(func() {
 			fakeClient = new(fakes.FakeStorageClient)
 			backends := []string{Backend}
 			controller = core.NewControllerWithClient(testLogger, fakeClient, backends)
+			random = rand.New(rand.NewSource(time.Now().UnixNano()))
 		})
 		It("does not error when remote client activate is successful", func() {
 			fakeClient.ActivateReturns(nil)
@@ -115,13 +121,29 @@ var _ = Describe("Controller", func() {
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal(""))
 					Expect(getResponse.Volume).ToNot(Equal(nil))
-					Expect(getResponse.Volume.Name).To(Equal("dockerVolume1"))
+					Expect(getResponse.Volume["Name"]).To(Equal("dockerVolume1"))
 				})
 				It("errors when list dockerVolume returns an error", func() {
 					fakeClient.GetVolumeConfigReturns(nil, fmt.Errorf("failed listing volume"))
 					getRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
 					getResponse := controller.Get(getRequest)
 					Expect(getResponse.Err).To(Equal("failed listing volume"))
+				})
+				It("get Status from backend", func() {
+					keyStr, valStr := "key", "val"
+					num := 1 + random.Intn(10)
+					config := make(map[string]interface{})
+					for index := 0; index < num; index++ {
+						indexStr := strconv.Itoa(index)
+						config[keyStr+indexStr] = valStr + indexStr
+					}
+					fakeClient.GetVolumeConfigReturns(config, nil)
+					getRequest := resources.GetVolumeConfigRequest{Name: "dockerVolume1"}
+					getResponse := controller.Get(getRequest)
+					Expect(getResponse.Err).To(Equal(""))
+					Expect(getResponse.Volume["Name"]).To(Equal("dockerVolume1"))
+					eq := reflect.DeepEqual(getResponse.Volume["Status"], config)
+					Expect(eq).To(Equal(true))
 				})
 			})
 			Context(".Path", func() {

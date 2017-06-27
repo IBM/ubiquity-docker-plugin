@@ -3,9 +3,9 @@ package core
 import (
 	"log"
 
+	"fmt"
 	"github.com/IBM/ubiquity/remote"
 	"github.com/IBM/ubiquity/resources"
-	"fmt"
 )
 
 type Controller struct {
@@ -20,18 +20,18 @@ func NewController(logger *log.Logger, storageApiURL string, config resources.Ub
 		logger.Fatal("Cannot initialize remote client")
 		return nil, err
 	}
-	return &Controller{logger: logger, client: remoteClient, config:config}, nil
+	return &Controller{logger: logger, client: remoteClient, config: config}, nil
 }
 
 func NewControllerWithClient(logger *log.Logger, client resources.StorageClient, backends []string) *Controller {
-	return &Controller{logger: logger, client: client, config:resources.UbiquityPluginConfig{Backends:backends}}
+	return &Controller{logger: logger, client: client, config: resources.UbiquityPluginConfig{Backends: backends}}
 }
 
 func (c *Controller) Activate() resources.ActivateResponse {
 	c.logger.Println("Controller: activate start")
 	defer c.logger.Println("Controller: activate end")
 
-	activateRequest := resources.ActivateRequest{Backends:c.config.Backends}
+	activateRequest := resources.ActivateRequest{Backends: c.config.Backends}
 	err := c.client.Activate(activateRequest)
 
 	if err != nil {
@@ -49,7 +49,7 @@ func (c *Controller) Create(createVolumeRequest resources.CreateVolumeRequest) r
 	userSpecifiedBackend, backendSpecified := createVolumeRequest.Opts["backend"]
 	if backendSpecified {
 		if !validBackend(c.config, userSpecifiedBackend.(string)) {
-			return resources.GenericResponse{Err:fmt.Sprintf("invalid backend %s", userSpecifiedBackend.(string))}
+			return resources.GenericResponse{Err: fmt.Sprintf("invalid backend %s", userSpecifiedBackend.(string))}
 		}
 		createVolumeRequest.Backend = userSpecifiedBackend.(string)
 	}
@@ -119,23 +119,26 @@ func (c *Controller) Path(pathRequest resources.GetVolumeConfigRequest) resource
 func (c *Controller) Get(getRequest resources.GetVolumeConfigRequest) resources.DockerGetResponse {
 	c.logger.Println("Controller: get start")
 	defer c.logger.Println("Controller: get end")
-	volume, err := c.client.GetVolumeConfig(getRequest)
+	volStatus, err := c.client.GetVolumeConfig(getRequest)
 	if err != nil {
 		return resources.DockerGetResponse{Err: err.Error()}
 	}
-	mountpoint, exists := volume["mountpoint"]
-	if exists == false || mountpoint == "" {
+	mountpoint, exists := volStatus["mountpoint"]
+	if exists == false {
 		mountpoint = ""
 	}
-
-	getResponse := resources.DockerGetResponse{Volume: resources.Volume{Name: getRequest.Name, Mountpoint: mountpoint.(string)}}
+	volume := make(map[string]interface{})
+	volume["Name"] = getRequest.Name
+	volume["Status"] = volStatus
+	volume["Mountpoint"] = mountpoint
+	getResponse := resources.DockerGetResponse{Volume: volume}
 	return getResponse
 }
 
 func (c *Controller) List() resources.ListResponse {
 	c.logger.Println("Controller: list start")
 	defer c.logger.Println("Controller: list end")
-	listVolumesRequest := resources.ListVolumesRequest{Backends:c.config.Backends}
+	listVolumesRequest := resources.ListVolumesRequest{Backends: c.config.Backends}
 	volumes, err := c.client.ListVolumes(listVolumesRequest)
 	if err != nil {
 		return resources.ListResponse{Err: err.Error()}
@@ -145,7 +148,7 @@ func (c *Controller) List() resources.ListResponse {
 }
 
 func validBackend(config resources.UbiquityPluginConfig, userSpecifiedBackend string) bool {
-	for _,backend := range config.Backends {
+	for _, backend := range config.Backends {
 		if backend == userSpecifiedBackend {
 			return true
 		}

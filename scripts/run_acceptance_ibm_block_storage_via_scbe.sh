@@ -161,6 +161,11 @@ function tests_with_second_node()
 	ssh root@$node2 "docker stop ${CName}5"
 	ssh root@$node2 "docker rm ${CName}5"
 
+	echo "## ---> ${S}.4. [$node2] : Verify that you can NOT delete the volume $vol from the second node because its already attached to first node"
+	ssh root@$node2 "docker volume rm $vol" && exit 1 || :
+	ssh root@$node2 "docker volume ls | grep -v $vol" # volume should still be visible on the remote
+	docker volume ls| grep -v $vol # and also visible on the local node, so we sure the volume was deleted
+	
 	stepinc
 	echo "####### ---> ${S} Stop the container (so next step can run it on second node)"
 	docker stop ${CName}4

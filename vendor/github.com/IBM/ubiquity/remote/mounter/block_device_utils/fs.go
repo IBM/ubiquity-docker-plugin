@@ -42,34 +42,6 @@ func (s *impBlockDeviceUtils) MakeFs(mpath string, fsType string) error {
 	return nil
 }
 
-func (s *impBlockDeviceUtils) MountFs(mpath string, mpoint string) error {
-	defer s.logger.Trace(logs.DEBUG)()
-	mountCmd := "mount"
-	if err := s.exec.IsExecutable(mountCmd); err != nil {
-		return s.logger.ErrorRet(&commandNotFoundError{mountCmd, err}, "failed")
-	}
-	args := []string{mountCmd, mpath, mpoint}
-	if _, err := s.exec.Execute("sudo", args); err != nil {
-		return s.logger.ErrorRet(&commandExecuteError{mountCmd, err}, "failed")
-	}
-	s.logger.Info("mounted", logs.Args{{"mpoint", mpoint}})
-	return nil
-}
-
-func (s *impBlockDeviceUtils) UmountFs(mpoint string) error {
-	defer s.logger.Trace(logs.DEBUG)()
-	umountCmd := "umount"
-	if err := s.exec.IsExecutable(umountCmd); err != nil {
-		return s.logger.ErrorRet(&commandNotFoundError{umountCmd, err}, "failed")
-	}
-	args := []string{umountCmd, mpoint}
-	if _, err := s.exec.Execute("sudo", args); err != nil {
-		return s.logger.ErrorRet(&commandExecuteError{umountCmd, err}, "failed")
-	}
-	s.logger.Info("umounted", logs.Args{{"mpoint", mpoint}})
-	return nil
-}
-
 func (s *impBlockDeviceUtils) IsExitStatusCode(err error, code int) bool {
 	defer s.logger.Trace(logs.DEBUG)()
 	isExitStatusCode := false

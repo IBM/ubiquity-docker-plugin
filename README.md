@@ -26,8 +26,7 @@ This code is provided "AS IS" and without warranty of any kind.  Any issues will
 mkdir -p $HOME/workspace
 export GOPATH=$HOME/workspace
 ```
-- Configure ssh-keys for github.ibm.com - go tools require password less ssh access to github. If you have not already setup ssh keys for your github.ibm profile, please follow steps in 
-(https://help.github.com/enterprise/2.7/user/articles/generating-an-ssh-key/) before proceeding further. 
+
 - Build Ubiquity docker plugin from source (can take several minutes based on connectivity)
 ```bash
 mkdir -p $GOPATH/src/github.com/IBM
@@ -91,7 +90,7 @@ Ensure that pluginsDirectory specified in ubiquity-client.conf file exists on th
 If any of docker volume management commands responds with following errors message, it is highly likely that ubiquity-docker-plugin and ubiquity service are not able to communicate
 with each other. Please check the storageApiURL specified while starting the plugin
 ```bash
-Error response from daemon: create fdsfdsf: create fdsfdsf: Error looking up volume plugin spectrum-scale: Plugin does not implement the requested driver
+Error response from daemon: create fdsfdsf: create fdsfdsf: Error looking up volume plugin ubiquity: Plugin does not implement the requested driver
 ```
 
 ### Volume Creation

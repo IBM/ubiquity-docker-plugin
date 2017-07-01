@@ -1,5 +1,9 @@
 # IBM Block Storage via SCBE
 
+* [Deployment Prerequisities](#deployment-prerequisities)
+* [Configuration](#configuring-ubiquity-docker-plugin-with-ubiquity-and-scbe)
+* [Volume Creation](#volume-creation-using-scbe-supported-ibm-block-storage-system)
+
 ## Deployment Prerequisities
 * IBM Block Storage - Configuring storage connectivity and multipathing as mentioned below
 
@@ -72,7 +76,7 @@ The following snippet shows a sample configuration file(ubiquity-client.conf):
 [Ubiquity service](https://github.com/IBM/ubiquity) communicates with the IBM block storage systems through IBM Spectrum Control Base Edition([SCBE](http://www.ibm.com/support/knowledgecenter/STWMS9/landing/IBM_Spectrum_Control_Base_Edition_welcome_page.html)).
 The plugin can provision a volume from a delegated SCBE storage service by using the --opt=<SCBE storage service name> flag.
 
-##### Creating volume on gold SCBE storage service
+### Creating volume on gold SCBE storage service
 Create a volume named demo11 with 10gb size from the gold SCBE storage service (the gold service could be, for example, a pool from IBM FlashSystem A9000\R and with high QoS capability) :
 
 ```bash

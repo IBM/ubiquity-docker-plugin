@@ -1,5 +1,13 @@
 # IBM Spectrum Scale
 
+* [Deployment Prerequisities](#deployment-prerequisities)
+* [Configuration](#configuring-ubiquity-docker-plugin-with-ubiquity-and-spectrum-scale)
+* [Volume Creation](#volume-creation-using-spectrum-scale-storage-system)
+  * [Fileset Volumes](#creating-fileset-volumes)
+  * [Independent Fileset Volumes](#creating-independent-fileset-volumes)
+  * [Lightweight Volumes](#creating-lightweight-volumes)
+  * [Fileset with Quota Volumes](#creating-fileset-with-quota-volumes)
+
 ## Deployment Prerequisities
  * Spectrum-Scale - Ensure the Spectrum Scale client (NSD client) is installed and part of a Spectrum Scale cluster.
  * NFS - Ensure hosts support mounting NFS file systems.
@@ -27,7 +35,7 @@
  
 ## Volume Creation using Spectrum Scale Storage system
 
-##### Creating Fileset Volumes
+### Creating Fileset Volumes
 
 Create a fileset volume named demo1,  using volume driver, on the gold Spectrum Scale file system :
 
@@ -65,7 +73,7 @@ Alternatively, we can create the same volume named demo4 by also passing a type 
 docker volume create -d ubiquity --name demo4 --opt type=fileset --opt fileset=modelingData --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
-##### Creating Independent Fileset Volumes
+### Creating Independent Fileset Volumes
 
 Create an independent fileset volume named demo5, using volume driver, on the gold Spectrum Scale file system
 
@@ -79,7 +87,7 @@ Create an independent fileset volume named demo6 having an inode limit of 1024, 
 docker volume create -d spectrum-scale --name demo6 --opt type=fileset --opt filesystem=gold --opt fileset-type=independent --opt inode-limit=1024
 ```
 
-##### Creating Lightweight Volumes
+### Creating Lightweight Volumes
 
 Create a lightweight volume named demo7, using volume driver, within an existing fileset 'LtWtVolFileset' in the gold Spectrum Scale filesystem :
 
@@ -99,7 +107,7 @@ Alternatively, we can create the same volume named demo8 by also passing a type 
 docker volume create -d ubiquity --name demo8 --opt type=lightweight --opt fileset=LtWtVolFileset --opt directory=dir1 --opt filesystem=gold --opt backend=spectrum-scale
 ```
 
-##### Creating Fileset With Quota Volumes
+### Creating Fileset With Quota Volumes
 
 Create a fileset with quota volume named demo9, using volume driver, with a quota limit of 1GB in the silver Spectrum Scale file system :
 

@@ -94,7 +94,7 @@ with each other. Please check the storageApiURL specified while starting the plu
 Error response from daemon: create fdsfdsf: create fdsfdsf: Error looking up volume plugin spectrum-scale: Plugin does not implement the requested driver
 ```
 
-#### Volume Creation
+### Volume Creation
 Ubiquity Docker Plugin communicates with Ubiquity Service to create volumes on one of the storage systems supported by it.  Storage system specific options can be provided using the 'opt' option on the command line as a set of key-value pairs.
 
 For more information examples of volume creation specific to Ubiquity supported storage systems see [Available Storage Systems](supportedStorage.md)  

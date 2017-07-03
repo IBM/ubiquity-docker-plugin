@@ -120,6 +120,48 @@ function basic_tests_on_one_node()
 	docker rm ${CName}3 
 	docker volume rm $vol
 	docker volume ls | grep -v $vol
+
+
+	stepinc
+	echo "####### ---> ${S}. Run container with 2 volumes"
+	docker run -t -i -d --name ${CName}4 --volume-driver ubiquity --volume ${vol}1:/data1 --volume ${vol}2:/data2 --entrypoint /bin/sh alpine
+
+	echo "## ---> ${S}.1. Verify volume was created for this container and you can touch a file inside the container"
+	docker volume ls | grep ${vol}1
+	docker volume ls | grep ${vol}2
+	docker exec ${CName}4 df | egrep "/data1|^Filesystem"
+	docker exec ${CName}4 df | egrep "/data2|^Filesystem"
+	docker exec ${CName}4 touch /data1/file1
+	docker exec ${CName}4 touch /data2/file2
+
+	echo "## ---> ${S}.2. Stop container Verify unmount and remove volumes"
+	docker stop ${CName}4
+	mount |grep ubiquity  && exit ${S} || :
+	docker rm ${CName}4
+	docker volume rm ${vol}1
+	docker volume rm ${vol}2
+	docker volume ls | grep -v $vol || :
+}
+
+function fstype_basic_check()
+{
+    for fstype in ext4 xfs; do
+        stepinc
+        echo "####### ---> ${S}. Create volume with xfs run container and make sure the volume is $fstype"
+        docker volume create --driver ubiquity --name $vol --opt size=5 --opt profile=${profile} --opt fstype=$fstype
+
+        echo "## ---> ${S}.1. Verify volume info"
+        docker volume ls | grep $vol
+        docker volume inspect $vol | grep fstype | grep $fstype
+
+        echo "## ---> ${S}.2 Run container with the volume and Verify it was mounted right"
+        docker run -t -i -d --name ${CName}4 --volume-driver ubiquity --volume $vol:/data --entrypoint /bin/sh alpine
+        df | egrep "ubiquity|^Filesystem"
+        mount |grep ubiquity | grep $fstype
+        docker stop ${CName}4
+        docker rm ${CName}4
+        docker volume rm $vol
+    done
 }
 
 function one_node_negative_tests()
@@ -247,6 +289,7 @@ echo "Start Acceptance Test for IBM Block Storage"
 setup # Verifications and clean up before the test
 
 basic_tests_on_one_node
+fstype_basic_check
 [ -n "$withnegative" ] && one_node_negative_tests
 [ -n "$node2" ] && tests_with_second_node
 

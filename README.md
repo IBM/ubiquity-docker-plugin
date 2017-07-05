@@ -21,9 +21,9 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
      For non-root users, such as USER, configure the sudoers as follows: 
 
      ```
-         USER ALL= NOPASSWD: /usr/lpp/mmfs/bin/, /usr/bin/, /bin/
+         USER ALL= NOPASSWD: /usr/bin/, /bin/
          Defaults:%USER !requiretty
-         Defaults:%USER secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/lpp/mmfs/bin
+         Defaults:%USER secure_path = /sbin:/bin:/usr/sbin:/usr/bin
      ```
   * Verify that the pluginsDirectory, specified in ubiquity-client.conf file, exists on the host. Default localtion is /etc/docker/plugins/.
   

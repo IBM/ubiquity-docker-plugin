@@ -7,7 +7,6 @@ Requires=docker.service
 
 [Service]
 Type=simple
-User=ubiquity
 ExecStart=/usr/bin/ubiquity-docker-plugin \
           --config /etc/ubiquity/ubiquity-client.conf
 Restart=on-abort

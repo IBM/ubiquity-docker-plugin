@@ -14,17 +14,18 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
     - SUSE 12+
   * Ubiquity needs access to the management of the required storage backends. See [Available Storage Systems](supportedStorage.md) for connectivity details.
   * The following sudoers configuration is required to run the plugin process:
+  
         ```bash
         Defaults !requiretty
         ```
   * Verify that the pluginsDirectory, specified in ubiquity-client.conf file, exists on the host. Default localtion is /etc/docker/plugins/.
+  
         ```bash
         mkdir /etc/docker/plugins
         ```
 
 ### 2. Downloading and installing the plugin
 
-  * Download and unpack the application package.
 ```bash
 mkdir -p /etc/ubiquity
 cd /etc/ubiquity
@@ -37,7 +38,7 @@ systemctl enable ubiquity-docker-plugin.service            # Enable plugin syste
 
 ### 3. Configuring the plugin
 Configure plugin according to your storage backend requirements. Refer to 
-[specific instructions](supportedStorage.md). 
+[specific instructions](supportedStorage.md) for specific configuration needed by the storage backend. 
 The configuration file must be named `ubiquity-client.conf` and placed in `/etc/ubiquity` directory.
 
 
@@ -53,9 +54,9 @@ service docker restart
 
 ## Plugin usage examples
 ### Creating a volume
-Ubiquity Docker Plugin communicates with Ubiquity Service to create volumes on one of the storage systems supported by it.  Storage system specific options can be provided using the 'opt' option on the command line as a set of key-value pairs.
+Ubiquity Docker Plugin communicates with Ubiquity Service to create volumes on one of the storage systems that was configured. Storage system specific options can be provided using the '--opt' option on the command line as a set of key-value pairs.
 
-For more information examples of volume creation specific to Ubiquity supported storage systems see [Available Storage Systems](supportedStorage.md)  
+In the Creation For more information examples of volume creation specific to Ubiquity supported storage systems see [Available Storage Systems](supportedStorage.md)  
 
 ### Listing Docker volumes
 
@@ -123,3 +124,19 @@ Error looking up volume plugin ubiquity: Plugin does not implement the requested
 ## Suggestions and Questions
 
 For any questions, suggestions, or issues, please use github.
+
+## Licensing
+
+Copyright 2016, 2017 IBM Corp.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

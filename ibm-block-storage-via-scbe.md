@@ -70,6 +70,8 @@ For example, to create a volume named volume1 with 10gb size from the gold SCBE 
 #> docker volume create --driver ubiquity --name volume1 --opt size=10 --opt fstype=xfs --opt profile=gold
 ```
 
+### Display a Docker volume
+
 You can list and inspect the newly created volume by the following command :
 ```bash
 #> docker volume ls
@@ -92,18 +94,19 @@ ubiquity            volume1
         "Scope": "local",
         "Status": {
             "LogicalCapacity": "10000000000",
-            "Name": "u_prod_volume1",
+            "Name": "u_instance_volume1",
             "PhysicalCapacity": "10234101760",
             "PoolName": "gold_ubiquity",
             "Profile": "gold",
             "StorageName": "A9000R system1",
             "StorageType": "2810XIV",
-            "UsedCapacity": "0",
+            "UsedCapacity": "10485760",
             "Wwn": "6001738CFC9035EB0000000000CFF306",
             "fstype": "xfs"
         }
     }
 ]
+
 ```
 
 ### Run a Docker container with a volume
@@ -153,15 +156,17 @@ Filesystem                       1K-blocks    Used Available Use% Mounted on
 ```
 
 ### Stop a Docker container with a volume
-Docker stop template:
+Docker stop   (Ubiquity will detach the volume from the host)
 ```bash
-#> docker stop [CONTAINER NAME]
-TODO
+#> docker stop container1
 ```
 
 ### Remove a Docker volume
-Docker stop template:
+Note : to remove a volume you first need to remove the container.
 ```bash
-#> docker volume rm [VOLUME  NAME]
-TODO
+#> docker rm container1
+container1
+
+#> docker volume rm volume1
+volume1
 ```

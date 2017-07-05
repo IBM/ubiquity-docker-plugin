@@ -1,35 +1,30 @@
-# IBM Block Storage via SCBE
+# IBM Block Storage System via SCBE
 
 * [Deployment Prerequisities](#deployment-prerequisities)
 * [Configuration](#configuring-ubiquity-docker-plugin-with-ubiquity-and-scbe)
 * [Volume Creation](#volume-creation-using-scbe-supported-ibm-block-storage-system)
 
-## Deployment Prerequisities
-* IBM Block Storage - Configuring storage connectivity and multipathing as mentioned below
+## Plugin installation prerequisities for IBM block storage system
+Configuring storage connectivity and multipathing as mentioned below
 
-     The plugin supports FC or iSCSI connectivity to the storage systems.
-      - Install OpeniSCSI and SCSI utilities.
+#### 1. Storage connectivity packages to install
+The plugin supports FC or iSCSI connectivity to the storage systems.
+Install SCSI utilities (and OpeniSCSI if iscsi is needed)
+         * Redhat \ SLES
+         ```bash
+         sudo yum -y install sg3_utils
+         sudo yum -y install iscsi-initiator-utils  # only if you need iSCSI
+         ```
         * Ubuntu
         ```bash
          sudo apt-get update
          sudo apt-get -y install scsitools
          sudo apt-get install -y open-iscsi  # only if you need iSCSI
          ```
-         * Redhat
-         ```bash
-         sudo yum -y install sg3_utils
-         sudo yum -y install iscsi-initiator-utils  # only if you need iSCSI
-         ```
-
+#### 2. Multipathing configuration 
+The plugin works only with multipath devices. Therefor make sure you configure the multipath.conf compatible to the required storage system.
      - Install and configure multipathing.
-         * Ubuntu
-        ```bash
-         sudo apt-get multipath-tools
-         cp multipath.conf /etc/multipath.conf
-         multipath -l  # Check no errors appear.
-        ```
-
-         * Redhat
+         * Redhat \ SLES
         ```bash
          yum install device-mapper-multipath
          sudo modprobe dm-multipath
@@ -40,6 +35,14 @@
          multipath -ll  # Make sure no error appear.
         ```
 
+        * Ubuntu
+        ```bash
+         sudo apt-get multipath-tools
+         cp multipath.conf /etc/multipath.conf
+         multipath -l  # Check no errors appear.
+        ```        
+
+#### 3. Storage connectivity setup
      - Verify that the hostname of the docker node is defined on the relevant storage systems with the valid WWPNs or IQN of the node.
 
      - For iSCSI - Discover and login to the iSCSI targets of the relevant storage systems:
@@ -68,11 +71,14 @@ The following snippet shows a sample configuration file(ubiquity-client.conf):
  
  
  [UbiquityServer]
- address = "UbiquityServiceHostname"  # IP/hostname of the Ubiquity Service
- port = 9999            # TCP port on which the Ubiquity Service is listening
+ address = "IP"  # IP/hostname of the Ubiquity Service
+ port = 9999     # TCP port on which the Ubiquity Service is listening
  ```
  
-## Volume Creation using SCBE supported IBM Block Storage system
+## Plugin usage example
+
+### Creating a Docker volume
+Volume Creation using SCBE supported IBM Block Storage system
 [Ubiquity service](https://github.com/IBM/ubiquity) communicates with the IBM block storage systems through IBM Spectrum Control Base Edition([SCBE](http://www.ibm.com/support/knowledgecenter/STWMS9/landing/IBM_Spectrum_Control_Base_Edition_welcome_page.html)).
 The plugin can provision a volume from a delegated SCBE storage service by using the --opt=<SCBE storage service name> flag.
 

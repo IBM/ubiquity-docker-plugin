@@ -103,9 +103,10 @@ ubiquity            volume1
         }
     }
 ]
+```
 
 ### Run a Docker container with a volume
-Docker volume creation template:
+Docker run template:
 ```bash
 #> docker run -it -d --name [CONTAINER NAME] --volume-driver ubiquity -v [VOL NAME]:[PATH TO MOUNT] [DOCKER IMAGE] [CMD]
 ```
@@ -148,4 +149,18 @@ Filesystem                       1K-blocks    Used Available Use% Mounted on
 #> docker inspect --format '{{ index .Mounts }}' container1
 [{volume volume1 /ubiquity/6001738CFC9035EB0000000000CBB306 /data ubiquity  true }]
 
+```
+
+### Stop a Docker container with a volume
+Docker stop template:
+```bash
+#> docker stop [CONTAINER NAME]
+TODO
+```
+
+### Remove a Docker volume
+Docker stop template:
+```bash
+#> docker volume rm [VOLUME  NAME]
+TODO
 ```

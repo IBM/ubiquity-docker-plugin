@@ -13,11 +13,18 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
     - RHEL 7+
     - SUSE 12+
   * Ubiquity needs access to the management of the required storage backends. See [Available Storage Systems](supportedStorage.md) for connectivity details.
-  * The following sudoers configuration is required to run the plugin process:
+  * The following sudoers configuration `/etc/sudoers` is required to run the plugin as root user: 
   
-        ```bash
+     ```
         Defaults !requiretty
-        ```
+     ```
+     For non-root users, such as USER, configure the sudoers as follows: 
+
+     ```
+         USER ALL= NOPASSWD: /usr/lpp/mmfs/bin/, /usr/bin/, /bin/
+         Defaults:%USER !requiretty
+         Defaults:%USER secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/lpp/mmfs/bin
+     ```
   * Verify that the pluginsDirectory, specified in ubiquity-client.conf file, exists on the host. Default localtion is /etc/docker/plugins/.
   
         ```bash
@@ -26,14 +33,22 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
 
 ### 2. Downloading and installing the plugin
 
+* Download and unpack the application package.
 ```bash
 mkdir -p /etc/ubiquity
 cd /etc/ubiquity
 curl https://github.com/IBM/ubiquity-docker-plugin/releases/download/v0.3.0/ubiquity-docker-plugin-0.3.0.tar.gz | tar xf -
 chmod u+x ubiquity-docker-plugin
-cp ubiquity-docker-plugin /usr/bin                         # Copy the plugin binary file
-cp ubiquity-docker-plugin.service /usr/lib/systemd/system/ # Copy the plugin systemd config to systemd directory
-systemctl enable ubiquity-docker-plugin.service            # Enable plugin systemd service
+#chown USER:GROUP ubiquity  # Run this command only a non-root should run ubiquity (fill up the USER and GROUP)
+cp ubiquity-docker-plugin /usr/bin                         
+cp ubiquity-docker-plugin.service /usr/lib/systemd/system/ 
+```
+   * To run the plugin as non-root users, you must add to the `/usr/lib/systemd/system/ubiquity-docker-plugin.service` file this line `User=USER` under the [Service] item.
+   
+   * Enable the plugin service
+   
+```bash 
+systemctl enable ubiquity-docker-plugin.service      
 ```
 
 ### 3. Configuring the plugin
@@ -53,65 +68,7 @@ service docker restart
 ```
 
 ## Plugin usage examples
-### Creating a volume
-Ubiquity Docker Plugin communicates with Ubiquity Service to create volumes on one of the storage systems that was configured. Storage system specific options can be provided using the '--opt' option on the command line as a set of key-value pairs.
-
-In the Creation For more information examples of volume creation specific to Ubiquity supported storage systems see [Available Storage Systems](supportedStorage.md)  
-
-### Listing Docker volumes
-
-We can list the volumes created using the ubiquity docker plugin:
-
-```bash
- $ docker volume ls
-DRIVER                  VOLUME NAME
-ubiquity                    demo1
-ubiquity                    demo2
-```
-
-Please note that the 'volume ls' command will list all volumes across all the volume plugins (including plugins other than Ubiquity) running on the host on which the command was executed.
-
-### Running Docker containers using the Ubiquity volumes
-
-Run a container and mount the volume created above by specifying the name of the volume name and the volume driver used to create that volume.  Note that local and ubiquity volumes can be passed into a container.
-
-```bash
-docker run -t -i --volume-driver ubiquity --volume <VOLUME-NAME>:<CONTAINER-MOUNTPOINT> --entrypoint /bin/sh alpine
-```
-
-**_Example_**
-
-let's run a docker image of Alpine Linux, a lightweight Linux Distribution, inside a container and mounting demo1 volume inside the container.
-
-```bash
-docker run -t -i --volume-driver ubiquity --volume demo1:/data --entrypoint /bin/sh alpine
-```
-Here demo1 was created using the volume driver ubiquity. We specify that volume demo1 must be mounted at /data inside the container
-
-### Removing a Docker volume
-**_Pre-Conditions :_** Make sure the volume is not being used by any running containers
-
-```bash
-docker volume rm <VOLUME-NAME>
-```
-
-**_Example:_**
-
-To Remove volume demo1, created above :
-```bash
-docker volume rm demo1
-```
-
-**_NOTE: If an error occurs try removing any stale docker entries by running the following command and then try removing the volume again:_**
-
-```bash
-docker rm `docker ps -aq`
-```
-
-**_NOTE: Whether data is actually removed or not is controlled by the forceDelete config option on the Ubiquity service.
-
-### Updating a Docker volume
-Currently there is no way to update the options set on a volume through the Docker CLI.  In order to change its name or features, the native storage system APIs must be used. If a name must be changed and the data must be kept, it can always be deleted from Ubiquity (assuming forceDelete = false on the server) and then re-added with the new name.
+See docker volume create\delete\start\stop examples inside the dedicated page of each [Available Storage Systems](supportedStorage.md).
 
 ### Troubleshooting
 #### Communication Error
@@ -120,6 +77,9 @@ with each other. Please check the storageApiURL specified while starting the plu
 ```bash
 Error looking up volume plugin ubiquity: Plugin does not implement the requested driver
 ```
+
+#### Updating a Docker volume
+Currently there is no way to update the options set on a volume through the Docker CLI.  In order to change its name or features, the native storage system APIs must be used. If a name must be changed and the data must be kept, it can always be deleted from Ubiquity (assuming forceDelete = false on the server) and then re-added with the new name.
 
 ## Suggestions and Questions
 

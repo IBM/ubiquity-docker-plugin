@@ -12,7 +12,6 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
   * Ubiquity Docker volume plugin is supported on the following operating systems:
     - RHEL 7+
     - SUSE 12+
-  * Ubiquity needs access to the management of the required storage backends. See [Available Storage Systems](supportedStorage.md) for connectivity details.
   * The following sudoers configuration `/etc/sudoers` is required to run the plugin as root user: 
   
      ```
@@ -26,6 +25,9 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
          Defaults:%USER secure_path = /sbin:/bin:/usr/sbin:/usr/bin
      ```
   * Verify that the pluginsDirectory, specified in ubiquity-client.conf file, exists on the host. Default localtion is /etc/docker/plugins/.
+
+  * Ubiquity needs access to the management of the required storage backends. See [Available Storage Systems](supportedStorage.md) for connectivity details.
+
   
 ```bash
         mkdir /etc/docker/plugins
@@ -68,7 +70,7 @@ service docker restart
 ```
 
 ## Plugin usage examples
-Examples of how to use Ubiquity Docker volumes (e.g : create\delete\start\stop) details on each dedicated [Available Storage Systems](supportedStorage.md).
+Examples of how to manage Ubiquiy Docker volumes, such as volume create\remove\list and start\stop stateful containers, details in [Available Storage Systems](supportedStorage.md).
 
 ## Troubleshooting
 ### Communication Error

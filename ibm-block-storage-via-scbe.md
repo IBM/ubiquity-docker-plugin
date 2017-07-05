@@ -1,6 +1,7 @@
 # IBM Block Storage System via Spectrum Control Base Edition
 
 ## Configuring Docker host for IBM block storage systems
+Configure the following steps(1-4) on each node in the Docker Swarm cluster that requires access to Ubiquity volumes.
 
 #### 1. Installing connectivity packages 
 The plugin supports FC or iSCSI connectivity to the storage systems.
@@ -36,7 +37,7 @@ The plugin requires multipath devices. Configure the `multipath.conf` file accor
    iscsiadm -m node  -p ${storage system iSCSI portal IP/hostname} --login              # To log in to targets
 ```
             
-## Configuring Ubiquity Docker volume plugin for SCBE
+### 4. Configuring Ubiquity Docker volume plugin for SCBE
 
 The ubiquity-client.conf must be created in the /etc/ubiquity directory. Configure the plugin by editing the file, as illustrated below.
 

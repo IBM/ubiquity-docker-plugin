@@ -7,34 +7,34 @@ The plugin supports FC or iSCSI connectivity to the storage systems.
 
   * Redhat \ SLES
   
-      ```bash
-      sudo yum -y install sg3_utils
-      sudo yum -y install iscsi-initiator-utils  # only if you need iSCSI
-      ```
+```bash
+   sudo yum -y install sg3_utils
+   sudo yum -y install iscsi-initiator-utils  # only if you need iSCSI
+```
 
 #### 2. Configuring multipathing 
 The plugin requires multipath devices. Configure the `multipath.conf` file according to the storage system requirments.
   * Redhat \ SLES
   
-        ```bash
-         yum install device-mapper-multipath
-         sudo modprobe dm-multipath
+```bash
+   yum install device-mapper-multipath
+   sudo modprobe dm-multipath
 
-         cp multipath.conf /etc/multipath.conf  # Default file can be copied from  /usr/share/doc/device-mapper-multipath-*/multipath.conf to /etc
-         systemctl start multipathd
-         systemctl status multipathd  # Make sure its active
-         multipath -ll  # Make sure no error appear.
-        ```
+   cp multipath.conf /etc/multipath.conf  # Default file can be copied from  /usr/share/doc/device-mapper-multipath-*/multipath.conf to /etc
+   systemctl start multipathd
+   systemctl status multipathd  # Make sure its active
+   multipath -ll  # Make sure no error appear.
+```
 
 #### 3. Configure storage system connectivity
   *  Verify that the hostname of the Docker node is defined on the relevant storage systems with the valid WWPNs or IQN of the node. Otherwise, you will not be able to run stateful containers.
 
   *  For iSCSI, discover and log in to the iSCSI targets of the relevant storage systems:
 
-         ```bash
-            iscsiadm -m discoverydb -t st -p ${storage system iSCSI portal IP}:3260 --discover   # To discover targets
-            iscsiadm -m node  -p ${storage system iSCSI portal IP/hostname} --login              # To log in to targets
-         ```
+```bash
+   iscsiadm -m discoverydb -t st -p ${storage system iSCSI portal IP}:3260 --discover   # To discover targets
+   iscsiadm -m node  -p ${storage system iSCSI portal IP/hostname} --login              # To log in to targets
+```
             
 ## Configuring Ubiquity Docker volume plugin for SCBE
 

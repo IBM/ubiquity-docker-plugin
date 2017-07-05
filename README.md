@@ -27,9 +27,9 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
      ```
   * Verify that the pluginsDirectory, specified in ubiquity-client.conf file, exists on the host. Default localtion is /etc/docker/plugins/.
   
-        ```bash
+```bash
         mkdir /etc/docker/plugins
-        ```
+ ```
 
 ### 2. Downloading and installing the plugin
 
@@ -68,17 +68,17 @@ service docker restart
 ```
 
 ## Plugin usage examples
-See docker volume create\delete\start\stop examples inside the dedicated page of each [Available Storage Systems](supportedStorage.md).
+Examples of how to use Ubiquity Docker volumes (e.g : create\delete\start\stop) details on each dedicated [Available Storage Systems](supportedStorage.md).
 
-### Troubleshooting
-#### Communication Error
+## Troubleshooting
+### Communication Error
 If any of docker volume management commands responds with following errors message, it is highly likely that ubiquity-docker-plugin and ubiquity service are not able to communicate
 with each other. Please check the storageApiURL specified while starting the plugin
 ```bash
 Error looking up volume plugin ubiquity: Plugin does not implement the requested driver
 ```
 
-#### Updating a Docker volume
+### Updating a Docker volume
 Currently there is no way to update the options set on a volume through the Docker CLI.  In order to change its name or features, the native storage system APIs must be used. If a name must be changed and the data must be kept, it can always be deleted from Ubiquity (assuming forceDelete = false on the server) and then re-added with the new name.
 
 ## Suggestions and Questions

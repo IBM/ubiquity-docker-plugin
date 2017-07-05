@@ -58,13 +58,47 @@ The ubiquity-client.conf must be created in the /etc/ubiquity directory. Configu
 ## Plugin usage example
 
 ### Creating a Docker volume
-Volume Creation using SCBE supported IBM Block Storage system
-[Ubiquity service](https://github.com/IBM/ubiquity) communicates with the IBM block storage systems through IBM Spectrum Control Base Edition([SCBE](http://www.ibm.com/support/knowledgecenter/STWMS9/landing/IBM_Spectrum_Control_Base_Edition_welcome_page.html)).
-The plugin can provision a volume from a delegated SCBE storage service by using the --opt=<SCBE storage service name> flag.
+Docker volume creation template:
+```bash
+docker volume create --driver ubiquity --name [VOL NAME] --opt size=[number in GB] --fstype=[xfs|ext4] --opt profile=[SCBE service name]
+```
 
-### Creating volume on gold SCBE storage service
-Create a volume named demo11 with 10gb size from the gold SCBE storage service (the gold service could be, for example, a pool from IBM FlashSystem A9000\R and with high QoS capability) :
+For example, to create a volume named demo1 with 10gb size from the gold SCBE storage service, such as a pool from IBM FlashSystem A9000R and with QoS capability:
 
 ```bash
-docker volume create -d ubiquity --name demo11 --opt size=10 --opt profile=gold
+#> docker volume create --driver ubiquity --name demo1 --opt size=10 --opt fstype=xfs --opt profile=gold
+```
+
+You can list and inspect the newly created volume by the following command :
+```bash
+#> docker volume ls
+DRIVER              VOLUME NAME
+ubiquity            demo1
+#> docker volume inspect demo1
+[
+    {
+        "Driver": "ubiquity",
+        "Labels": {},
+        "Mountpoint": "/",
+        "Name": "demo1",
+        "Options": {
+            "fstype": "xfs",
+            "profile": "gold",
+            "size": "10"
+        },
+        "Scope": "local",
+        "Status": {
+            "LogicalCapacity": "10000000000",
+            "Name": "u_ubiquityPOC_demo1",
+            "PhysicalCapacity": "10234101760",
+            "PoolName": "gold_ubiquity_9.151.162.17",
+            "Profile": "gold",
+            "StorageName": "XIV Gen4d-67d",
+            "StorageType": "2810XIV",
+            "UsedCapacity": "0",
+            "Wwn": "6001738CFC9035EB0000000000CBB305",
+            "fstype": "xfs"
+        }
+    }
+]
 ```

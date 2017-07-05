@@ -1,5 +1,14 @@
 # IBM Block Storage System via Spectrum Control Base Edition
 
+* [Introduction](#introduction)
+* [Configuring Docker host for IBM block storage systems](#configuring-docker-host-for-ibm-block-storage-systems)
+* [Plugin usage example](#plugin-usage-example)
+
+## Introduction
+IBM block storage can be used as persistent storage for Docker via Ubiquity service.
+Ubiquity communicates with the IBM storage systems through IBM Spectrum Control Base Edition (SCBE) 3.2.0. SCBE creates a storage profile (for example, gold, silver or bronze) and makes it available for Docker or Kubernetes plugins.
+Avilable IBM block storage systems for Docker volume plugin can be viewed in the [Ubiquity Service](https://github.com/IBM/ubiquity/).
+
 ## Configuring Docker host for IBM block storage systems
 Configure the following steps(1-4) on each node in the Docker Swarm cluster that requires access to Ubiquity volumes.
 

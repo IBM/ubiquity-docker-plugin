@@ -63,24 +63,26 @@ Docker volume creation template:
 docker volume create --driver ubiquity --name [VOL NAME] --opt size=[number in GB] --fstype=[xfs|ext4] --opt profile=[SCBE service name]
 ```
 
-For example, to create a volume named demo1 with 10gb size from the gold SCBE storage service, such as a pool from IBM FlashSystem A9000R and with QoS capability:
+For example, to create a volume named volume1 with 10gb size from the gold SCBE storage service, such as a pool from IBM FlashSystem A9000R and with QoS capability:
 
 ```bash
-#> docker volume create --driver ubiquity --name demo1 --opt size=10 --opt fstype=xfs --opt profile=gold
+#> docker volume create --driver ubiquity --name volume1 --opt size=10 --opt fstype=xfs --opt profile=gold
 ```
 
 You can list and inspect the newly created volume by the following command :
 ```bash
 #> docker volume ls
 DRIVER              VOLUME NAME
-ubiquity            demo1
+ubiquity            volume1
+
+
 #> docker volume inspect demo1
 [
     {
         "Driver": "ubiquity",
         "Labels": {},
         "Mountpoint": "/",
-        "Name": "demo1",
+        "Name": "volume1",
         "Options": {
             "fstype": "xfs",
             "profile": "gold",
@@ -89,16 +91,61 @@ ubiquity            demo1
         "Scope": "local",
         "Status": {
             "LogicalCapacity": "10000000000",
-            "Name": "u_ubiquityPOC_demo1",
+            "Name": "u_prod_volume1",
             "PhysicalCapacity": "10234101760",
-            "PoolName": "gold_ubiquity_9.151.162.17",
+            "PoolName": "gold_ubiquity",
             "Profile": "gold",
-            "StorageName": "XIV Gen4d-67d",
+            "StorageName": "A9000R system1",
             "StorageType": "2810XIV",
             "UsedCapacity": "0",
-            "Wwn": "6001738CFC9035EB0000000000CBB305",
+            "Wwn": "6001738CFC9035EB0000000000CFF306",
             "fstype": "xfs"
         }
     }
 ]
+
+### Run a Docker container with a volume
+Docker volume creation template:
+```bash
+#> docker run -it -d --name [CONTAINER NAME] --volume-driver ubiquity -v [VOL NAME]:[PATH TO MOUNT] [DOCKER IMAGE] [CMD]
+```
+
+For example, to run a container `container1` with the created volume `volume1` based on alpine Docker image and running `bash` command for the fun.
+
+```bash
+#> docker run -it -d --name container1 --volume-driver ubiquity -v volume1:/data alpine bash
+```
+
+You can display the new mountpoint and multipath device inside the container and of cause to write data inside this A9000R presistant volume
+```bash
+#> docker exec container1 df | egrep "/data|^Filesystem"
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/mapper/mpathacg   9755384     32928   9722456   0% /data
+
+#> docker exec container1 mount | egrep "/data"
+/dev/mapper/mpathacg on /data type xfs (rw,seclabel,relatime,attr2,inode64,noquota)
+
+#> docker exec container1 touch /data/FILE
+#> docker exec container1 ls /data/FILE
+```
+
+You can also see the new attached volume on the host
+```bash
+#> multipath -ll
+mpathacg (36001738cfc9035eb0000000000cbb306) dm-8 IBM     ,2810XIV         
+size=9.3G features='1 queue_if_no_path' hwhandler='0' wp=rw
+`-+- policy='service-time 0' prio=1 status=active
+  |- 8:0:0:1 sdb 8:16 active ready running
+  `- 9:0:0:1 sdc 8:32 active ready running
+
+#> mount |grep ubiquity
+/dev/mapper/mpathacg on /ubiquity/6001738CFC9035EB0000000000CBB306 type xfs (rw,relatime,seclabel,attr2,inode64,noquota)
+
+#> df | egrep "ubiquity|^Filesystem" 
+Filesystem                       1K-blocks    Used Available Use% Mounted on
+/dev/mapper/mpathacg               9755384   32928   9722456   1% /ubiquity/6001738CFC9035EB0000000000CFF306
+
+#> docker inspect --format '{{ index .Mounts }}' container1
+[{volume volume1 /ubiquity/6001738CFC9035EB0000000000CBB306 /data ubiquity  true }]
+
 ```

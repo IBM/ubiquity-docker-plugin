@@ -7,11 +7,15 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
 
 
 ## Installing the Ubiquity Docker volume plugin
+Install and configure the plugin on each node in the Docker Swarm cluster that requires access to Ubiquity volumes.
 
 ### 1. Prerequisites
   * Ubiquity Docker volume plugin is supported on the following operating systems:
     - RHEL 7+
     - SUSE 12+
+
+  * Ubiquity Docker volume plugin requires Docker version 17+.
+
   * The following sudoers configuration `/etc/sudoers` is required to run the plugin as root user: 
   
      ```
@@ -24,14 +28,9 @@ The code is provided as is, without warranty. Any issue will be handled on a bes
          Defaults:%USER !requiretty
          Defaults:%USER secure_path = /sbin:/bin:/usr/sbin:/usr/bin
      ```
-  * Verify that the pluginsDirectory, specified in ubiquity-client.conf file, exists on the host. Default localtion is /etc/docker/plugins/.
 
-  * Ubiquity needs access to the management of the required storage backends. See [Available Storage Systems](supportedStorage.md) for connectivity details.
-
-  
-```bash
-        mkdir /etc/docker/plugins
- ```
+  * The Docker node must have access to the storage backends. Follow the configuration procedures detailed in the [Available Storage Systems](supportedStorage.md) section, according to your storage system type.
+   
 
 ### 2. Downloading and installing the plugin
 
@@ -41,22 +40,21 @@ mkdir -p /etc/ubiquity
 cd /etc/ubiquity
 curl https://github.com/IBM/ubiquity-docker-plugin/releases/download/v0.3.0/ubiquity-docker-plugin-0.3.0.tar.gz | tar xf -
 chmod u+x ubiquity-docker-plugin
-#chown USER:GROUP ubiquity  # Run this command only a non-root should run ubiquity (fill up the USER and GROUP)
-cp ubiquity-docker-plugin /usr/bin                         
+cp ubiquity-docker-plugin /usr/bin 
+#chown USER:GROUP /usr/bin/ubiquity-docker-plugin   ### Run this command only a non-root user.
 cp ubiquity-docker-plugin.service /usr/lib/systemd/system/ 
 ```
-   * To run the plugin as non-root users, you must add to the `/usr/lib/systemd/system/ubiquity-docker-plugin.service` file this line `User=USER` under the [Service] item.
+   * To run the plugin as non-root user, add the `User=USER` line under the [Service] item in the  `/usr/lib/systemd/system/ubiquity-docker-plugin.service` file.
    
-   * Enable the plugin service
+   * Enable the plugin service.
    
 ```bash 
 systemctl enable ubiquity-docker-plugin.service      
 ```
 
 ### 3. Configuring the plugin
-Configure plugin according to your storage backend requirements. Refer to 
-[specific instructions](supportedStorage.md) for specific configuration needed by the storage backend. 
-The configuration file must be named `ubiquity-client.conf` and placed in `/etc/ubiquity` directory.
+Before running the plugin service, you must create and configure the `/etc/ubiquity/ubiquity-client.conf` file, according to your storage system type.
+Follow the configuration procedures detailed in the [Available Storage Systems](supportedStorage.md) section.
 
 
 ### 4. Running the plugin service
@@ -70,22 +68,14 @@ service docker restart
 ```
 
 ## Plugin usage examples
-Examples of how to manage Ubiquiy Docker volumes, such as volume create\remove\list and start\stop stateful containers, details in [Available Storage Systems](supportedStorage.md).
+For examples on how to create, remove, list Ubiquity Docker volumes, as well as start and stop stateful containers, refer to the [Available Storage Systems](supportedStorage.md) section, according to your storage system type.
 
 ## Troubleshooting
-### Communication Error
-If any of docker volume management commands responds with following errors message, it is highly likely that ubiquity-docker-plugin and ubiquity service are not able to communicate
-with each other. Please check the storageApiURL specified while starting the plugin
-```bash
-Error looking up volume plugin ubiquity: Plugin does not implement the requested driver
-```
+### Communication failure
+If the  `Error looking up volume plugin ubiquity: Plugin does not implement the requested driver` error is displayed and the `Error in activate remote call &url.Error` message is stored in the `ubiquity-docker-plugin.log` file, verify comminication link between the plugin and Ubiqutiy server nodes. The loss of communication may occur if the relevant TCP  ports are not open. The port numbers are detailed in the plugin and Ubiquity server configuration files.
 
-### Updating a Docker volume
-Currently there is no way to update the options set on a volume through the Docker CLI.  In order to change its name or features, the native storage system APIs must be used. If a name must be changed and the data must be kept, it can always be deleted from Ubiquity (assuming forceDelete = false on the server) and then re-added with the new name.
-
-## Suggestions and Questions
-
-For any questions, suggestions, or issues, please use github.
+## Support
+For any questions, suggestions, or issues, use github.
 
 ## Licensing
 

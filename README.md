@@ -36,7 +36,7 @@ Install and configure the plugin on each node in the Docker Swarm cluster that r
 ```bash
 mkdir -p /etc/ubiquity
 cd /etc/ubiquity
-curl https://github.com/IBM/ubiquity-docker-plugin/releases/download/v0.3.0/ubiquity-docker-plugin-0.3.0.tar.gz | tar xf -
+curl -L https://github.com/IBM/ubiquity-docker-plugin/releases/download/v0.3.0/ubiquity-docker-plugin-0.3.0.tar.gz | tar xf -
 chmod u+x ubiquity-docker-plugin
 cp ubiquity-docker-plugin /usr/bin 
 #chown USER:GROUP /usr/bin/ubiquity-docker-plugin   ### Run this command only a non-root user.

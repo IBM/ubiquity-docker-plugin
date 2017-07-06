@@ -1,10 +1,26 @@
+/**
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package scbe_test
 
 import (
 	"fmt"
 	"github.com/IBM/ubiquity/local/scbe"
-	"github.com/IBM/ubiquity/utils/logs"
 	"github.com/IBM/ubiquity/resources"
+	"github.com/IBM/ubiquity/utils/logs"
 	"github.com/jinzhu/gorm"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega" // including the whole package inside the file
@@ -176,7 +192,7 @@ var _ = Describe("datamodel integration testing with live DB", func() {
 	Context(".table", func() {
 		It("Should to succeed to insert new volume raw and find it in DB", func() {
 			fakeVolName := "volname1"
-			err := datamodel.InsertVolume(fakeVolName, "www1", "host")
+			err := datamodel.InsertVolume(fakeVolName, "www1", "host", "ext4")
 			Expect(err).NotTo(HaveOccurred())
 			ScbeVolume, exist, err := datamodel.GetVolume(fakeVolName)
 			Expect(err).NotTo(HaveOccurred())
@@ -186,7 +202,7 @@ var _ = Describe("datamodel integration testing with live DB", func() {
 		})
 		It("Should to succeed to insert new volume and delete it", func() {
 			fakeVolName := "volname1"
-			err := datamodel.InsertVolume(fakeVolName, "www1", "host")
+			err := datamodel.InsertVolume(fakeVolName, "www1", "host", "ext4")
 			Expect(err).NotTo(HaveOccurred())
 			_, exist, err := datamodel.GetVolume(fakeVolName)
 			Expect(err).NotTo(HaveOccurred())
@@ -200,7 +216,7 @@ var _ = Describe("datamodel integration testing with live DB", func() {
 			num := 10
 			for i := 0; i < num; i++ {
 				volname = fmt.Sprintf("fakevol %d", i)
-				Expect(datamodel.InsertVolume(volname, "www1", "host")).NotTo(HaveOccurred())
+				Expect(datamodel.InsertVolume(volname, "www1", "host", "ext4")).NotTo(HaveOccurred())
 			}
 			vols, err := datamodel.ListVolumes()
 			Expect(err).NotTo(HaveOccurred())
@@ -208,7 +224,7 @@ var _ = Describe("datamodel integration testing with live DB", func() {
 		})
 		It("Should to succeed to insert and then update the attach of the volume", func() {
 			fakeVolName := "volname1"
-			err := datamodel.InsertVolume(fakeVolName, "www1", "host")
+			err := datamodel.InsertVolume(fakeVolName, "www1", "host", "ext4")
 			Expect(err).NotTo(HaveOccurred())
 			vol, exist, err := datamodel.GetVolume(fakeVolName)
 			Expect(err).NotTo(HaveOccurred())

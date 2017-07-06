@@ -1,3 +1,19 @@
+/**
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package resources
 
 import "github.com/jinzhu/gorm"
@@ -46,14 +62,16 @@ type ScbeConfig struct {
 	ConnectionInfo       ConnectionInfo
 	DefaultService       string // SCBE storage service to be used by default if not mentioned by plugin
 	DefaultVolumeSize    string // The default volume size in case not specified by user
-	DefaultFilesystem    string // The default filesystem to create on new volumes
 	UbiquityInstanceName string // Prefix for the volume name in the storage side (max length 15 char)
+
+	DefaultFilesystemType string // The default filesystem type to create on new provisioned volume during attachment to the host
 }
 
 const UbiquityInstanceNameMaxSize = 15
 const DefaultForScbeConfigParamDefaultVolumeSize = "1"    // if customer don't mention size, then the default is 1gb
 const DefaultForScbeConfigParamDefaultFilesystem = "ext4" // if customer don't mention fstype, then the default is ext4
 const PathToMountUbiquityBlockDevices = "/ubiquity/%s"    // %s is the WWN of the volume # TODO this should be moved to docker plugin side
+const OptionNameForVolumeFsType = "fstype"                // the option name of the fstype and also the key in the volumeConfig
 
 type SshConfig struct {
 	User string

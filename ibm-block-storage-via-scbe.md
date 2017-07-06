@@ -135,7 +135,6 @@ For example, to create a volume named volume1 with 10GB size from the gold SCBE 
 ```
 
 ### Displaying a Docker volume
-
 You can list and inspect the newly created volume, using the following command:
 ```bash
 #> docker volume ls

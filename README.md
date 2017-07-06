@@ -32,8 +32,6 @@ Install and configure the plugin on each node in the Docker Swarm cluster that r
   * The Docker node must have access to the storage backends. Follow the configuration procedures detailed in the [Available Storage Systems](supportedStorage.md) section, according to your storage system type.
    
 
-  
-
 ### 2. Downloading and installing the plugin
 
 * Download and unpack the application package.

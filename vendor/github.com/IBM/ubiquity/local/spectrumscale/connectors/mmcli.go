@@ -1,3 +1,19 @@
+/**
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package connectors
 
 import (
@@ -17,7 +33,7 @@ type spectrum_mmcli struct {
 }
 
 func NewSpectrumMMCLI(logger *log.Logger) (SpectrumScaleConnector, error) {
-	return &spectrum_mmcli{logger: logger, executor: utils.NewExecutor(logger)}, nil
+	return &spectrum_mmcli{logger: logger, executor: utils.NewExecutor()}, nil
 }
 
 func NewSpectrumMMCLIWithExecutor(logger *log.Logger, executor utils.Executor) (SpectrumScaleConnector, error) {
@@ -407,5 +423,51 @@ func SetFilesetQuotaInternal(logger *log.Logger, executor utils.Executor, filesy
 	}
 
 	logger.Printf("setFilesetQuota output: %s\n", string(output))
+	return nil
+}
+
+func (s *spectrum_mmcli) ExportNfs(volumeMountpoint string, clientConfig string) error {
+	s.logger.Println("spectrumLocalClient: ExportNfs start")
+	defer s.logger.Println("spectrumLocalClient: ExportNfs end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"
+	args := []string{spectrumCommand, "export", "add", volumeMountpoint, "--client", clientConfig}
+
+	return ExportNfsInternal(s.logger, s.executor, "sudo", args)
+}
+
+func ExportNfsInternal(logger *log.Logger, executor utils.Executor, command string, args []string) error {
+
+	output, err := executor.Execute(command, args)
+
+	if err != nil {
+		logger.Printf("Failed to export fileset via Nfs: error %#v ExportNfs output: %#v\n", err, output)
+		return fmt.Errorf("Failed to export fileset via Nfs: %s", err.Error())
+	}
+
+	logger.Printf("ExportNfs output: %s\n", string(output))
+	return nil
+}
+
+func (s *spectrum_mmcli) UnexportNfs(volumeMountpoint string) error {
+	s.logger.Println("spectrumLocalClient: UnexportNfs start")
+	defer s.logger.Println("spectrumLocalClient: UnexportNfs end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"
+	args := []string{spectrumCommand, "export", "remove", volumeMountpoint, "--force"}
+
+	return UnexportNfsInternal(s.logger, s.executor, "sudo", args)
+}
+
+func UnexportNfsInternal(logger *log.Logger, executor utils.Executor, command string, args []string) error {
+
+	output, err := executor.Execute(command, args)
+
+	if err != nil {
+		logger.Printf("Failed to unexport fileset via Nfs: error %#v UnexportNfs output: %#v \n", err, output)
+		return fmt.Errorf("Failed to unexport fileset via Nfs: %s", err.Error())
+	}
+
+	logger.Printf("UnexportNfs output: %s\n", string(output))
 	return nil
 }

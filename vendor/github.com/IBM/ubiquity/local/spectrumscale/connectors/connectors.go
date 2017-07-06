@@ -1,3 +1,19 @@
+/**
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package connectors
 
 import (
@@ -26,6 +42,8 @@ type SpectrumScaleConnector interface {
 	//TODO modify quota from string to Capacity (see kubernetes)
 	ListFilesetQuota(filesystemName string, filesetName string) (string, error)
 	SetFilesetQuota(filesystemName string, filesetName string, quota string) error
+	ExportNfs(volumeMountpoint string, clientConfig string) error
+	UnexportNfs(volumeMountpoint string) error
 }
 
 const (
@@ -35,8 +53,8 @@ const (
 
 func GetSpectrumScaleConnector(logger *log.Logger, config resources.SpectrumScaleConfig) (SpectrumScaleConnector, error) {
 	if config.RestConfig.Endpoint != "" {
-		logger.Printf("Initializing SpectrumScale REST connector with restConfig: %+v\n", config.RestConfig)
-		return NewSpectrumRest(logger, config.RestConfig)
+		logger.Printf("Initializing SpectrumScale REST connector\n")
+		return NewSpectrumRestV2(logger, config.RestConfig)
 	}
 	if config.SshConfig.User != "" && config.SshConfig.Host != "" {
 		if config.SshConfig.Port == "" || config.SshConfig.Port == "0" {

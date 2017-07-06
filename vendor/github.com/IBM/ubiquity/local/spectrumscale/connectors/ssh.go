@@ -1,3 +1,19 @@
+/**
+ * Copyright 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package connectors
 
 import (
@@ -22,7 +38,7 @@ func NewSpectrumSSH(logger *log.Logger, sshConfig resources.SshConfig) (Spectrum
 	user := sshConfig.User
 	host := sshConfig.Host
 	port := sshConfig.Port
-	return &spectrum_ssh{logger: logger, executor: utils.NewExecutor(logger), user: user, host: host, port: port}, nil
+	return &spectrum_ssh{logger: logger, executor: utils.NewExecutor(), user: user, host: host, port: port}, nil
 }
 func NewSpectrumSSHWithExecutor(logger *log.Logger, sshConfig resources.SshConfig, executor utils.Executor) (SpectrumScaleConnector, error) {
 	user := sshConfig.User
@@ -200,4 +216,26 @@ func (s *spectrum_ssh) SetFilesetQuota(filesystemName string, filesetName string
 	userAndHost := fmt.Sprintf("%s@%s", s.user, s.host)
 	args := []string{userAndHost, "-p", s.port, "sudo", spectrumCommand, filesystemName + ":" + filesetName, "--block", quota + ":" + quota}
 	return SetFilesetQuotaInternal(s.logger, s.executor, filesystemName, filesetName, quota, "ssh", args)
+}
+
+func (s *spectrum_ssh) ExportNfs(volumeMountpoint string, clientConfig string) error {
+
+	s.logger.Println("spectrumLocalClient: ExportNfs start")
+	defer s.logger.Println("spectrumLocalClient: ExportNfs end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"
+	userAndHost := fmt.Sprintf("%s@%s", s.user, s.host)
+	args := []string{userAndHost, "-p", s.port, "sudo", spectrumCommand, "export", "add", volumeMountpoint, "--client", clientConfig}
+	return ExportNfsInternal(s.logger, s.executor, "ssh", args)
+}
+
+func (s *spectrum_ssh) UnexportNfs(volumeMountpoint string) error {
+
+	s.logger.Println("spectrumLocalClient: UnexportNfs start")
+	defer s.logger.Println("spectrumLocalClient: UnexportNfs end")
+
+	spectrumCommand := "/usr/lpp/mmfs/bin/mmnfs"
+	userAndHost := fmt.Sprintf("%s@%s", s.user, s.host)
+	args := []string{userAndHost, "-p", s.port, "sudo", spectrumCommand, "export", "remove", volumeMountpoint, "--force"}
+	return UnexportNfsInternal(s.logger, s.executor, "ssh", args)
 }

@@ -13,6 +13,9 @@ Install and configure the plugin on each node in the Docker Swarm cluster that r
   * Ubiquity Docker volume plugin is supported on the following operating systems:
     - RHEL 7+
     - SUSE 12+
+
+  * Ubiquity Docker volume plugin requires Docker version 17+.
+
   * The following sudoers configuration `/etc/sudoers` is required to run the plugin as root user: 
   
      ```

@@ -42,8 +42,8 @@ mkdir -p /etc/ubiquity
 cd /etc/ubiquity
 curl https://github.com/IBM/ubiquity-docker-plugin/releases/download/v0.3.0/ubiquity-docker-plugin-0.3.0.tar.gz | tar xf -
 chmod u+x ubiquity-docker-plugin
-#chown USER:GROUP ubiquity       ### Run this command only a non-root user.
-cp ubiquity-docker-plugin /usr/bin                         
+cp ubiquity-docker-plugin /usr/bin 
+#chown USER:GROUP /usr/bin/ubiquity-docker-plugin   ### Run this command only a non-root user.
 cp ubiquity-docker-plugin.service /usr/lib/systemd/system/ 
 ```
    * To run the plugin as non-root user, add the `User=USER` line under the [Service] item in the  `/usr/lib/systemd/system/ubiquity-docker-plugin.service` file.

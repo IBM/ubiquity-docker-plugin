@@ -143,7 +143,7 @@ DRIVER              VOLUME NAME
 ubiquity            volume1
 
 
-#> docker volume inspect demo1
+#> docker volume inspect volume1
 [
     {
         "Driver": "ubiquity",

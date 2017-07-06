@@ -42,10 +42,10 @@ The plugin requires multipath devices. Configure the `multipath.conf` file accor
    iscsiadm -m node  -p ${storage system iSCSI portal IP/hostname} --login              # To log in to targets
 ```
 
-### 4. Opening TCP ports to Ubiquity server
+#### 4. Opening TCP ports to Ubiquity server
 Ubiquity server listens on TCP port (by default 9999) to receive plugin requests, such as creating a new volume. Verify that the Docker node can access this Ubiquity server port.
 
-### 5. Configuring Ubiquity Docker volume plugin for SCBE
+#### 5. Configuring Ubiquity Docker volume plugin for SCBE
 
 The ubiquity-client.conf must be created in the /etc/ubiquity directory. Configure the plugin by editing the file, as illustrated below.
 
@@ -70,6 +70,10 @@ The ubiquity-client.conf must be created in the /etc/ubiquity directory. Configu
  ```
   
  
+ 
+ 
+ 
+ 
 
 ## Plugin usage example
 
@@ -82,13 +86,14 @@ The flow is:
 5. Clean up by exist `container2`, remove the containers and delete the volume `demoVol`
 
 ```bash
-[root@docker-c1-n1 tmp]# docker volume create --driver ubiquity --name demoVol --opt size=10 --opt fstype=xfs --opt profile=gold
+#> docker volume create --driver ubiquity --name demoVol --opt size=10 --opt fstype=xfs --opt profile=gold
 demoVol
 
-[root@docker-c1-n1 tmp]# docker volume ls
+#> docker volume ls
 DRIVER              VOLUME NAME
 ubiquity            demoVol
-[root@docker-c1-n1 tmp]# docker run -it --name container1 --volume-driver ubiquity -v demoVol:/data alpine sh
+
+#> docker run -it --name container1 --volume-driver ubiquity -v demoVol:/data alpine sh
 
 / # df | egrep "/data|^Filesystem"
 Filesystem           1K-blocks      Used Available Use% Mounted on
@@ -99,17 +104,17 @@ Filesystem           1K-blocks      Used Available Use% Mounted on
 -rw-r--r--    1 root     root             0 Jul  6 07:59 /data/myDATA
 / # exit
 
-[root@docker-c1-n1 tmp]# docker run -it --name container2 --volume-driver ubiquity -v demoVol:/data alpine sh
+#> docker run -it --name container2 --volume-driver ubiquity -v demoVol:/data alpine sh
 
 / # ls -l /data/myDATA
 -rw-r--r--    1 root     root             0 Jul  6 07:59 /data/myDATA
 / # exit
 
-[root@docker-c1-n1 tmp]# docker rm container1 container2
+#> docker rm container1 container2
 container1
 container2
 
-[root@docker-c1-n1 tmp]# docker volume rm demoVol
+#> docker volume rm demoVol
 demoVol
 ```
 
@@ -275,3 +280,14 @@ docker-compose -f docker-compose.yml up
 ## Troubleshooting
 ### Server error
 If the `bad status code 500 INTERNAL SERVER ERROR` error is displayed, check the `/var/log/sc/hsgsvr.log` log file on the SCBE node for explanation.
+
+### None managed storage side operations
+Don't change the volume directly on the storage system, use only docker volume for that. 
+if by exidate u unmap volume directly from the storage, you to clean up the multipath device of this volume on the plugin node and then rescan the operating system. 
+
+### Cannot attach volume if it already attached to different host
+A voluem can be used only from one node at a time. In order to use a volume from different node, you must stop the container that used this volume and then use the volume on different host.
+
+### Cannot delete volume that attach to host
+You cannot delete volume that is attached to a host `Volume [vol] already attached to [host]`
+If volume is not attached to any host but you still see this error, you need to run a new container using this volume, then stop the container and remove the volume. 

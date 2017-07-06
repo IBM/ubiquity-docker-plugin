@@ -77,13 +77,13 @@ The ubiquity-client.conf must be created in the /etc/ubiquity directory. Configu
 
 ## Plugin usage example
 
-### Simple flow of stateful container with Ubiquity volume
-The flow is:
-1. Create volume `demoVol` on `gold` SCBE storage service, 
-2. Run docker `container1` with volume `demoVol` on `/data` mountpoint inside the `container1`
-3. Create file `/data/myDATA` in the `container1`
-4. Exit `container1` and then start new `container2` and the file `/data/myDATA` exist!
-5. Clean up by exist `container2`, remove the containers and delete the volume `demoVol`
+### Basic flow for running a stateful container with Ubiquity volume
+The basic flow is as follows:
+1. Create volume `demoVol` on `gold` SCBE storage service.
+2. Run container `container1` with volume `demoVol` with `/data` mountpoint.
+3. Start I/Os into `/data/myDATA` inside the `container1`.
+4. Exit `container1` and then start a new `container2` with the same `demoVol` volume and validate that the file `/data/myDATA` still exists.
+5. Clean up by exiting `container2`, removing the containers and deleting the volume `demoVol`.
 
 ```bash
 #> docker volume create --driver ubiquity --name demoVol --opt size=10 --opt fstype=xfs --opt profile=gold
@@ -95,19 +95,23 @@ ubiquity            demoVol
 
 #> docker run -it --name container1 --volume-driver ubiquity -v demoVol:/data alpine sh
 
-/ # df | egrep "/data|^Filesystem"
+#> df | egrep "/data|^Filesystem"
 Filesystem           1K-blocks      Used Available Use% Mounted on
 /dev/mapper/mpathaci   9755384     32928   9722456   0% /data
 
-/ # touch /data/myDATA
-/ # ls -l /data/myDATA
--rw-r--r--    1 root     root             0 Jul  6 07:59 /data/myDATA
-/ # exit
+#> dd if=/dev/zero of=/data/myDATA bs=10M count=1
+1+0 records in
+1+0 records out
+
+#> ls -lh /data/myDATA
+-rw-r--r--    1 root     root       10.0M Jul  6 11:04 /data/myDATA
+
+#> exit
 
 #> docker run -it --name container2 --volume-driver ubiquity -v demoVol:/data alpine sh
 
 / # ls -l /data/myDATA
--rw-r--r--    1 root     root             0 Jul  6 07:59 /data/myDATA
+-rw-r--r--    1 root     root       10.0M Jul  6 11:04 /data/myDATA
 / # exit
 
 #> docker rm container1 container2
@@ -121,18 +125,18 @@ demoVol
 ### Creating a Docker volume
 Docker volume creation template:
 ```bash
-docker volume create --driver ubiquity --name [VOL NAME] --opt size=[number in GB] --fstype=[xfs|ext4] --opt profile=[SCBE service name]
+docker volume create --driver ubiquity --name [VOL NAME] --opt size=[number in GB] --opt fstype=[xfs|ext4] --opt profile=[SCBE service name]
 ```
 
-For example, to create a volume named volume1 with 10gb size from the gold SCBE storage service, such as a pool from IBM FlashSystem A9000R and with QoS capability:
+For example, to create a volume named volume1 with 10GB size from the gold SCBE storage service, such as a pool from IBM FlashSystem A9000R with QoS capability:
 
 ```bash
 #> docker volume create --driver ubiquity --name volume1 --opt size=10 --opt fstype=xfs --opt profile=gold
 ```
 
-### Display a Docker volume
+### Displaying a Docker volume
 
-You can list and inspect the newly created volume by the following command :
+You can list and inspect the newly created volume, using the following command:
 ```bash
 #> docker volume ls
 DRIVER              VOLUME NAME
@@ -169,19 +173,25 @@ ubiquity            volume1
 
 ```
 
-### Run a Docker container with a volume
+### Running a Docker container with a Ubiquity volume
+The Docker start command will cause the Ubiquity to: 
+* Attach the volume to the host
+* Rescan and discover the multipath device of the new volume
+* Create xfs or ext4 filesystem on the device
+* Mount the new multipath device on /ubiquity/[WWN of the volume]
+
 Docker run template:
 ```bash
 #> docker run -it -d --name [CONTAINER NAME] --volume-driver ubiquity -v [VOL NAME]:[PATH TO MOUNT] [DOCKER IMAGE] [CMD]
 ```
 
-For example, to run a container `container1` with the created volume `volume1` based on alpine Docker image and running `bash` command for the fun.
+For example, to run a container `container1` with the created volume `volume1` based on `alpine` Docker image and running `sh` command.
 
 ```bash
 #> docker run -it -d --name container1 --volume-driver ubiquity -v volume1:/data alpine sh
 ```
 
-You can display the new mountpoint and multipath device inside the container and of cause to write data inside this A9000R presistant volume
+You can display the new mountpoint and multipath device inside the container. In addition you can write data into this  presistant volume on IBM FlashSystem A9000R.
 ```bash
 #> docker exec container1 df | egrep "/data|^Filesystem"
 Filesystem           1K-blocks      Used Available Use% Mounted on
@@ -194,7 +204,7 @@ Filesystem           1K-blocks      Used Available Use% Mounted on
 #> docker exec container1 ls /data/FILE
 ```
 
-You can also see the new attached volume on the host
+Now you can also display the newly attached volume on the host.
 ```bash
 #> multipath -ll
 mpathacg (36001738cfc9035eb0000000000cbb306) dm-8 IBM     ,2810XIV         
@@ -215,19 +225,14 @@ Filesystem                       1K-blocks    Used Available Use% Mounted on
 
 ```
 
-### Stop a Docker container with a volume
-Docker stop   (Ubiquity will detach the volume from the host)
+### Stopping a Docker container with a volume
+The Docker stop command will cause the Ubiquity to detach the volume from the host.
 ```bash
 #> docker stop container1
 ```
 
-Now you can start the same container to see that the data still p
-```bash
-#> docker run -it -d --name container1 --volume-driver ubiquity -v volume1:/data alpine bash
-```
-
-### Remove a Docker volume
-Note : to remove a volume you first need to remove the container.
+### Removing a Docker volume
+Note: Before removing a volume, remove its container.
 ```bash
 #> docker rm container1
 container1
@@ -236,8 +241,8 @@ container1
 volume1
 ```
 
-### Docker Compose 
-Below a docker compose that describe web app and postgress app.
+### Using Docker Compose 
+The `docker-compose.yml` example below illustrates a web app container that uses postgress container with Ubiquity volume.
 
 ```bash
 version: "3"
@@ -275,19 +280,17 @@ services:
         - 'postgres:/var/lib/postgresql/data'
 ```
 
-docker-compose -f docker-compose.yml up
-
 ## Troubleshooting
 ### Server error
 If the `bad status code 500 INTERNAL SERVER ERROR` error is displayed, check the `/var/log/sc/hsgsvr.log` log file on the SCBE node for explanation.
 
-### None managed storage side operations
-Don't change the volume directly on the storage system, use only docker volume for that. 
-if by exidate u unmap volume directly from the storage, you to clean up the multipath device of this volume on the plugin node and then rescan the operating system. 
+### Updating the volume on the storage side
+Do not change a volume on a storage system itself, use Docker native command instead.
+Any volume operation on the storage it self, requires manual action on the Docker host. For example, if you unmap a volume directly from the storage, you must clean up the multipath device of this volume and rescan the operating system on the Docker node.
 
-### Cannot attach volume if it already attached to different host
-A voluem can be used only from one node at a time. In order to use a volume from different node, you must stop the container that used this volume and then use the volume on different host.
+### An attached volume cannot be attached to different host
+A volume can be used only by one node at a time. In order to use a volume on different node, you must stop the container that uses the volume and then start a new container with the volume on different host.
 
-### Cannot delete volume that attach to host
-You cannot delete volume that is attached to a host `Volume [vol] already attached to [host]`
-If volume is not attached to any host but you still see this error, you need to run a new container using this volume, then stop the container and remove the volume. 
+### Cannot delete volume attached to a host
+You cannot delete volume that is currently attached to a host. Any atempt will result in the `Volume [vol] already attached to [host]` error message.
+If volume is not attached to any host, but this error is still displayed, run a new container, using this volume, then stop the container and remove the volume to delete it. 

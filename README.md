@@ -1,7 +1,5 @@
 # Ubiquity Docker Volume Plugin
-The Ubiquity Docker volume plugin provides access to persistent storage for Docker containers.  This plugin communicates with the Ubiquity storage volume service for the creation and management of volumes in storage system.  Once created, a volume can be used by Docker. 
-
-The plugin must be installed on each of your Docker hosts. The plugin must be configured to operate with the Ubiquity storage service.
+The Ubiquity Docker volume plugin provides access to persistent storage for Docker containers.  This plugin communicates with the [Ubiquity service](https://github.com/IBM/ubiquity) for the creation and management of volumes in storage system.
 
 The code is provided as is, without warranty. Any issue will be handled on a best-effort basis.
 
@@ -24,7 +22,7 @@ Install and configure the plugin on each node in the Docker Swarm cluster that r
      For non-root users, such as USER, configure the sudoers as follows: 
 
      ```
-         USER ALL= NOPASSWD: /usr/bin/, /bin/
+         USER ALL= NOPASSWD: /usr/bin/, /bin/, /usr/sbin/ 
          Defaults:%USER !requiretty
          Defaults:%USER secure_path = /sbin:/bin:/usr/sbin:/usr/bin
      ```

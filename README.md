@@ -73,9 +73,6 @@ For examples on how to create, remove, list Ubiquity Docker volumes, as well as 
 ### Communication failure
 If the  `Error looking up volume plugin ubiquity: Plugin does not implement the requested driver` error is displayed and the `Error in activate remote call &url.Error` message is stored in the `ubiquity-docker-plugin.log` file, verify comminication link between the plugin and Ubiqutiy server nodes. The loss of communication may occur if the relevant TCP  ports are not open. The port numbers are detailed in the plugin and Ubiquity server configuration files.
 
-### Server error
-If the `bad status code 500 INTERNAL SERVER ERROR` error is displayed, check the `/var/log/sc/hsgsvr.log` log file on the SCBE node for explanation.
-
 ## Support
 For any questions, suggestions, or issues, use github.
 

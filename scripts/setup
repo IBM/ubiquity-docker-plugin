@@ -8,7 +8,7 @@ mkdir -p /etc/ubiquity
 cp $scripts/../bin/ubiquity-docker-plugin /usr/bin/ubiquity-docker-plugin
 
 cp $scripts/../ubiquity-client.conf \
-/etc/ubiquity/ubiquity-client-docker.conf 
+/etc/ubiquity/ubiquity-client.conf 
 
 cp $scripts/ubiquity-docker-plugin.env /etc/ubiquity/ubiquity-docker-plugin.env
 

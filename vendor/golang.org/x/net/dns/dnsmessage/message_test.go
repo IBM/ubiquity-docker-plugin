@@ -7,9 +7,7 @@ package dnsmessage
 import (
 	"bytes"
 	"fmt"
-	"net"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -536,115 +534,60 @@ func TestBuilder(t *testing.T) {
 	}
 }
 
-func ExampleHeaderSearch() {
-	msg := Message{
-		Header: Header{Response: true, Authoritative: true},
-		Questions: []Question{
-			{
-				Name:  mustNewName("foo.bar.example.com."),
-				Type:  TypeA,
-				Class: ClassINET,
+func TestResourcePack(t *testing.T) {
+	for _, tt := range []struct {
+		m   Message
+		err error
+	}{
+		{
+			Message{
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeAAAA,
+						Class: ClassINET,
+					},
+				},
+				Answers: []Resource{{ResourceHeader{}, nil}},
 			},
-			{
-				Name:  mustNewName("bar.example.com."),
-				Type:  TypeA,
-				Class: ClassINET,
+			&nestedError{"packing Answer", errNilResouceBody},
+		},
+		{
+			Message{
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeAAAA,
+						Class: ClassINET,
+					},
+				},
+				Authorities: []Resource{{ResourceHeader{}, (*NSResource)(nil)}},
+			},
+			&nestedError{"packing Authority",
+				&nestedError{"ResourceHeader",
+					&nestedError{"Name", errNonCanonicalName},
+				},
 			},
 		},
-		Answers: []Resource{
-			{
-				ResourceHeader{
-					Name:  mustNewName("foo.bar.example.com."),
-					Type:  TypeA,
-					Class: ClassINET,
+		{
+			Message{
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeA,
+						Class: ClassINET,
+					},
 				},
-				&AResource{[4]byte{127, 0, 0, 1}},
+				Additionals: []Resource{{ResourceHeader{}, nil}},
 			},
-			{
-				ResourceHeader{
-					Name:  mustNewName("bar.example.com."),
-					Type:  TypeA,
-					Class: ClassINET,
-				},
-				&AResource{[4]byte{127, 0, 0, 2}},
-			},
+			&nestedError{"packing Additional", errNilResouceBody},
 		},
-	}
-
-	buf, err := msg.Pack()
-	if err != nil {
-		panic(err)
-	}
-
-	wantName := "bar.example.com."
-
-	var p Parser
-	if _, err := p.Start(buf); err != nil {
-		panic(err)
-	}
-
-	for {
-		q, err := p.Question()
-		if err == ErrSectionDone {
-			break
-		}
-		if err != nil {
-			panic(err)
-		}
-
-		if q.Name.String() != wantName {
-			continue
-		}
-
-		fmt.Println("Found question for name", wantName)
-		if err := p.SkipAllQuestions(); err != nil {
-			panic(err)
-		}
-		break
-	}
-
-	var gotIPs []net.IP
-	for {
-		h, err := p.AnswerHeader()
-		if err == ErrSectionDone {
-			break
-		}
-		if err != nil {
-			panic(err)
-		}
-
-		if (h.Type != TypeA && h.Type != TypeAAAA) || h.Class != ClassINET {
-			continue
-		}
-
-		if !strings.EqualFold(h.Name.String(), wantName) {
-			if err := p.SkipAnswer(); err != nil {
-				panic(err)
-			}
-			continue
-		}
-
-		switch h.Type {
-		case TypeA:
-			r, err := p.AResource()
-			if err != nil {
-				panic(err)
-			}
-			gotIPs = append(gotIPs, r.A[:])
-		case TypeAAAA:
-			r, err := p.AAAAResource()
-			if err != nil {
-				panic(err)
-			}
-			gotIPs = append(gotIPs, r.AAAA[:])
+	} {
+		_, err := tt.m.Pack()
+		if !reflect.DeepEqual(err, tt.err) {
+			t.Errorf("got %v for %v; want %v", err, tt.m, tt.err)
 		}
 	}
-
-	fmt.Printf("Found A/AAAA records for name %s: %v\n", wantName, gotIPs)
-
-	// Output:
-	// Found question for name bar.example.com.
-	// Found A/AAAA records for name bar.example.com.: [127.0.0.2]
 }
 
 func BenchmarkParsing(b *testing.B) {

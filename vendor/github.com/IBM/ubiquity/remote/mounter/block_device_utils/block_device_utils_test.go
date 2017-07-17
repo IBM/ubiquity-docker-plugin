@@ -87,6 +87,10 @@ var _ = Describe("block_device_utils_test", func() {
             err = bdUtils.Rescan(block_device_utils.SCSI)
             Expect(err.Error()).To(MatchRegexp(cmdErr.Error()))
         })
+        It("Rescan fails if unknown protocol", func() {
+            err = bdUtils.Rescan(2)
+            Expect(err).To(HaveOccurred())
+        })
     })
     Context(".ReloadMultipath", func() {
         It("ReloadMultipath calls multipath command", func() {
@@ -133,6 +137,15 @@ var _ = Describe("block_device_utils_test", func() {
         It("Discover fails if multipath -ll command fails", func() {
             volumeId := "volume-id"
             fakeExec.ExecuteReturns([]byte{}, cmdErr)
+            _, err := bdUtils.Discover(volumeId)
+            Expect(err).To(HaveOccurred())
+            Expect(err.Error()).To(MatchRegexp(cmdErr.Error()))
+        })
+        It("Discover fails if stat fails", func() {
+            volumeId := "volume-id"
+            result := "mpath"
+            fakeExec.ExecuteReturns([]byte(fmt.Sprintf("%s (%s) dm-1", result, volumeId)), nil)
+            fakeExec.StatReturns(nil, cmdErr)
             _, err := bdUtils.Discover(volumeId)
             Expect(err).To(HaveOccurred())
             Expect(err.Error()).To(MatchRegexp(cmdErr.Error()))

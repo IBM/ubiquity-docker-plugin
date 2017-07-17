@@ -33,6 +33,7 @@ type UbiquityServerConfig struct {
 	ScbeConfig          ScbeConfig
 	BrokerConfig        BrokerConfig
 	DefaultBackend      string
+	LogLevel            string
 }
 
 // TODO we should consider to move dedicated backend structs to the backend resource file instead of this one.
@@ -102,6 +103,7 @@ type UbiquityPluginConfig struct {
 	SpectrumNfsRemoteConfig SpectrumNfsRemoteConfig
 	ScbeRemoteConfig        ScbeRemoteConfig
 	Backends                []string
+	LogLevel                string
 }
 
 type UbiquityDockerPluginConfig struct {

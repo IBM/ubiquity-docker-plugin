@@ -17,30 +17,20 @@
 package web_server
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"path"
-
-	"os/exec"
-	"os/user"
-
-	"strings"
-
 	"github.com/IBM/ubiquity/resources"
 	"github.com/gorilla/mux"
+	"os"
+	"syscall"
+	"net"
 )
 
 type Server struct {
 	handler *Handler
 	log     *log.Logger
-}
-
-type ServerInfo struct {
-	Name string
-	Addr string
 }
 
 func NewServer(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Server, error) {
@@ -51,7 +41,7 @@ func NewServer(logger *log.Logger, storageApiURL string, config resources.Ubiqui
 	return &Server{log: logger, handler: handler}, nil
 }
 
-func (s *Server) Start(address string, port int, pluginsPath string) {
+func (s *Server) Start(pluginsPath string) {
 	s.log.Println("Starting server...")
 	router := mux.NewRouter()
 	router.HandleFunc("/Plugin.Activate", s.handler.Activate).Methods("POST")
@@ -63,55 +53,42 @@ func (s *Server) Start(address string, port int, pluginsPath string) {
 	router.HandleFunc("/VolumeDriver.Path", s.handler.Path).Methods("POST")
 	router.HandleFunc("/VolumeDriver.List", s.handler.List).Methods("POST")
 	http.Handle("/", router)
-	serverInfo := &ServerInfo{Name: "ubiquity", Addr: fmt.Sprintf("http://%s:%d", address, port)}
-	err := s.writeSpecFile(serverInfo, pluginsPath)
+
+	err := s.serveUnixSocket(pluginsPath, router)
 	if err != nil {
-		s.log.Fatal("Error writing plugin config, aborting...(: %s)\n", err.Error())
-		return
+		panic("Error starting web server: " + err.Error())
 	}
-	s.log.Printf("Started http server on %s:%d\n", address, port)
-	http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
 }
 
-func (s *Server) writeSpecFile(server *ServerInfo, pluginsPath string) error {
-	data, err := json.Marshal(server)
-	if err != nil {
-		return fmt.Errorf("Error marshalling Get response: %s", err.Error())
+func (s *Server) serveUnixSocket(pluginsPath string, router *mux.Router) error {
+
+	if _,err := os.Stat(pluginsPath); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(pluginsPath, 0755); err != nil {
+				s.log.Printf("Error creating pluginsPath %s : %s", pluginsPath, err.Error())
+				return err
+			}
+		} else {
+			s.log.Printf("Error stating %s : %s", pluginsPath, err.Error())
+			return err
+		}
 	}
 
-	pluginFileName := path.Join(pluginsPath, fmt.Sprintf("%s.json", "ubiquity"))
+	ubiquitySocketAddress := path.Join(pluginsPath, fmt.Sprintf("%s.sock", "ubiquity"))
 
-	currentUser, err := user.Current()
-	if err != nil {
-		return fmt.Errorf("Error determinging current user: %s", err.Error())
+	err := syscall.Unlink(ubiquitySocketAddress)
+	if err != nil && !os.IsNotExist(err) {
+		s.log.Printf("Error un-linking %s : %s", ubiquitySocketAddress, err.Error())
+		return err
 	}
 
-	args := []string{"touch", pluginFileName}
-	cmd := exec.Command("sudo", args...)
-	_, err = cmd.Output()
+	l, err := net.Listen("unix", ubiquitySocketAddress)
 	if err != nil {
-		return fmt.Errorf("Error creating plugins config file: %s, error %s", pluginFileName, err.Error())
+		s.log.Printf("Error listening on %s : %s", ubiquitySocketAddress, err.Error())
+		return err
 	}
 
-	dockerConfigPath := strings.Replace(pluginsPath, "plugins/", "", 1)
+    s.log.Printf("Starting http server at %s", ubiquitySocketAddress)
 
-	args = []string{"chmod", "-R", "777", dockerConfigPath}
-	cmd = exec.Command("sudo", args...)
-	_, err = cmd.Output()
-	if err != nil {
-		return fmt.Errorf("Error updating permissions for %s docker config directory", dockerConfigPath)
-	}
-
-	args = []string{"chown", fmt.Sprintf("%s:%s", currentUser.Uid, currentUser.Gid), pluginFileName}
-	cmd = exec.Command("sudo", args...)
-	_, err = cmd.Output()
-	if err != nil {
-		return fmt.Errorf("Error upating ownership for plugin config file: %s", pluginFileName)
-	}
-
-	err = ioutil.WriteFile(pluginFileName, data, 0777)
-	if err != nil {
-		return fmt.Errorf("Error writing json spec: %s", err.Error())
-	}
-	return nil
+	return http.Serve(l, router)
 }

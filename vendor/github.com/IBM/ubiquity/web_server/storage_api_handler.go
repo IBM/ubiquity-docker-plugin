@@ -75,16 +75,13 @@ func (h *StorageApiHandler) Activate() http.HandlerFunc {
 			for name, backend := range h.backends {
 				err := backend.Activate(activateRequest)
 				if err != nil {
-					h.logger.Printf("Error activating %s", err.Error())
+					h.logger.Printf(fmt.Sprintf("Error activating %s %s", name, err.Error()))
 					errors = fmt.Sprintf("%s,%s", errors, name)
 				}
 			}
 			if errors != "" {
 				utils.WriteResponse(w, http.StatusInternalServerError, &resources.GenericResponse{Err: errors})
 				return
-			} else {
-				h.logger.Printf("Error - fail to activate due to error : [%s]", errors)
-				h.logger.Printf("But since SCBE succeeded lets ignore and finish activation. (TODO its a tmp hack)", errors)
 			}
 		}
 
@@ -344,4 +341,38 @@ func (h *StorageApiHandler) getBackend(name string) (resources.StorageClient, er
 		return nil, fmt.Errorf("Cannot find backend %s", backend)
 	}
 	return backend, nil
+}
+
+func (h *StorageApiHandler) GetCapabilities() http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		capabilitiesRequest := resources.GetCapabilitiesRequest{}
+		err := utils.UnmarshalDataFromRequest(req, &capabilitiesRequest)
+		if err != nil {
+			utils.WriteResponse(w, 409, &resources.GenericResponse{Err: err.Error()})
+			return
+		}
+
+		if len(capabilitiesRequest.Backend) == 0 {
+			h.logger.Printf("Backend not specified", capabilitiesRequest.Backend)
+			utils.WriteResponse(w, http.StatusNotFound, &resources.GenericResponse{Err: "Backend-not-specified"})
+			return
+		}
+
+		backend, ok := h.backends[capabilitiesRequest.Backend]
+		if !ok {
+			h.logger.Printf("error-backend-not-found: %s", capabilitiesRequest.Backend)
+			utils.WriteResponse(w, http.StatusNotFound, &resources.GenericResponse{Err: "backend-not-found"})
+			return
+		}
+
+		capabilities, err := backend.GetCapabilities(capabilitiesRequest)
+		if err != nil {
+			utils.WriteResponse(w, 409, &resources.GetResponse{Err: err.Error()})
+			return
+		}
+
+		h.logger.Printf("GetCapabilities response: %#v\n", capabilities)
+		utils.WriteResponse(w, http.StatusOK, capabilities)
+	}
 }

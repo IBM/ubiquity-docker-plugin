@@ -148,6 +148,19 @@ func (c *Handler) List(w http.ResponseWriter, r *http.Request) {
 	handleResponse(w, listResponse, listResponse.Err)
 }
 
+func (c *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
+	c.log.Println("Handler: GetCapabilities start")
+	defer c.log.Println("Handler: GetCapabilities end")
+
+	getCapabilitiesResponse, err := c.Controller.GetCapabilities()
+	if err != nil {
+		genericResponse := &resources.GenericResponse{Err: err.Error()}
+		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
+		return
+	}
+	utils.WriteResponse(w, http.StatusOK, getCapabilitiesResponse)
+}
+
 func extractRequestObject(r *http.Request, request interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {

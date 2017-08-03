@@ -52,6 +52,7 @@ func (s *Server) Start(pluginsPath string) {
 	router.HandleFunc("/VolumeDriver.Get", s.handler.Get).Methods("POST")
 	router.HandleFunc("/VolumeDriver.Path", s.handler.Path).Methods("POST")
 	router.HandleFunc("/VolumeDriver.List", s.handler.List).Methods("POST")
+	router.HandleFunc("/VolumeDriver.Capabilities", s.handler.GetCapabilities).Methods("POST")
 	http.Handle("/", router)
 
 	err := s.serveUnixSocket(pluginsPath, router)

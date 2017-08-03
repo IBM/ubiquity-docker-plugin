@@ -1,5 +1,5 @@
 hash: 6bceccfde51fad5663e3f7c711176ef52afc5a51db97a101224a3e17dde1c312
-updated: 2017-08-02T15:56:58.939130533-07:00
+updated: 2017-08-03T11:00:58.262206151-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: b26d9c308763d68093482582cea63d69be07a0f0
@@ -10,7 +10,7 @@ imports:
 - name: github.com/gorilla/mux
   version: bcd8bc72b08df0f70df986b97f95590779502d31
 - name: github.com/IBM/ubiquity
-  version: bbfa38940068e4e9b674db69d87b6bf926966f6a
+  version: b98e343ef60200d2f1c2c28db0705ebf831e12eb
   subpackages:
   - fakes
   - local/scbe

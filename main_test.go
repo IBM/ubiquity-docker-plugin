@@ -24,6 +24,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"context"
+	"net"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -830,8 +832,16 @@ func doesProcessExist(pid int) bool {
 }
 
 func submitRequest(reqType string, path string) (body string, status string, err error) {
-	req, _ := http.NewRequest(reqType, fmt.Sprintf("http://%s:%d%s", listenAddr, listenPort, path), nil)
-	response, err := (&http.Client{}).Do(req)
+	req, _ := http.NewRequest(reqType, fmt.Sprintf("http://unix%s", path), nil)
+	httpClient := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", "/tmp/ubiquity.sock")
+			},
+		},
+	}
+
+	response, err := httpClient.Do(req)
 	if err != nil {
 		testLogger.Println(err.Error())
 		return "", "", err
@@ -842,9 +852,16 @@ func submitRequest(reqType string, path string) (body string, status string, err
 }
 
 func submitRequestWithBody(reqType string, path string, requestBody []byte) (body string, status string, err error) {
-	req, _ := http.NewRequest(reqType, fmt.Sprintf("http://%s:%d%s", listenAddr, listenPort, path), bytes.NewBuffer(requestBody))
+	req, _ := http.NewRequest(reqType, fmt.Sprintf("http://unix%s", path), bytes.NewBuffer(requestBody))
+	httpClient := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", "/tmp/ubiquity.sock")
+			},
+		},
+	}
 
-	response, err := (&http.Client{}).Do(req)
+	response, err := httpClient.Do(req)
 	if err != nil {
 		testLogger.Println(err.Error())
 		return "", "", err

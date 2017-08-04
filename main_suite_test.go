@@ -34,8 +34,6 @@ var spectrumBackend string
 var spectrumPath string
 var spectrumProcess *os.Process
 var spectrumCommand *exec.Cmd
-var listenAddr string
-var listenPort int
 var testLogger *log.Logger
 var logFile *os.File
 var backend string
@@ -76,12 +74,10 @@ var _ = BeforeEach(func() {
 	}
 	testLogger = log.New(logFile, "spectrum: ", log.Lshortfile|log.LstdFlags)
 
-	listenAddr = "127.0.0.1"
-	listenPort = 9000 + GinkgoParallelNode()
 	backend = "spectrum-scale"
 
-	confFileName := fmt.Sprintf("/tmp/ubiquity-plugin%d.conf", listenPort)
-	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackends = [\"%s\"] \n[DockerPlugin] \naddress = \"127.0.0.1\" \nport = %d \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"%s\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nClientConfig = \"%s\"\n",backend, listenPort, ubiquityServerIP, spectrumNfsConfig)
+	confFileName := fmt.Sprintf("/tmp/ubiquity-plugin%d.conf", "sock")
+	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackends = [\"%s\"] \n[DockerPlugin] \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"%s\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nClientConfig = \"%s\"\n",backend, ubiquityServerIP, spectrumNfsConfig)
 
 	err = ioutil.WriteFile(confFileName, []byte(confData), 0644)
 	if err != nil {

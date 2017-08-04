@@ -76,7 +76,7 @@ var _ = BeforeEach(func() {
 
 	backend = "spectrum-scale"
 
-	confFileName := fmt.Sprintf("/tmp/ubiquity-plugin%d.conf", "sock")
+	confFileName := fmt.Sprintf("/tmp/ubiquity-plugin%s.conf", "Sock")
 	confData := fmt.Sprintf("logPath = \"/tmp\" \nbackends = [\"%s\"] \n[DockerPlugin] \npluginsDirectory = \"/tmp/\" \n[UbiquityServer] \naddress = \"%s\" \nport = 9999 \n[SpectrumNfsRemoteConfig] \nClientConfig = \"%s\"\n",backend, ubiquityServerIP, spectrumNfsConfig)
 
 	err = ioutil.WriteFile(confFileName, []byte(confData), 0644)

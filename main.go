@@ -48,7 +48,7 @@ func main() {
 		return
 	}
 
-	defer logs.InitFileLogger(logs.DEBUG, path.Join(config.LogPath, "ubiquity-docker-plugin.log"))()
+	defer logs.InitFileLogger(logs.GetLogLevelFromString(config.LogLevel), path.Join(config.LogPath, "ubiquity-docker-plugin.log"))()
 	logger, logFile := utils.SetupLogger(config.LogPath, "ubiquity-docker-plugin")
 	defer utils.CloseLogs(logFile)
 

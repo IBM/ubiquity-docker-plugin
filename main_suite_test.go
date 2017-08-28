@@ -46,6 +46,7 @@ const (
 	inodeLimit        string = "1024"
 	spectrumNfsConfig string = "192.168.1.0/24(Access_Type=RW,Protocols=3:4)"
 	ubiquityServerIP  string = "127.0.0.1"
+	connector 	  string = "REST"
 )
 
 func TestMain(t *testing.T) {

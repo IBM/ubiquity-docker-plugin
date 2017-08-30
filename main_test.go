@@ -251,7 +251,12 @@ var _ = Describe("Main", func() {
 						var createResponse resources.GenericResponse
 						err = json.Unmarshal([]byte(body), &createResponse)
 						Expect(err).ToNot(HaveOccurred())
-						Expect(createResponse.Err).To(Equal(fmt.Sprintf("Failed to set quota 'invalid-quota' for fileset '%s': exit status 1", volumeName)))
+					        if (connector == "REST") {
+							Expect(createResponse.Err).To(Equal(fmt.Sprintf("Unable to set quota for fileset %s:[EFSSP1101C CLI: The value \"invalid-quota\" specified for \"s\" is invalid. ]. Please refer Ubiquity server logs for more details",volumeName)))
+
+						} else {
+							Expect(createResponse.Err).To(Equal(fmt.Sprintf("Failed to set quota 'invalid-quota' for fileset '%s': exit status 1", volumeName)))
+						}
 					})
 					It("should error on create with invalid type in opt", func() {
 						opts = make(map[string]interface{})
@@ -695,7 +700,9 @@ var _ = Describe("Main", func() {
 							Skip("Testcase applies to spectrum-scale native impl only.")
 						}
 						successfulCreateRequest(volumeName)
-						failedUnmountRequest(volumeName)
+						if (connector != "REST") {
+							failedUnmountRequest(volumeName)
+						}
 						successfulRemoveRequest(volumeName)
 					})
 					It("should error when volume of type fileset is not linked", func() {
@@ -706,7 +713,9 @@ var _ = Describe("Main", func() {
 						opts["type"] = "fileset"
 						opts["filesystem"] = filesystem2
 						successfulCreateWithOptsRequest(filesetVolume, opts)
-						failedUnmountRequest(filesetVolume)
+						if (connector != "REST") {
+							failedUnmountRequest(filesetVolume)
+						}
 						successfulRemoveRequest(filesetVolume)
 					})
 					It("should error when volume of type fileset with quota is not linked", func() {
@@ -718,7 +727,9 @@ var _ = Describe("Main", func() {
 						opts["quota"] = "1G"
 						opts["filesystem"] = filesystem2
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
-						failedUnmountRequest(filesetWithQuotaVolume)
+						if (connector != "REST") {
+							failedUnmountRequest(filesetWithQuotaVolume)
+						}
 						successfulRemoveRequest(filesetWithQuotaVolume)
 					})
 					It("should error when volume does not exist", func() {
@@ -789,7 +800,9 @@ var _ = Describe("Main", func() {
 							Skip("Testcase applies to spectrum-scale native impl only.")
 						}
 						successfulCreateRequest(volumeName)
-						failedPathRequest(volumeName)
+						if (connector != "REST") {
+							failedPathRequest(volumeName)
+						}
 						successfulRemoveRequest(volumeName)
 					})
 					It("should error when volume of type fileset is not linked", func() {
@@ -800,7 +813,9 @@ var _ = Describe("Main", func() {
 						opts["type"] = "fileset"
 						opts["filesystem"] = filesystem2
 						successfulCreateWithOptsRequest(filesetVolume, opts)
-						failedPathRequest(filesetVolume)
+						if (connector != "REST") {
+							failedPathRequest(filesetVolume)
+						}
 						successfulRemoveRequest(filesetVolume)
 					})
 					It("should error when volume of type fileset with quota is not linked", func() {
@@ -812,7 +827,9 @@ var _ = Describe("Main", func() {
 						opts["quota"] = "1G"
 						opts["filesystem"] = filesystem2
 						successfulCreateWithOptsRequest(filesetWithQuotaVolume, opts)
-						failedPathRequest(filesetWithQuotaVolume)
+						if (connector != "REST") {
+							failedPathRequest(filesetWithQuotaVolume)
+						}
 						successfulRemoveRequest(filesetWithQuotaVolume)
 					})
 				})

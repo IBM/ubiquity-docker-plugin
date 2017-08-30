@@ -163,6 +163,18 @@ func (c *Controller) List() resources.ListResponse {
 	return listResponse
 }
 
+func (c *Controller) GetCapabilities() (resources.GetCapabilitiesResponse, error) {
+	c.logger.Println("Controller: GetCapabilities start")
+	defer c.logger.Println("Controller: GetCapabilities end")
+
+	getCapabilitiesRequest := resources.GetCapabilitiesRequest{Backend:c.config.Backends[0]}
+	capabilities, err := c.client.GetCapabilities(getCapabilitiesRequest)
+	if err != nil {
+		return resources.GetCapabilitiesResponse{}, err
+	}
+	return resources.GetCapabilitiesResponse{Capabilities:capabilities}, nil
+}
+
 func validBackend(config resources.UbiquityPluginConfig, userSpecifiedBackend string) bool {
 	for _, backend := range config.Backends {
 		if backend == userSpecifiedBackend {

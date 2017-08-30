@@ -835,6 +835,18 @@ var _ = Describe("Main", func() {
 						successfulRemoveRequest(filesetWithQuotaVolume)
 					})
 				})
+				Context(".Capabilities", func() {
+					It("does not error when getting list of capabilities that the plugin supports", func() {
+						body, status, err := submitRequest("POST", "/VolumeDriver.Capabilities")
+						Expect(err).ToNot(HaveOccurred())
+						Expect(status).To(Equal("200 OK"))
+						var getCapabilitiesResponse resources.GetCapabilitiesResponse
+						err = json.Unmarshal([]byte(body), &getCapabilitiesResponse)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(getCapabilitiesResponse.Capabilities.Scope).ToNot(Equal(""))
+						Expect(getCapabilitiesResponse.Capabilities.Scope).To(Equal("global"))
+					})
+				})
 			})
 		})
 	})

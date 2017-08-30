@@ -25,17 +25,13 @@ import (
 	"github.com/IBM/ubiquity-docker-plugin/web_server"
 	"github.com/IBM/ubiquity/resources"
 	"github.com/IBM/ubiquity/utils"
-        "path"
+	"path"
 )
 
 var configFile = flag.String(
 	"config",
 	"ubiquity-client.conf",
 	"config file with ubiquity client configuration params",
-)
-
-const (
-	PLUGIN_ADDRESS = "127.0.0.1"
 )
 
 func main() {
@@ -58,5 +54,5 @@ func main() {
 	if err != nil {
 		panic("Error initializing webserver " + err.Error())
 	}
-	server.Start(PLUGIN_ADDRESS, config.DockerPlugin.Port, config.DockerPlugin.PluginsDirectory)
+	server.Start(config.DockerPlugin.PluginsDirectory)
 }

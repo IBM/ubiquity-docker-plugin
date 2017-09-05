@@ -41,7 +41,10 @@ func NewHandler(logger *log.Logger, storageApiURL string, config resources.Ubiqu
 	if err != nil {
 		return nil, err
 	}
-	hostname := config.DockerPlugin.Hostname
+	hostname,err := os.Hostname()
+	if err != nil {
+		return nil,err
+	}
 	return &Handler{log: logger, Controller: controller, hostname:hostname}, err
 }
 

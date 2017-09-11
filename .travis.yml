@@ -8,6 +8,7 @@ install:
   - sh scripts/build
 
 script:
+  - sh scripts/run_glide_up
   - sh scripts/run_units.sh
 
 notifications:

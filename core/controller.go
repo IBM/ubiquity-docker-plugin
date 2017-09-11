@@ -70,6 +70,7 @@ func (c *Controller) Create(createVolumeRequest resources.CreateVolumeRequest) r
 		createVolumeRequest.Backend = userSpecifiedBackend.(string)
 	}
 
+	createVolumeRequest.CredentialInfo = c.config.CredentialInfo
 	err := c.client.CreateVolume(createVolumeRequest)
 	var createResponse resources.GenericResponse
 	if err != nil {
@@ -84,6 +85,7 @@ func (c *Controller) Remove(removeVolumeRequest resources.RemoveVolumeRequest) r
 	c.logger.Println("Controller: remove start")
 	defer c.logger.Println("Controller: remove end")
 	// forceDelete is set to false to enable deleting just the volume metadata
+	removeVolumeRequest.CredentialInfo = c.config.CredentialInfo
 	err := c.client.RemoveVolume(removeVolumeRequest)
 	if err != nil {
 		return resources.GenericResponse{Err: err.Error()}
@@ -95,6 +97,7 @@ func (c *Controller) Mount(attachRequest resources.AttachRequest) resources.Atta
 	c.logger.Println("Controller: mount start")
 	defer c.logger.Println("Controller: mount end")
 
+	attachRequest.CredentialInfo = c.config.CredentialInfo
 	mountedPath, err := c.client.Attach(attachRequest)
 	if err != nil {
 		return resources.AttachResponse{Err: err.Error()}
@@ -108,6 +111,7 @@ func (c *Controller) Unmount(detachRequest resources.DetachRequest) resources.Ge
 	c.logger.Println("Controller: unmount start")
 	defer c.logger.Println("Controller: unmount end")
 
+	detachRequest.CredentialInfo = c.config.CredentialInfo
 	err := c.client.Detach(detachRequest)
 	if err != nil {
 		return resources.GenericResponse{Err: err.Error()}
@@ -119,6 +123,7 @@ func (c *Controller) Unmount(detachRequest resources.DetachRequest) resources.Ge
 func (c *Controller) Path(pathRequest resources.GetVolumeConfigRequest) resources.AttachResponse {
 	c.logger.Println("Controller: path start")
 	defer c.logger.Println("Controller: path end")
+	pathRequest.CredentialInfo = c.config.CredentialInfo
 	volume, err := c.client.GetVolumeConfig(pathRequest)
 	if err != nil {
 		return resources.AttachResponse{Err: err.Error()}
@@ -135,6 +140,7 @@ func (c *Controller) Path(pathRequest resources.GetVolumeConfigRequest) resource
 func (c *Controller) Get(getRequest resources.GetVolumeConfigRequest) resources.DockerGetResponse {
 	c.logger.Println("Controller: get start")
 	defer c.logger.Println("Controller: get end")
+	getRequest.CredentialInfo = c.config.CredentialInfo
 	volStatus, err := c.client.GetVolumeConfig(getRequest)
 	if err != nil {
 		return resources.DockerGetResponse{Err: err.Error()}
@@ -154,7 +160,7 @@ func (c *Controller) Get(getRequest resources.GetVolumeConfigRequest) resources.
 func (c *Controller) List() resources.ListResponse {
 	c.logger.Println("Controller: list start")
 	defer c.logger.Println("Controller: list end")
-	listVolumesRequest := resources.ListVolumesRequest{Backends: c.config.Backends}
+	listVolumesRequest := resources.ListVolumesRequest{Backends: c.config.Backends, CredentialInfo:c.config.CredentialInfo}
 	volumes, err := c.client.ListVolumes(listVolumesRequest)
 	if err != nil {
 		return resources.ListResponse{Err: err.Error()}

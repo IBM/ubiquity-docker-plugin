@@ -30,8 +30,8 @@ type Controller struct {
 	config resources.UbiquityPluginConfig
 }
 
-func NewController(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Controller, error) {
-	remoteClient, err := remote.NewRemoteClient(logger, storageApiURL, config)
+func NewController(logger *log.Logger, config resources.UbiquityPluginConfig) (*Controller, error) {
+	remoteClient, err := remote.NewRemoteClientSecure(logger, config)
 	if err != nil {
 		logger.Fatal("Cannot initialize remote client")
 		return nil, err

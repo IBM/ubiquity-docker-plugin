@@ -55,10 +55,30 @@ func (s *Server) Start(pluginsPath string) {
 	router.HandleFunc("/VolumeDriver.Capabilities", s.handler.GetCapabilities).Methods("POST")
 	http.Handle("/", router)
 
-	err := s.serveUnixSocket(pluginsPath, router)
+	err := s.setupPropagatedMount()
+	if err != nil {
+		panic("Error initializing PropagatedMount" + err.Error())
+	}
+
+	err = s.serveUnixSocket(pluginsPath, router)
 	if err != nil {
 		panic("Error starting web server: " + err.Error())
 	}
+}
+
+func (s *Server) setupPropagatedMount() error {
+	if _,err := os.Stat(resources.DockerPropagatedMount); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(resources.DockerPropagatedMount, 0755); err != nil {
+				s.log.Printf("Error creating PropagatedMount %s : %s", resources.DockerPropagatedMount, err.Error())
+				return err
+			}
+		} else {
+			s.log.Printf("Error stating %s : %s", resources.DockerPropagatedMount, err.Error())
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Server) serveUnixSocket(pluginsPath string, router *mux.Router) error {

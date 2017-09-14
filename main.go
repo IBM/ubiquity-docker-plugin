@@ -26,20 +26,22 @@ import (
 	"github.com/IBM/ubiquity/resources"
 	"github.com/IBM/ubiquity/utils"
 	"path"
-)
-
-var configFile = flag.String(
-	"config",
-	"ubiquity-client.conf",
-	"config file with ubiquity client configuration params",
+	"os"
 )
 
 func main() {
 
 	flag.Parse()
 	var config resources.UbiquityPluginConfig
-	fmt.Printf("Starting ubiquity plugin with %s config file\n", *configFile)
-	if _, err := toml.DecodeFile(*configFile, &config); err != nil {
+	configFile, configEnvSet := os.LookupEnv("UBIQUITY_PLUGIN_CONFIG")
+	if !configEnvSet {
+		fmt.Println("UBIQUITY_PLUGIN_CONFIG environment variable not set")
+		return
+	}
+	configFileContainerPath := path.Join(resources.DockerHostRootMountpath, configFile)
+
+	fmt.Printf("Starting ubiquity plugin with %s config file\n", configFileContainerPath)
+	if _, err := toml.DecodeFile(configFileContainerPath, &config); err != nil {
 		fmt.Println(err)
 		return
 	}

@@ -79,6 +79,7 @@ func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
 		return
 	}
+	removeVolumeRequest.ContainerOrchestrator = "docker"
 	removeResponse := c.Controller.Remove(removeVolumeRequest)
 	handleResponse(w, removeResponse, removeResponse.Err)
 }
@@ -94,6 +95,7 @@ func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	attachRequest.Host = c.hostname
+	attachRequest.ContainerOrchestrator = "docker"
 	attachResponse := c.Controller.Mount(attachRequest)
 	handleResponse(w, attachResponse, attachResponse.Err)
 }

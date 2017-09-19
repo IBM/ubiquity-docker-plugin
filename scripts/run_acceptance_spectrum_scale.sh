@@ -1,7 +1,7 @@
 #!/bin/bash -ex
-
-# While running this test export FILESYSTEM to gpfs filesystem. Default value 
+# While running this test export FILESYSTEM to gpfs filesystem. Default value
 # is gpfs_device
+
 
 if [ -z "$1" ]
     then
@@ -45,9 +45,6 @@ function cleanup() {
 	sleep 5
 	set +e
 	docker stop $(docker ps -qa)
-#	if [ $rc -ne 0 ]; then
-#		return
-#	fi
 	docker rm $(docker ps -qa)
 	set -e
 
@@ -63,7 +60,7 @@ function create_fileset()
 		return
 	fi
 	/usr/lpp/mmfs/bin/mmlinkfileset $fsys $fileset -J /gpfs/$fsys/$fileset
-	sleep 5
+	sleep 10
 	return
 }
 

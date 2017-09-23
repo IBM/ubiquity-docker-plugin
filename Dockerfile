@@ -10,6 +10,5 @@ FROM alpine:latest
 RUN apk --update add ca-certificates multipath-tools nfs-utils open-iscsi openssh sg3_utils
 RUN mkdir -p /ubiquity /run/docker/plugins
 WORKDIR /root
-COPY --from=0 /go/src/github.com/IBM/ubiquity-docker-plugin/scripts/start-ssh-agent .
 COPY --from=0 /go/src/github.com/IBM/ubiquity-docker-plugin/ubiquity-docker-plugin .
 CMD ["/root/ubiquity-docker-plugin"]

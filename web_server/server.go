@@ -33,8 +33,13 @@ type Server struct {
 	log     *log.Logger
 }
 
-func NewServer(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Server, error) {
-	handler, err := NewHandler(logger, storageApiURL, config)
+type ServerInfo struct {
+	Name string
+	Addr string
+}
+
+func NewServer(logger *log.Logger, config resources.UbiquityPluginConfig) (*Server, error) {
+	handler, err := NewHandler(logger, config)
 	if err != nil {
 		return nil, err
 	}

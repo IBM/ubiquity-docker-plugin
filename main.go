@@ -43,9 +43,7 @@ func main() {
 	logger, logFile := utils.SetupLogger(config.LogPath, "ubiquity-docker-plugin")
 	defer utils.CloseLogs(logFile)
 
-	storageAPIURL := fmt.Sprintf("http://%s:%d/ubiquity_storage", config.UbiquityServer.Address, config.UbiquityServer.Port)
-
-	server, err := web_server.NewServer(logger, storageAPIURL, config)
+	server, err := web_server.NewServer(logger, config)
 	if err != nil {
 		panic("Error initializing webserver " + err.Error())
 	}

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -xe
 
 PLUGIN_NAME="aswarke/ubiquity-docker-plugin"
 scripts=$(dirname $0)

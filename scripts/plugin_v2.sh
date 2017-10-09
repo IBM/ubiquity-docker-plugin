@@ -1,8 +1,8 @@
 #!/bin/bash
 
-set -xe
+set -e
 
-PLUGIN_NAME="aswarke/ubiquity-docker-plugin"
+PLUGIN_NAME="ubiquity/ubiquity-docker-plugin"
 TAG="v1"
 scripts=$(dirname $0)
 PLUGIN_V2_DIR=$scripts/../pluginv2

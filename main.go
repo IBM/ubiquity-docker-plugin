@@ -24,12 +24,13 @@ import (
 	"github.com/IBM/ubiquity/resources"
 	"github.com/IBM/ubiquity/utils"
 	"path"
+	dockerUtils "github.com/IBM/ubiquity-docker-plugin/utils"
 )
 
 func main() {
 
 	var config resources.UbiquityPluginConfig
-	config, err := utils.LoadUbiquityPluginConfig()
+	config, err := dockerUtils.LoadUbiquityPluginConfig()
 	if err != nil {
 		panic("Error loading UbiquityPluginConfig" + err.Error())
 	}

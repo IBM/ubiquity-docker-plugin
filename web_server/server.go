@@ -72,14 +72,14 @@ func (s *Server) Start(pluginsPath string) {
 }
 
 func (s *Server) setupPropagatedMount() error {
-	if _,err := os.Stat(resources.DockerPropagatedMount); err != nil {
+	if _,err := os.Stat(resources.UbiquityMountpoint); err != nil {
 		if os.IsNotExist(err) {
-			if err := os.MkdirAll(resources.DockerPropagatedMount, 0755); err != nil {
-				s.log.Printf("Error creating PropagatedMount %s : %s", resources.DockerPropagatedMount, err.Error())
+			if err := os.MkdirAll(resources.UbiquityMountpoint, 0755); err != nil {
+				s.log.Printf("Error creating PropagatedMount %s : %s", resources.UbiquityMountpoint, err.Error())
 				return err
 			}
 		} else {
-			s.log.Printf("Error stating %s : %s", resources.DockerPropagatedMount, err.Error())
+			s.log.Printf("Error stating %s : %s", resources.UbiquityMountpoint, err.Error())
 			return err
 		}
 	}

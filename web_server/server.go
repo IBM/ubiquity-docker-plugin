@@ -18,19 +18,20 @@ package web_server
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-	"path"
 	"github.com/IBM/ubiquity/resources"
+	"github.com/IBM/ubiquity/utils"
 	"github.com/gorilla/mux"
-	"os"
-	"syscall"
+	"log"
 	"net"
+	"net/http"
+	"os"
+	"path"
 )
 
 type Server struct {
-	handler *Handler
-	log     *log.Logger
+	handler  *Handler
+	log      *log.Logger
+	executor utils.Executor
 }
 
 type ServerInfo struct {
@@ -43,7 +44,7 @@ func NewServer(logger *log.Logger, config resources.UbiquityPluginConfig) (*Serv
 	if err != nil {
 		return nil, err
 	}
-	return &Server{log: logger, handler: handler}, nil
+	return &Server{log: logger, handler: handler, executor:utils.NewExecutor()}, nil
 }
 
 func (s *Server) Start(pluginsPath string) {
@@ -72,7 +73,7 @@ func (s *Server) Start(pluginsPath string) {
 }
 
 func (s *Server) setupPropagatedMount() error {
-	if _,err := os.Stat(resources.UbiquityMountpoint); err != nil {
+	if _, err := os.Stat(resources.UbiquityMountpoint); err != nil {
 		if os.IsNotExist(err) {
 			if err := os.MkdirAll(resources.UbiquityMountpoint, 0755); err != nil {
 				s.log.Printf("Error creating PropagatedMount %s : %s", resources.UbiquityMountpoint, err.Error())
@@ -88,7 +89,7 @@ func (s *Server) setupPropagatedMount() error {
 
 func (s *Server) serveUnixSocket(pluginsPath string, router *mux.Router) error {
 
-	if _,err := os.Stat(pluginsPath); err != nil {
+	if _, err := os.Stat(pluginsPath); err != nil {
 		if os.IsNotExist(err) {
 			if err := os.MkdirAll(pluginsPath, 0755); err != nil {
 				s.log.Printf("Error creating pluginsPath %s : %s", pluginsPath, err.Error())
@@ -102,9 +103,10 @@ func (s *Server) serveUnixSocket(pluginsPath string, router *mux.Router) error {
 
 	ubiquitySocketAddress := path.Join(pluginsPath, fmt.Sprintf("%s.sock", "ubiquity"))
 
-	err := syscall.Unlink(ubiquitySocketAddress)
+	args := []string{ubiquitySocketAddress}
+	output, err := s.executor.Execute("unlink", args)
 	if err != nil && !os.IsNotExist(err) {
-		s.log.Printf("Error un-linking %s : %s", ubiquitySocketAddress, err.Error())
+		s.log.Printf("Error un-linking %s, output: %s, error: %s", ubiquitySocketAddress,string(output), err.Error())
 		return err
 	}
 
@@ -114,7 +116,7 @@ func (s *Server) serveUnixSocket(pluginsPath string, router *mux.Router) error {
 		return err
 	}
 
-    s.log.Printf("Starting http server at %s", ubiquitySocketAddress)
+	s.log.Printf("Starting http server at %s", ubiquitySocketAddress)
 
 	return http.Serve(l, router)
 }

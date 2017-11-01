@@ -1,0 +1,126 @@
+{
+  "description": "Ubiquity Docker Volume Plugin",
+  "documentation": "https://github.com/IBM/ubiquity-docker-plugin",
+  "entrypoint": [
+    "/root/ubiquity-docker-plugin"
+  ],
+  "env": [
+    {
+      "name": "LOG_LEVEL",
+      "description": "log level",
+      "settable": [
+        "value"
+      ],
+      "value": "info"
+    },
+    {
+      "name": "LOG_PATH",
+      "description": "Path of the logfile",
+      "settable": [
+        "value"
+      ],
+      "value": "/tmp"
+    },
+    {
+      "name": "BACKENDS",
+      "description": "Backend of the plugin",
+      "settable": [
+        "value"
+      ],
+      "value": ""
+    },
+    {
+      "name": "PLUGINS_DIRECTORY",
+      "description": "Path for socket creation",
+      "settable": [
+        "value"
+      ],
+      "value": "/run/docker/plugins/"
+    },
+    {
+      "name": "UBIQUITY_PORT",
+      "description": "Port of Ubiquity Service",
+      "settable": [
+        "value"
+      ],
+      "value": ""
+    },
+    {
+      "name": "UBIQUITY_ADDRESS",
+      "description": "Address of Ubiquity Service",
+      "settable": [
+        "value"
+      ],
+      "value": ""
+    },
+    {
+      "name": "SPECTRUM_NFS_CLIENT_CONFIG",
+      "description": "SpectrumScale CES NFS Client config",
+      "settable": [
+        "value"
+      ],
+      "value": ""
+    },
+    {
+      "name": "SCBE_SKIP_RESCAN_ISCSI",
+      "description": "SCBE Skip ISCSI Rescan flag",
+      "settable": [
+        "value"
+      ],
+      "value": "false"
+    }
+  ],
+  "interface": {
+    "socket": "ubiquity.sock",
+    "types": [
+      "docker.volumedriver/1.0"
+    ]
+  },
+  "linux": {
+    "capabilities": [
+      "CAP_SYS_ADMIN"
+    ],
+    "allowalldevices": true
+  },
+  "mounts": [
+    {
+      "source": "/dev",
+      "destination": "/dev",
+      "type": "bind",
+      "options": [
+        "rbind"
+      ]
+    },
+    {
+      "source": "/root/.ssh",
+      "destination": "/root/.ssh",
+      "type": "bind",
+      "options": [
+        "rbind",
+        "ro"
+      ]
+    },
+    {
+      "source": "/etc/group",
+      "destination": "/etc/group",
+      "type": "bind",
+      "options": [
+        "rbind",
+        "ro"
+      ]
+    },
+    {
+      "source": "/etc/passwd",
+      "destination": "/etc/passwd",
+      "type": "bind",
+      "options": [
+        "rbind",
+        "ro"
+      ]
+    }
+  ],
+  "network": {
+    "type": "host"
+  },
+  "propagatedmount": "/ubiquity"
+}

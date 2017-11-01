@@ -17,36 +17,25 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 
-	"github.com/BurntSushi/toml"
 	"github.com/IBM/ubiquity/utils/logs"
 	"github.com/IBM/ubiquity-docker-plugin/web_server"
 	"github.com/IBM/ubiquity/resources"
 	"github.com/IBM/ubiquity/utils"
-        "path"
-)
-
-var configFile = flag.String(
-	"config",
-	"ubiquity-client.conf",
-	"config file with ubiquity client configuration params",
-)
-
-const (
-	PLUGIN_ADDRESS = "127.0.0.1"
+	"path"
+	dockerUtils "github.com/IBM/ubiquity-docker-plugin/utils"
 )
 
 func main() {
 
-	flag.Parse()
 	var config resources.UbiquityPluginConfig
-	fmt.Printf("Starting ubiquity plugin with %s config file\n", *configFile)
-	if _, err := toml.DecodeFile(*configFile, &config); err != nil {
-		fmt.Println(err)
-		return
+	config, err := dockerUtils.LoadUbiquityPluginConfig()
+	if err != nil {
+		panic("Error loading UbiquityPluginConfig" + err.Error())
 	}
+
+	fmt.Printf("Starting ubiquity plugin with config %#v \n", config)
 
 	defer logs.InitFileLogger(logs.GetLogLevelFromString(config.LogLevel), path.Join(config.LogPath, "ubiquity-docker-plugin.log"))()
 	logger, logFile := utils.SetupLogger(config.LogPath, "ubiquity-docker-plugin")
@@ -56,5 +45,5 @@ func main() {
 	if err != nil {
 		panic("Error initializing webserver " + err.Error())
 	}
-	server.Start(PLUGIN_ADDRESS, config.DockerPlugin.Port, config.DockerPlugin.PluginsDirectory)
+	server.Start(config.DockerPlugin.PluginsDirectory)
 }

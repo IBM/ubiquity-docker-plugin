@@ -79,6 +79,7 @@ func (c *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
 		return
 	}
+	removeVolumeRequest.ContainerOrchestrator = resources.DockerOrchestrator
 	removeResponse := c.Controller.Remove(removeVolumeRequest)
 	handleResponse(w, removeResponse, removeResponse.Err)
 }
@@ -94,6 +95,7 @@ func (c *Handler) Mount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	attachRequest.Host = c.hostname
+	attachRequest.ContainerOrchestrator = resources.DockerOrchestrator
 	attachResponse := c.Controller.Mount(attachRequest)
 	handleResponse(w, attachResponse, attachResponse.Err)
 }
@@ -146,6 +148,19 @@ func (c *Handler) List(w http.ResponseWriter, r *http.Request) {
 	defer c.log.Println("Handler: list end")
 	listResponse := c.Controller.List()
 	handleResponse(w, listResponse, listResponse.Err)
+}
+
+func (c *Handler) GetCapabilities(w http.ResponseWriter, r *http.Request) {
+	c.log.Println("Handler: GetCapabilities start")
+	defer c.log.Println("Handler: GetCapabilities end")
+
+	getCapabilitiesResponse, err := c.Controller.GetCapabilities()
+	if err != nil {
+		genericResponse := &resources.GenericResponse{Err: err.Error()}
+		utils.WriteResponse(w, http.StatusBadRequest, genericResponse)
+		return
+	}
+	utils.WriteResponse(w, http.StatusOK, getCapabilitiesResponse)
 }
 
 func extractRequestObject(r *http.Request, request interface{}) error {

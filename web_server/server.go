@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"syscall"
 )
 
 type Server struct {
@@ -103,10 +104,9 @@ func (s *Server) serveUnixSocket(pluginsPath string, router *mux.Router) error {
 
 	ubiquitySocketAddress := path.Join(pluginsPath, fmt.Sprintf("%s.sock", "ubiquity"))
 
-	args := []string{ubiquitySocketAddress}
-	output, err := s.executor.Execute("unlink", args)
+	err := syscall.Unlink(ubiquitySocketAddress)
 	if err != nil && !os.IsNotExist(err) {
-		s.log.Printf("Error un-linking %s, output: %s, error: %s", ubiquitySocketAddress,string(output), err.Error())
+		s.log.Printf("Error un-linking %s : %s", ubiquitySocketAddress, err.Error())
 		return err
 	}
 

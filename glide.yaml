@@ -1,9 +1,9 @@
 package: github.com/IBM/ubiquity-docker-plugin
 import:
 - package: github.com/BurntSushi/toml
-  version: ^0.2.0
+  version: v0.3.0
 - package: github.com/gorilla/mux
-  version: ^1.3.0
+  version: v1.5.0
 - package: github.com/IBM/ubiquity
   version: dev
   subpackages:

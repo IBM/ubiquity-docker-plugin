@@ -43,8 +43,8 @@ type ServerInfo struct {
 	Addr string
 }
 
-func NewServer(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Server, error) {
-	handler, err := NewHandler(logger, storageApiURL, config)
+func NewServer(logger *log.Logger, config resources.UbiquityPluginConfig) (*Server, error) {
+	handler, err := NewHandler(logger, config)
 	if err != nil {
 		return nil, err
 	}

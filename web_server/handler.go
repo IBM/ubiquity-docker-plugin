@@ -36,8 +36,8 @@ type Handler struct {
 	hostname   string
 }
 
-func NewHandler(logger *log.Logger, storageApiURL string, config resources.UbiquityPluginConfig) (*Handler, error) {
-	controller, err := core.NewController(logger, storageApiURL, config)
+func NewHandler(logger *log.Logger, config resources.UbiquityPluginConfig) (*Handler, error) {
+	controller, err := core.NewController(logger, config)
 	if err != nil {
 		return nil, err
 	}

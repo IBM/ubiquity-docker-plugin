@@ -20,12 +20,13 @@ import (
 	"flag"
 	"fmt"
 
+	"path"
+
 	"github.com/BurntSushi/toml"
-	"github.com/IBM/ubiquity/utils/logs"
 	"github.com/IBM/ubiquity-docker-plugin/web_server"
 	"github.com/IBM/ubiquity/resources"
 	"github.com/IBM/ubiquity/utils"
-        "path"
+	"github.com/IBM/ubiquity/utils/logs"
 )
 
 var configFile = flag.String(
@@ -49,8 +50,7 @@ func main() {
 	}
 
 	defer logs.InitFileLogger(logs.GetLogLevelFromString(config.LogLevel), path.Join(config.LogPath, "ubiquity-docker-plugin.log"))()
-	logger, logFile := utils.SetupLogger(config.LogPath, "ubiquity-docker-plugin")
-	defer utils.CloseLogs(logFile)
+	logger := utils.SetupOldLogger("ubiquity-docker-plugin")
 
 	server, err := web_server.NewServer(logger, config)
 	if err != nil {
